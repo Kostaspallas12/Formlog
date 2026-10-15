@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import HeroPreview from '@/components/HeroPreview';
+import HomeRedirect from '@/components/HomeRedirect';
 
 const BENEFITS = [
   {
@@ -42,6 +43,7 @@ const FAQ = [
 export default function Home() {
   return (
     <>
+      <HomeRedirect />
       <main>
         {/* Hero */}
         <section className="hero wrap">
