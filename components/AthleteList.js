@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { listAllCheckins, listAllWeighIns, listAthletes } from '@/lib/storage';
+import { listAllCheckins, listAllWeighIns, listAthletes, listInvites } from '@/lib/storage';
 import { ANGLES, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
 import AthleteForm from './AthleteForm';
 import Photo from './Photo';
@@ -13,15 +13,20 @@ export default function AthleteList({ user }) {
   const [athletes, setAthletes] = useState(null);
   const [adding, setAdding] = useState(false);
 
-  // 3 αιτήματα συνολικά, όσους αθλούμενους κι αν έχει ο προπονητής.
+  // 4 αιτήματα συνολικά, όσους αθλούμενους κι αν έχει ο προπονητής.
   const reload = useCallback(async () => {
-    const [list, checkins, weighIns] = await Promise.all([listAthletes(), listAllCheckins(), listAllWeighIns()]);
+    const [list, checkins, weighIns, invites] = await Promise.all([
+      listAthletes(), listAllCheckins(), listAllWeighIns(), listInvites(),
+    ]);
     const byAthlete = (rows, id) => rows.filter((r) => r.athleteId === id);
     const withData = list
-      .filter((a) => !a.self)
-      .map((a) => ({ ...a, checkins: byAthlete(checkins, a.id), weighIns: byAthlete(weighIns, a.id) }));
+      .filter((a) => a.coachId === user.id) // όσοι προπονεί (συνδεδεμένοι ή όχι)
+      .map((a) => ({
+        ...a, checkins: byAthlete(checkins, a.id), weighIns: byAthlete(weighIns, a.id),
+        pending: invites.some((i) => i.athleteId === a.id && !i.usedAt && !i.revokedAt && new Date(i.expiresAt) > new Date()),
+      }));
     setAthletes(withData.sort((a, b) => a.name.localeCompare(b.name, 'el')));
-  }, []);
+  }, [user.id]);
 
   useEffect(() => { reload(); }, [reload]);
 
@@ -77,6 +82,9 @@ function AthleteCard({ athlete }) {
       {lastPhoto ? <Photo id={lastPhoto} alt="" className="athlete-photo" /> : <span className="athlete-photo no-photo" />}
       <div className="athlete-info">
         <h3>{athlete.name}{athlete.age != null && <span className="athlete-age"> · {athlete.age} ετών</span>}</h3>
+        <span className={`link-status ${athlete.linked ? 'on' : athlete.pending ? 'wait' : ''}`}>
+          {athlete.linked ? '✓ Συνδεδεμένος' : athlete.pending ? '⏳ Αναμένει αποδοχή' : 'Χωρίς λογαριασμό'}
+        </span>
         <span className="meta">
           {checkins.length
             ? `${checkins.length} ${checkins.length === 1 ? 'καταγραφή' : 'καταγραφές'} · τελευταία ${fmtDate(last.date)}`

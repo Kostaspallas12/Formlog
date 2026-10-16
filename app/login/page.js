@@ -13,9 +13,12 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const passwordRef = useRef(null);
+  const [next, setNext] = useState(null); // από πρόσκληση προπονητή: /join/…
 
   // «Να με θυμάσαι»: αν υπάρχει αποθηκευμένο email, το συμπληρώνουμε και πάμε κατευθείαν στον κωδικό.
   useEffect(() => {
+    const n = new URLSearchParams(window.location.search).get('next');
+    if (n?.startsWith('/join/')) setNext(n);
     const saved = getRememberedEmail();
     if (saved) {
       setEmail(saved);
@@ -64,7 +67,7 @@ export default function LoginPage() {
           {busy ? 'Είσοδος...' : 'Είσοδος'}
         </button>
         <p className="auth-foot">
-          Δεν έχεις λογαριασμό; <Link href="/signup">Δημιούργησε έναν</Link>
+          Δεν έχεις λογαριασμό; <Link href={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'}>Δημιούργησε έναν</Link>
         </p>
       </form>
     </main>

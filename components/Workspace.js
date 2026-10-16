@@ -23,7 +23,7 @@ const TABS = [
 ];
 
 // Ο χώρος ενός αθλούμενου: σύνοψη, νέα καταγραφή, αρχείο, σύγκριση, πίνακας βάρους, καθημερινά.
-export default function Workspace({ athlete, title, greeting, backHref, onDeleteAthlete }) {
+export default function Workspace({ athlete, title, greeting, backHref, banner, onDeleteAthlete }) {
   const [raw, setRaw] = useState(null); // { checkins, weighIns, daily }
   const [loadError, setLoadError] = useState(false);
   const [tab, setTab] = useState('archive');
@@ -91,6 +91,8 @@ export default function Workspace({ athlete, title, greeting, backHref, onDelete
           <button className="btn primary" onClick={() => setEditing('new')}>+ Νέα καταγραφή</button>
         )}
       </div>
+
+      {banner}
 
       {editing && (
         <CheckinForm

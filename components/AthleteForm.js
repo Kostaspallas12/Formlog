@@ -59,13 +59,13 @@ export default function AthleteForm({ onDone, onCancel }) {
         }
       }
 
-      athlete = await addAthlete(name, { age: ageNum });
+      athlete = await addAthlete(name, { age: ageNum, asCoach: true });
       const date = todayISO();
       if (kg != null) await setWeighIn({ athleteId: athlete.id, date, weight: Math.round(kg * 10) / 10 });
 
       if (Object.keys(shrunk).length) {
         const photos = {};
-        for (const [angle, versions] of Object.entries(shrunk)) photos[angle] = await addPhoto(versions);
+        for (const [angle, versions] of Object.entries(shrunk)) photos[angle] = await addPhoto(versions, athlete.id);
         await putCheckin({
           id: uuid(), athleteId: athlete.id, date, weight: null, photos, note: '',
           createdAt: new Date().toISOString(),

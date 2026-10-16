@@ -6,6 +6,7 @@ import { getSelfAthlete } from '@/lib/storage';
 import { getLastUser } from '@/lib/lastUser';
 import AthleteList from '@/components/AthleteList';
 import Workspace from '@/components/Workspace';
+import MyCoach from '@/components/MyCoach';
 import { AthleteCardsSkeleton, WorkspaceBodySkeleton, WorkspaceSkeleton } from '@/components/Skeletons';
 
 export default function DashboardPage() {
@@ -68,5 +69,5 @@ function MyProgress({ user }) {
     );
   }
 
-  return <Workspace athlete={me} title="Η πρόοδός μου" greeting={greeting} />;
+  return <Workspace athlete={me} title="Η πρόοδός μου" greeting={greeting} banner={<MyCoach />} />;
 }

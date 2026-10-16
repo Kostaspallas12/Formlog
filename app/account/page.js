@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRequireUser } from '@/lib/useAuthRedirect';
 import { MIN_PASSWORD, useAuth } from '@/lib/AuthContext';
 import { buildExportZip, exportFileName } from '@/lib/exportZip';
 import { AccountSkeleton } from '@/components/Skeletons';
+import { disconnectCoach, getMyCoach } from '@/lib/storage';
+import { fmtDate } from '@/lib/utils';
 
 export default function AccountPage() {
   const { user, ready, deleteAccount } = useRequireUser();
@@ -61,6 +63,8 @@ export default function AccountPage() {
           </div>
         </div>
       </section>
+
+      {user.type === 'personal' && <CoachSection />}
 
       <section className="panel account-block">
         <h2>Λήψη των δεδομένων μου</h2>
@@ -220,5 +224,48 @@ function PasswordRow() {
         <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" required />
       </label>
     </Setting>
+  );
+}
+
+/* ---------- Προπονητής (για τον αθλούμενο) ---------- */
+
+function CoachSection() {
+  const [coach, setCoach] = useState(undefined);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  useEffect(() => { getMyCoach().then(setCoach).catch(() => setCoach(null)); }, []);
+
+  if (coach === undefined) return null;
+
+  const stop = async () => {
+    if (!confirm(`Διακοπή συνεργασίας με «${coach.name}»; Ο φάκελος και όλα τα δεδομένα μένουν σε σένα· ο προπονητής δεν θα έχει πια πρόσβαση.`)) return;
+    setBusy(true);
+    try {
+      await disconnectCoach(coach.athleteId);
+      setCoach(null);
+      setMsg('Η συνεργασία διακόπηκε. Τα δεδομένα σου είναι όλα εδώ.');
+    } catch {
+      setMsg('Κάτι πήγε στραβά. Δοκίμασε ξανά.');
+    }
+    setBusy(false);
+  };
+
+  return (
+    <section className="panel account-block">
+      <h2>Προπονητής</h2>
+      {coach ? (
+        <>
+          <p>
+            Συνεργάζεσαι με <b>{coach.name}</b>{coach.since ? ` από ${fmtDate(coach.since.slice(0, 10))}` : ''}. Βλέπει και
+            καταχωρεί στον φάκελό σου φωτογραφίες, βάρος και καθημερινά.
+          </p>
+          <button className="btn danger-solid" onClick={stop} disabled={busy}>Διακοπή συνεργασίας</button>
+        </>
+      ) : (
+        <p>Δεν συνεργάζεσαι με προπονητή. Αν σου στείλει πρόσκληση, άνοιξε τον σύνδεσμο που σου έδωσε.</p>
+      )}
+      {msg && <p className="wl-ok" role="status">{msg}</p>}
+    </section>
   );
 }

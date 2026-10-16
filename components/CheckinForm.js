@@ -63,7 +63,7 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
       for (const a of ANGLES) {
         const s = slots[a.id];
         const old = initial?.photos?.[a.id] ?? null;
-        if (shrunk[a.id]) photos[a.id] = await addPhoto(shrunk[a.id]);
+        if (shrunk[a.id]) photos[a.id] = await addPhoto(shrunk[a.id], athleteId);
         else if (s.id) photos[a.id] = s.id;
         if (old && photos[a.id] !== old) obsolete.push(old);
       }

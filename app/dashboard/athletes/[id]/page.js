@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useRequireUser } from '@/lib/useAuthRedirect';
 import { deleteAthlete, getAthlete } from '@/lib/storage';
 import Workspace from '@/components/Workspace';
+import CoachLink from '@/components/CoachLink';
 import { WorkspaceSkeleton } from '@/components/Skeletons';
 
 export default function AthletePage() {
@@ -16,10 +17,10 @@ export default function AthletePage() {
 
   useEffect(() => {
     if (!user) return;
-    // Ο προπονητής βλέπει μόνο τους δικούς του αθλούμενους.
-    // (Η βάση επιστρέφει μόνο δικούς του, χάρη στο RLS· ελέγχουμε και εδώ.)
+    // Ο προπονητής βλέπει μόνο όσους προπονεί.
+    // (Η βάση επιστρέφει μόνο αυτούς, χάρη στο RLS· ελέγχουμε και εδώ.)
     getAthlete(id)
-      .then((a) => setAthlete(a && a.owner === user.id && !a.self ? a : null))
+      .then((a) => setAthlete(a && a.coachId === user.id ? a : null))
       .catch(() => setAthlete(null));
   }, [id, user]);
 
@@ -34,7 +35,9 @@ export default function AthletePage() {
           athlete={athlete}
           title={athlete.name}
           backHref="/dashboard"
-          onDeleteAthlete={async () => {
+          banner={<CoachLink athlete={athlete} onDisconnected={() => router.push('/dashboard')} />}
+          // Φάκελο συνδεδεμένου αθλούμενου δεν τον σβήνει ο προπονητής· ανήκει στον αθλούμενο.
+          onDeleteAthlete={athlete.linked ? undefined : async () => {
             await deleteAthlete(athlete.id);
             router.push('/dashboard');
           }}

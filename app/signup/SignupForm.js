@@ -9,7 +9,8 @@ const TYPES = [
   { id: 'coach', title: 'Προπονητής' },
 ];
 
-export default function SignupForm({ initialType }) {
+// fromInvite: ήρθε από πρόσκληση προπονητή (μόνο προσωπικός λογαριασμός, μετά επιστρέφει στην πρόσκληση).
+export default function SignupForm({ initialType, fromInvite = false, next = null }) {
   const { signup } = useRedirectIfLoggedIn();
   const [type, setType] = useState(initialType);
   const [name, setName] = useState('');
@@ -28,7 +29,7 @@ export default function SignupForm({ initialType }) {
     if (password.length < 8) return setError('Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.');
     if (!terms || !health) return setError('Για να συνεχίσεις χρειάζεται να αποδεχτείς και τα δύο.');
     setBusy(true);
-    const res = await signup({ name, email, password, type });
+    const res = await signup({ name, email, password, type, redirectTo: next || '/dashboard' });
     setBusy(false);
     setError(res.error || '');
     if (res.confirm) setConfirmSent(true);
@@ -43,7 +44,7 @@ export default function SignupForm({ initialType }) {
             Στείλαμε σύνδεσμο επιβεβαίωσης στο <b>{email.trim()}</b>. Πάτα τον για να ενεργοποιηθεί ο λογαριασμός σου.
           </p>
           <p className="meta">Δεν το βρίσκεις; Κοίτα και στα ανεπιθύμητα (spam).</p>
-          <p className="auth-foot"><Link href="/login">Πήγαινε στην είσοδο</Link></p>
+          <p className="auth-foot"><Link href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'}>Πήγαινε στην είσοδο</Link></p>
         </div>
       </main>
     );
@@ -53,18 +54,23 @@ export default function SignupForm({ initialType }) {
     <main className="wrap">
       <form className="auth" onSubmit={submit}>
         <h1>Δημιουργία λογαριασμού</h1>
-        <p className="auth-sub">Πώς θα χρησιμοποιήσεις το FormLog;</p>
-
-        <div className="types" role="radiogroup" aria-label="Τύπος λογαριασμού">
-          {TYPES.map((t) => (
-            <button
-              key={t.id} type="button" role="radio" className="type"
-              aria-checked={type === t.id} onClick={() => setType(t.id)}
-            >
-              <b>{t.title}</b>
-            </button>
-          ))}
-        </div>
+        {fromInvite ? (
+          <p className="auth-sub">Φτιάξε τον λογαριασμό σου για να συνδεθείς με τον προπονητή σου.</p>
+        ) : (
+          <>
+            <p className="auth-sub">Πώς θα χρησιμοποιήσεις το FormLog;</p>
+            <div className="types" role="radiogroup" aria-label="Τύπος λογαριασμού">
+              {TYPES.map((t) => (
+                <button
+                  key={t.id} type="button" role="radio" className="type"
+                  aria-checked={type === t.id} onClick={() => setType(t.id)}
+                >
+                  <b>{t.title}</b>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         <label className="f">
           {type === 'coach' ? 'Όνομα ή όνομα γυμναστηρίου' : 'Όνομα'}
@@ -107,7 +113,7 @@ export default function SignupForm({ initialType }) {
           {busy ? 'Δημιουργία...' : 'Δημιουργία λογαριασμού'}
         </button>
         <p className="auth-foot">
-          Έχεις ήδη λογαριασμό; <Link href="/login">Είσοδος</Link>
+          Έχεις ήδη λογαριασμό; <Link href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'}>Είσοδος</Link>
         </p>
       </form>
     </main>
