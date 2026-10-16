@@ -93,7 +93,6 @@ export default function WeightLog({ athleteId, entries, onChange }) {
           </table>
         </div>
       )}
-      <p className="hint">Κάνε κλικ σε ένα κελί για να το αλλάξεις. Enter για αποθήκευση, Esc για ακύρωση.</p>
     </div>
   );
 }

@@ -71,7 +71,6 @@ export default function DailyLog({ athleteId, entries, onChange }) {
           </table>
         </div>
       )}
-      <p className="hint">Κάνε κλικ σε ένα κελί για να το αλλάξεις. Enter για αποθήκευση, Esc για ακύρωση.</p>
     </div>
   );
 }
@@ -134,12 +133,6 @@ function Totals({ entries }) {
         </div>
       </div>
 
-      <p className="meta totals-range">
-        {days === 'all'
-          ? `Όλες οι καταγραφές · ${inRange.length} ${inRange.length === 1 ? 'μέρα' : 'μέρες'} με στοιχεία`
-          : `${fmtDate(from)} – ${fmtDate(todayISO())} · ${inRange.length} από ${days} ${days === 1 ? 'μέρα' : 'μέρες'} με στοιχεία`}
-      </p>
-
       <div className="totals-grid">
         {TOTALS.map((t) => {
           const vals = inRange.map((e) => e[t.key]).filter((v) => v != null);
@@ -148,12 +141,6 @@ function Totals({ entries }) {
             <div className="total" key={t.key}>
               <span>{t.label}</span>
               <b>{vals.length ? `${fmtNum(sum, t.decimals)}${t.unit ? ` ${t.unit}` : ''}` : '–'}</b>
-              {vals.length > 0 && (
-                <small>
-                  μ.ό. {fmtNum(sum / vals.length, t.decimals === 0 ? 0 : 2)}{t.unit ? ` ${t.unit}` : ''} / μέρα
-                  {vals.length < inRange.length && ` · ${vals.length} μέρες`}
-                </small>
-              )}
             </div>
           );
         })}
@@ -216,7 +203,6 @@ function AddForm({ athleteId, byDate, listId, onChange, flash }) {
         ))}
       </div>
       <div className="row daily-actions">
-        {existing && <span className="meta">Υπάρχει ήδη καταγραφή για αυτή τη μέρα · αλλάζεις τις τιμές της.</span>}
         <button className="btn primary" type="submit" disabled={busy}>{existing ? 'Ενημέρωση' : '+ Προσθήκη'}</button>
       </div>
     </form>
