@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { listAthletes, listCheckins, listWeighIns } from '@/lib/storage';
+import { listAllCheckins, listAllWeighIns, listAthletes } from '@/lib/storage';
 import { ANGLES, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
 import AthleteForm from './AthleteForm';
 import Photo from './Photo';
@@ -13,11 +13,13 @@ export default function AthleteList({ user }) {
   const [athletes, setAthletes] = useState(null);
   const [adding, setAdding] = useState(false);
 
+  // 3 αιτήματα συνολικά, όσους αθλούμενους κι αν έχει ο προπονητής.
   const reload = useCallback(async () => {
-    const list = (await listAthletes()).filter((a) => !a.self);
-    const withData = await Promise.all(list.map(async (a) => ({
-      ...a, checkins: await listCheckins(a.id), weighIns: await listWeighIns(a.id),
-    })));
+    const [list, checkins, weighIns] = await Promise.all([listAthletes(), listAllCheckins(), listAllWeighIns()]);
+    const byAthlete = (rows, id) => rows.filter((r) => r.athleteId === id);
+    const withData = list
+      .filter((a) => !a.self)
+      .map((a) => ({ ...a, checkins: byAthlete(checkins, a.id), weighIns: byAthlete(weighIns, a.id) }));
     setAthletes(withData.sort((a, b) => a.name.localeCompare(b.name, 'el')));
   }, []);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { deleteCheckin, listCheckins, listDailyLogs, listWeighIns, withWeights } from '@/lib/storage';
 import { daysBetween, fmtDelta, fmtKg } from '@/lib/utils';
@@ -12,6 +12,9 @@ import WeightLog from './WeightLog';
 import DailyLog from './DailyLog';
 import { WorkspaceBodySkeleton } from './Skeletons';
 
+// Τι φορτώνεται για έναν αθλούμενο (το καθένα ξεχωριστά, για να ανανεώνεται μόνο ό,τι άλλαξε).
+const LOADERS = { checkins: listCheckins, weighIns: listWeighIns, daily: listDailyLogs };
+
 const TABS = [
   { id: 'archive', label: 'Αρχείο' },
   { id: 'compare', label: 'Σύγκριση' },
@@ -21,24 +24,28 @@ const TABS = [
 
 // Ο χώρος ενός αθλούμενου: σύνοψη, νέα καταγραφή, αρχείο, σύγκριση, πίνακας βάρους, καθημερινά.
 export default function Workspace({ athlete, title, greeting, backHref, onDeleteAthlete }) {
-  const [data, setData] = useState(null); // { checkins, weighIns, daily }
+  const [raw, setRaw] = useState(null); // { checkins, weighIns, daily }
   const [loadError, setLoadError] = useState(false);
   const [tab, setTab] = useState('archive');
   const [editing, setEditing] = useState(null); // null | 'new' | καταγραφή
 
-  const reload = useCallback(async () => {
+  // Φορτώνει μόνο ό,τι ζητηθεί (π.χ. μετά από αλλαγή βάρους μόνο το βάρος), όχι τα πάντα.
+  const refresh = useCallback(async (parts = Object.keys(LOADERS)) => {
     try {
-      const [checkins, weighIns, daily] = await Promise.all([
-        listCheckins(athlete.id), listWeighIns(athlete.id), listDailyLogs(athlete.id),
-      ]);
-      // Το βάρος κάθε καταγραφής έρχεται από τον πίνακα βάρους (μία πηγή).
-      setData({ checkins: withWeights(checkins, weighIns), weighIns, daily });
+      const results = await Promise.all(parts.map((k) => LOADERS[k](athlete.id)));
+      setRaw((prev) => ({ ...prev, ...Object.fromEntries(parts.map((k, i) => [k, results[i]])) }));
       setLoadError(false);
     } catch {
       setLoadError(true);
     }
   }, [athlete.id]);
-  useEffect(() => { reload(); }, [reload]);
+  useEffect(() => { refresh(); }, [refresh]);
+
+  // Το βάρος κάθε καταγραφής έρχεται από τον πίνακα βάρους (μία πηγή).
+  const data = useMemo(
+    () => raw && { checkins: withWeights(raw.checkins, raw.weighIns), weighIns: raw.weighIns, daily: raw.daily },
+    [raw]
+  );
 
   if (loadError && !data) {
     return <div className="empty">Δεν φόρτωσαν τα δεδομένα. Έλεγξε τη σύνδεσή σου και ανανέωσε τη σελίδα.</div>;
@@ -69,7 +76,7 @@ export default function Workspace({ athlete, title, greeting, backHref, onDelete
 
   const done = () => {
     setEditing(null);
-    reload();
+    refresh(['checkins', 'weighIns']);
   };
 
   return (
@@ -128,7 +135,7 @@ export default function Workspace({ athlete, title, greeting, backHref, onDelete
           <Timeline
             checkins={checkins}
             onEdit={(c) => { setEditing(c); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            onDelete={async (c) => { await deleteCheckin(c); reload(); }}
+            onDelete={async (c) => { await deleteCheckin(c); refresh(['checkins']); }}
           />
         )
       )}
@@ -136,10 +143,10 @@ export default function Workspace({ athlete, title, greeting, backHref, onDelete
       {tab === 'weight' && (
         <div className="weight">
           <WeightChart entries={weighIns} />
-          <WeightLog athleteId={athlete.id} entries={weighIns} onChange={reload} />
+          <WeightLog athleteId={athlete.id} entries={weighIns} onChange={() => refresh(['weighIns'])} />
         </div>
       )}
-      {tab === 'daily' && <DailyLog athleteId={athlete.id} entries={daily} onChange={reload} />}
+      {tab === 'daily' && <DailyLog athleteId={athlete.id} entries={daily} onChange={() => refresh(['daily'])} />}
 
       {onDeleteAthlete && (
         <div className="danger-zone">
