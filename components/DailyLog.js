@@ -45,6 +45,8 @@ export default function DailyLog({ athleteId, entries, onChange }) {
 
       <AddForm athleteId={athleteId} byDate={byDate} listId={listId} onChange={onChange} flash={flash} />
 
+      {entries.length > 0 && <Totals entries={entries} />}
+
       {msg && <p className={msg.type === 'error' ? 'error' : 'wl-ok'} role={msg.type === 'error' ? 'alert' : 'status'}>{msg.text}</p>}
 
       {entries.length === 0 ? (
@@ -71,6 +73,92 @@ export default function DailyLog({ athleteId, entries, onChange }) {
       )}
       <p className="hint">Κάνε κλικ σε ένα κελί για να το αλλάξεις. Enter για αποθήκευση, Esc για ακύρωση.</p>
     </div>
+  );
+}
+
+/* ---------- Σύνολο περιόδου ---------- */
+
+const PRESETS = [7, 14, 30];
+const TOTALS = [
+  { key: 'calories', label: 'Θερμίδες', unit: 'kcal', decimals: 0 },
+  { key: 'steps', label: 'Βήματα', unit: '', decimals: 0 },
+  { key: 'water', label: 'Νερό', unit: 'L', decimals: 2 },
+];
+
+// Η ημερομηνία πριν από n-1 μέρες, ώστε «5 μέρες» = σήμερα και οι 4 προηγούμενες.
+function startOfLastDays(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - (n - 1));
+  return new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+}
+
+const fmtNum = (v, decimals) => v.toLocaleString('el-GR', { maximumFractionDigits: decimals });
+
+function Totals({ entries }) {
+  const [days, setDays] = useState(7); // αριθμός ημερών ή 'all'
+  const [custom, setCustom] = useState('');
+
+  const from = days === 'all' ? null : startOfLastDays(days);
+  const inRange = entries.filter((e) => (!from || e.date >= from) && e.date <= todayISO());
+
+  const pickCustom = (value) => {
+    setCustom(value);
+    const n = parseInt(value, 10);
+    if (n >= 1 && n <= 3650) setDays(n);
+    else if (!value) setDays(7); // άδειασε το πεδίο → πίσω στις 7 μέρες
+  };
+
+  return (
+    <section className="panel totals">
+      <div className="totals-head">
+        <h3>Σύνολο</h3>
+        <div className="totals-pick" role="group" aria-label="Περίοδος">
+          {PRESETS.map((n) => (
+            <button
+              key={n} type="button" className="chip" aria-pressed={days === n}
+              onClick={() => { setDays(n); setCustom(''); }}
+            >
+              {n} μέρες
+            </button>
+          ))}
+          <button type="button" className="chip" aria-pressed={days === 'all'} onClick={() => { setDays('all'); setCustom(''); }}>
+            Όλες
+          </button>
+          <label className="chip-input">
+            <input
+              inputMode="numeric" placeholder="π.χ. 5" value={custom} maxLength={4}
+              aria-label="Αριθμός ημερών" onChange={(e) => pickCustom(e.target.value.replace(/\D/g, ''))}
+            />
+            <span>μέρες</span>
+          </label>
+        </div>
+      </div>
+
+      <p className="meta totals-range">
+        {days === 'all'
+          ? `Όλες οι καταγραφές · ${inRange.length} ${inRange.length === 1 ? 'μέρα' : 'μέρες'} με στοιχεία`
+          : `${fmtDate(from)} – ${fmtDate(todayISO())} · ${inRange.length} από ${days} ${days === 1 ? 'μέρα' : 'μέρες'} με στοιχεία`}
+      </p>
+
+      <div className="totals-grid">
+        {TOTALS.map((t) => {
+          const vals = inRange.map((e) => e[t.key]).filter((v) => v != null);
+          const sum = vals.reduce((a, b) => a + b, 0);
+          return (
+            <div className="total" key={t.key}>
+              <span>{t.label}</span>
+              <b>{vals.length ? `${fmtNum(sum, t.decimals)}${t.unit ? ` ${t.unit}` : ''}` : '–'}</b>
+              {vals.length > 0 && (
+                <small>
+                  μ.ό. {fmtNum(sum / vals.length, t.decimals === 0 ? 0 : 2)}{t.unit ? ` ${t.unit}` : ''} / μέρα
+                  {vals.length < inRange.length && ` · ${vals.length} μέρες`}
+                </small>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
