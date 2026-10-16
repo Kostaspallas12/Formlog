@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { addPhoto, deleteWeighInOn, putCheckin, removePhotos, setWeighIn, uuid } from '@/lib/storage';
-import { shrinkImage } from '@/lib/images';
+import { processImage } from '@/lib/images';
 import { ANGLES, todayISO } from '@/lib/utils';
 import Photo from './Photo';
 
@@ -52,7 +52,7 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
         const s = slots[a.id];
         if (!s.file) continue;
         try {
-          shrunk[a.id] = await shrinkImage(s.file);
+          shrunk[a.id] = await processImage(s.file);
         } catch {
           throw new Error(`Δεν διαβάστηκε η φωτογραφία «${a.label}». Δοκίμασε αρχείο JPG ή PNG.`);
         }

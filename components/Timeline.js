@@ -77,7 +77,7 @@ function Lightbox({ id, label, onClose }) {
 
   return (
     <div className="lightbox" role="dialog" aria-modal="true" aria-label={label} onClick={onClose}>
-      <Photo id={id} alt={label} />
+      <Photo id={id} alt={label} size="full" />
       <p>{label}</p>
       <button className="x light" onClick={onClose} aria-label="Κλείσιμο">✕</button>
     </div>

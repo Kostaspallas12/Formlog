@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { getPhoto } from '@/lib/storage';
 
 // Φορτώνει μια αποθηκευμένη φωτογραφία. Δίνει { url, failed } για <img>.
-function usePhoto(id) {
+// size: 'thumb' (μικρή, για κάρτες/αρχείο) ή 'full' (κανονική, για μεγέθυνση/σύγκριση).
+function usePhoto(id, size) {
   const [state, setState] = useState({ url: null, failed: false });
 
   useEffect(() => {
@@ -12,7 +13,7 @@ function usePhoto(id) {
     let alive = true;
     let objectUrl = null;
     setState({ url: null, failed: false });
-    getPhoto(id).then((blob) => {
+    getPhoto(id, size).then((blob) => {
       if (!alive) return;
       if (!blob) return setState({ url: null, failed: true });
       objectUrl = URL.createObjectURL(blob);
@@ -22,15 +23,15 @@ function usePhoto(id) {
       alive = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [id]);
+  }, [id, size]);
 
   return state;
 }
 
-export const usePhotoUrl = (id) => usePhoto(id).url;
+export const usePhotoUrl = (id, size = 'full') => usePhoto(id, size).url;
 
-export default function Photo({ id, alt = '', className = '', onClick }) {
-  const { url, failed } = usePhoto(id);
+export default function Photo({ id, alt = '', className = '', onClick, size = 'thumb' }) {
+  const { url, failed } = usePhoto(id, size);
   // Όσο φορτώνει: κουτί που λάμπει απαλά. Αν δεν φόρτωσε: σκέτο κουτί.
   if (!url) return <span className={`ph ${failed ? 'failed' : ''} ${className}`} aria-hidden="true" />;
   // eslint-disable-next-line @next/next/no-img-element

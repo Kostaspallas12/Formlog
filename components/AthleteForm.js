@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { addAthlete, addPhoto, deleteAthlete, putCheckin, setWeighIn, uuid } from '@/lib/storage';
-import { shrinkImage } from '@/lib/images';
+import { processImage } from '@/lib/images';
 import { ANGLES, todayISO } from '@/lib/utils';
 
 // Νέος αθλούμενος (για τον προπονητή): όνομα, ηλικία, αρχικό βάρος και αρχικές φωτογραφίες.
@@ -53,7 +53,7 @@ export default function AthleteForm({ onDone, onCancel }) {
       for (const a of ANGLES) {
         if (!files[a.id]) continue;
         try {
-          shrunk[a.id] = await shrinkImage(files[a.id].file);
+          shrunk[a.id] = await processImage(files[a.id].file);
         } catch {
           throw new Error(`Δεν διαβάστηκε η φωτογραφία «${a.label}». Δοκίμασε αρχείο JPG ή PNG.`);
         }
@@ -65,7 +65,7 @@ export default function AthleteForm({ onDone, onCancel }) {
 
       if (Object.keys(shrunk).length) {
         const photos = {};
-        for (const [angle, blob] of Object.entries(shrunk)) photos[angle] = await addPhoto(blob);
+        for (const [angle, versions] of Object.entries(shrunk)) photos[angle] = await addPhoto(versions);
         await putCheckin({
           id: uuid(), athleteId: athlete.id, date, weight: null, photos, note: '',
           createdAt: new Date().toISOString(),
