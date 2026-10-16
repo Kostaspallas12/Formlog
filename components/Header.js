@@ -29,7 +29,9 @@ export default function Header() {
             ) : (
               <>
                 <Link href="/login" className="btn ghost">Είσοδος</Link>
-                <Link href="/signup" className="btn primary">Δημιουργία λογαριασμού</Link>
+                <Link href="/signup" className="btn primary">
+                  <span className="long">Δημιουργία λογαριασμού</span><span className="short">Εγγραφή</span>
+                </Link>
               </>
             )}
           </nav>

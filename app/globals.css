@@ -89,7 +89,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .logo i { width: 24px; height: 24px; border-radius: 8px; background: linear-gradient(135deg, var(--primary) 55%, var(--amber) 55%); }
 .logo.small { font-size: 17px; }
 .logo.small i { width: 18px; height: 18px; border-radius: 6px; }
-@media (max-width: 560px) { .top .btn.ghost { display: none; } }
+.top .short { display: none; }
 
 /* ---------- Hero ---------- */
 .hero {
@@ -599,3 +599,48 @@ tr:last-child td { border-bottom: 0; }
 .slot-replace input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .slot-x { z-index: 2; }
 .slot-label { z-index: 2; pointer-events: none; }
+
+/* ---------- Κινητό ---------- */
+@media (max-width: 560px) {
+  .wrap { padding: 0 16px; }
+  .top .wrap { height: 60px; }
+  .logo { font-size: 19px; gap: 8px; }
+  .logo i { width: 22px; height: 22px; }
+  .top .row { gap: 6px; flex-wrap: nowrap; }
+  .top .btn { padding: 8px 12px; font-size: 14px; white-space: nowrap; }
+  .top .long { display: none; }
+  .top .short { display: inline; }
+
+  .hero { padding-top: 32px; padding-bottom: 40px; gap: 28px; }
+  .hero h1 { font-size: 34px; margin-bottom: 14px; }
+  .lede { font-size: 16px; }
+  .cta { margin-top: 22px; flex-direction: column; align-items: stretch; gap: 10px; }
+  .cta .btn { width: 100%; }
+  .btn.big { padding: 13px 18px; font-size: 16px; }
+  .preview { padding: 16px; border-radius: 20px; }
+  .preview-stats { gap: 6px; }
+  .preview-stats div { padding: 8px 10px; }
+  .preview-stats b { font-size: 17px; white-space: nowrap; }
+
+  .section { padding-top: 44px; padding-bottom: 44px; }
+  .section h2, .final h2 { font-size: 26px; margin-bottom: 20px; }
+  .benefits { padding-top: 32px; padding-bottom: 32px; }
+  .audience { padding: 22px; }
+  .final { padding: 36px 20px; margin-bottom: 36px; border-radius: 22px; }
+  .final .btn { width: 100%; }
+
+  .app { padding-top: 24px; }
+  .app-head { margin-bottom: 18px; }
+  .app-head h1 { font-size: 26px; }
+  .app-head > .btn { width: 100%; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat { min-width: 0; padding: 10px 14px; }
+  .stat b { font-size: 20px; }
+  .panel { padding: 16px; }
+  .auth { padding: 24px 18px; margin: 24px auto 40px; border-radius: 20px; }
+}
+@media (max-width: 560px) {
+  .chart .tick { font-size: 22px; }
+  .chart .dot { r: 7; }
+  .danger-zone { margin-top: 32px; margin-bottom: 28px; }
+}
