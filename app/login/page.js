@@ -1,21 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRedirectIfLoggedIn } from '@/lib/useAuthRedirect';
+import { getRememberedEmail } from '@/lib/lastUser';
 
 export default function LoginPage() {
   const { login } = useRedirectIfLoggedIn();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const passwordRef = useRef(null);
+
+  // «Να με θυμάσαι»: αν υπάρχει αποθηκευμένο email, το συμπληρώνουμε και πάμε κατευθείαν στον κωδικό.
+  useEffect(() => {
+    const saved = getRememberedEmail();
+    if (saved) {
+      setEmail(saved);
+      passwordRef.current?.focus();
+    }
+  }, []);
 
   // Μετά την επιτυχή είσοδο, το useRedirectIfLoggedIn στέλνει στο /dashboard.
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
-    const res = await login({ email, password });
+    const res = await login({ email, password, remember });
     setBusy(false);
     setError(res.error || '');
   };
@@ -32,9 +44,19 @@ export default function LoginPage() {
         </label>
         <label className="f">
           Κωδικός
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
-          <Link href="/forgot-password" className="forgot">Ξέχασες τον κωδικό;</Link>
+          <input
+            ref={passwordRef} type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password" required
+          />
         </label>
+
+        <div className="login-options">
+          <label className="check remember">
+            <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+            <span>Να με θυμάσαι</span>
+          </label>
+          <Link href="/forgot-password" className="forgot">Ξέχασες τον κωδικό;</Link>
+        </div>
 
         {error && <p className="error" role="alert">{error}</p>}
 

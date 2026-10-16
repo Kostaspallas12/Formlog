@@ -236,6 +236,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .saved { display: block; font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 2px; }
 .setting-form { margin-top: 14px; max-width: 420px; }
 .setting-form .row { margin-top: 4px; }
+.login-options { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: -4px 0 16px; flex-wrap: wrap; }
+.login-options .check { margin: 0; font-size: 15px; }
+.login-options .forgot { margin-top: 0; }
 .forgot { display: inline-block; margin-top: 8px; font-size: 14px; color: var(--primary); text-decoration: none; font-weight: 600; }
 .forgot:hover { text-decoration: underline; }
 .dev-note {
