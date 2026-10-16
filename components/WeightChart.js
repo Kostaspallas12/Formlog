@@ -1,18 +1,16 @@
 'use client';
 
-import { daysBetween, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
+import { daysBetween, fmtDate, fmtKg } from '@/lib/utils';
 
 const W = 640;
 const H = 240;
 const PAD = { l: 44, r: 16, t: 16, b: 30 };
 
-// Γράφημα βάρους στον χρόνο και ιστορικό με τις αλλαγές.
-export default function WeightChart({ checkins }) {
-  const pts = checkins.filter((c) => c.weight != null);
+// Γράφημα βάρους στον χρόνο (από τον πίνακα βάρους). Χωρίς δεδομένα δεν δείχνει τίποτα.
+export default function WeightChart({ entries }) {
+  const pts = entries.filter((c) => c.weight != null);
 
-  if (!pts.length) {
-    return <div className="empty">Δεν έχεις καταγράψει βάρος ακόμα. Πρόσθεσέ το σε μια καταγραφή.</div>;
-  }
+  if (!pts.length) return null;
 
   const first = pts[0];
   const last = pts[pts.length - 1];
@@ -51,27 +49,6 @@ export default function WeightChart({ checkins }) {
           </text>
           {pts.length > 1 && <text className="tick" x={x(last.date)} y={H - 8} textAnchor="end">{fmtDate(last.date)}</text>}
         </svg>
-      </div>
-
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Ημερομηνία</th><th>Βάρος</th><th>Αλλαγή</th></tr>
-          </thead>
-          <tbody>
-            {[...pts].reverse().map((p, i, arr) => {
-              const prev = arr[i + 1];
-              const d = prev ? p.weight - prev.weight : null;
-              return (
-                <tr key={p.id}>
-                  <td>{fmtDate(p.date)}</td>
-                  <td><b>{fmtKg(p.weight)} kg</b></td>
-                  <td className={d == null ? 'meta' : d < 0 ? 'down' : d > 0 ? 'up' : ''}>{d == null ? 'Πρώτη' : fmtDelta(d)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
       </div>
     </div>
   );

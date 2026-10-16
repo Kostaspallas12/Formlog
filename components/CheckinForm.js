@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { addPhoto, putCheckin, removePhotos, uuid } from '@/lib/storage';
+import { addPhoto, deleteWeighInOn, putCheckin, removePhotos, setWeighIn, uuid } from '@/lib/storage';
 import { shrinkImage } from '@/lib/images';
 import { ANGLES, todayISO } from '@/lib/utils';
 import Photo from './Photo';
@@ -78,6 +78,14 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
         createdAt: initial?.createdAt ?? new Date().toISOString(),
       };
       await putCheckin(checkin);
+
+      // Το βάρος γράφεται στον πίνακα βάρους, στην ημέρα της καταγραφής.
+      // Αν άλλαξε η ημερομηνία ή σβήστηκε το βάρος, φεύγει από την παλιά μέρα.
+      if (initial?.weight != null && (initial.date !== checkin.date || kg == null)) {
+        await deleteWeighInOn(athleteId, initial.date);
+      }
+      if (kg != null) await setWeighIn({ athleteId, date: checkin.date, weight: kg });
+
       await removePhotos(obsolete);
       onDone(checkin);
     } catch (err) {

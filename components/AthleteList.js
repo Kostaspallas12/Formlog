@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { addAthlete, listAthletes, listCheckins } from '@/lib/storage';
+import { addAthlete, listAthletes, listCheckins, listWeighIns } from '@/lib/storage';
 import { ANGLES, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
 import Photo from './Photo';
 
@@ -13,7 +13,9 @@ export default function AthleteList({ user }) {
 
   const reload = useCallback(async () => {
     const list = (await listAthletes()).filter((a) => !a.self);
-    const withData = await Promise.all(list.map(async (a) => ({ ...a, checkins: await listCheckins(a.id) })));
+    const withData = await Promise.all(list.map(async (a) => ({
+      ...a, checkins: await listCheckins(a.id), weighIns: await listWeighIns(a.id),
+    })));
     setAthletes(withData.sort((a, b) => a.name.localeCompare(b.name, 'el')));
   }, [user.email]);
 
@@ -66,7 +68,7 @@ export default function AthleteList({ user }) {
 function AthleteCard({ athlete }) {
   const { checkins } = athlete;
   const last = checkins[checkins.length - 1];
-  const kgs = checkins.filter((c) => c.weight != null);
+  const kgs = athlete.weighIns;
   const lastPhoto = [...checkins].reverse()
     .map((c) => ANGLES.map((x) => c.photos[x.id]).find(Boolean))
     .find(Boolean);
