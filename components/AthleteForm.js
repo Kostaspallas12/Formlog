@@ -1,17 +1,19 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { addAthlete, addPhoto, deleteAthlete, putCheckin, setWeighIn, uuid } from '@/lib/storage';
+import { addAthlete, addPhoto, createInvite, deleteAthlete, putCheckin, setWeighIn, uuid } from '@/lib/storage';
 import { processImage } from '@/lib/images';
 import { ANGLES, todayISO } from '@/lib/utils';
 
 // Νέος αθλούμενος (για τον προπονητή): όνομα, ηλικία, αρχικό βάρος και αρχικές φωτογραφίες.
 // (Τη συγκατάθεση των αθλούμενων την έχει δηλώσει ο προπονητής στην εγγραφή του.)
 // Το βάρος μπαίνει στον πίνακα βάρους και οι φωτογραφίες ως η πρώτη καταγραφή, με σημερινή ημερομηνία.
+// Μαζί δημιουργείται αμέσως και ο σύνδεσμος πρόσκλησης (με προαιρετικό κλείδωμα στο email).
 export default function AthleteForm({ onDone, onCancel }) {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [weight, setWeight] = useState('');
+  const [email, setEmail] = useState('');
   const [files, setFiles] = useState({}); // { front: { file, preview }, … }
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -71,6 +73,8 @@ export default function AthleteForm({ onDone, onCancel }) {
           createdAt: new Date().toISOString(),
         });
       }
+      // Ο σύνδεσμος πρόσκλησης· αν αποτύχει, ο προπονητής τον βγάζει από τη σελίδα του αθλούμενου.
+      await createInvite(athlete.id, email.trim()).catch(() => {});
       onDone(athlete);
     } catch (err) {
       // Αν κόπηκε στη μέση, δεν αφήνουμε μισό αθλούμενο.
@@ -99,6 +103,10 @@ export default function AthleteForm({ onDone, onCancel }) {
         <label className="f">
           Αρχικό βάρος (kg)
           <input inputMode="decimal" placeholder="π.χ. 78,5" value={weight} onChange={(e) => setWeight(e.target.value)} />
+        </label>
+        <label className="f athlete-email">
+          Email αθλούμενου (προαιρετικό)
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="off" placeholder="μόνο αυτό το email θα μπορεί να μπει" />
         </label>
       </div>
 

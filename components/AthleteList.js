@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { listAllCheckins, listAllWeighIns, listAthletes, listInvites } from '@/lib/storage';
 import { ANGLES, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
 import AthleteForm from './AthleteForm';
@@ -12,6 +13,7 @@ import { AthleteCardsSkeleton } from './Skeletons';
 export default function AthleteList({ user }) {
   const [athletes, setAthletes] = useState(null);
   const [adding, setAdding] = useState(false);
+  const router = useRouter();
 
   // 4 αιτήματα συνολικά, όσους αθλούμενους κι αν έχει ο προπονητής.
   const reload = useCallback(async () => {
@@ -52,7 +54,8 @@ export default function AthleteList({ user }) {
       ) : adding ? (
         <AthleteForm
           onCancel={() => setAdding(false)}
-          onDone={async () => { await reload(); setAdding(false); }}
+          // Μετά την προσθήκη: κατευθείαν στον αθλούμενο, όπου είναι έτοιμος ο σύνδεσμος πρόσκλησης.
+          onDone={(athlete) => router.push(`/dashboard/athletes/${athlete.id}`)}
         />
       ) : athletes.length === 0 ? (
         <div className="empty big">
