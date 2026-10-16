@@ -2,32 +2,36 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { deleteCheckin, listCheckins, listWeighIns, withWeights } from '@/lib/storage';
+import { deleteCheckin, listCheckins, listDailyLogs, listWeighIns, withWeights } from '@/lib/storage';
 import { daysBetween, fmtDelta, fmtKg } from '@/lib/utils';
 import CheckinForm from './CheckinForm';
 import Timeline from './Timeline';
 import Compare from './Compare';
 import WeightChart from './WeightChart';
 import WeightLog from './WeightLog';
+import DailyLog from './DailyLog';
 
 const TABS = [
   { id: 'archive', label: 'Αρχείο' },
   { id: 'compare', label: 'Σύγκριση' },
   { id: 'weight', label: 'Βάρος' },
+  { id: 'daily', label: 'Καθημερινά' },
 ];
 
-// Ο χώρος ενός αθλούμενου: σύνοψη, νέα καταγραφή, αρχείο, σύγκριση, πίνακας βάρους.
+// Ο χώρος ενός αθλούμενου: σύνοψη, νέα καταγραφή, αρχείο, σύγκριση, πίνακας βάρους, καθημερινά.
 export default function Workspace({ athlete, title, greeting, backHref, onDeleteAthlete }) {
-  const [data, setData] = useState(null); // { checkins, weighIns }
+  const [data, setData] = useState(null); // { checkins, weighIns, daily }
   const [loadError, setLoadError] = useState(false);
   const [tab, setTab] = useState('archive');
   const [editing, setEditing] = useState(null); // null | 'new' | καταγραφή
 
   const reload = useCallback(async () => {
     try {
-      const [checkins, weighIns] = await Promise.all([listCheckins(athlete.id), listWeighIns(athlete.id)]);
+      const [checkins, weighIns, daily] = await Promise.all([
+        listCheckins(athlete.id), listWeighIns(athlete.id), listDailyLogs(athlete.id),
+      ]);
       // Το βάρος κάθε καταγραφής έρχεται από τον πίνακα βάρους (μία πηγή).
-      setData({ checkins: withWeights(checkins, weighIns), weighIns });
+      setData({ checkins: withWeights(checkins, weighIns), weighIns, daily });
       setLoadError(false);
     } catch {
       setLoadError(true);
@@ -40,10 +44,11 @@ export default function Workspace({ athlete, title, greeting, backHref, onDelete
   }
   if (!data) return null;
 
-  const { checkins, weighIns } = data;
-  const isEmpty = checkins.length === 0 && weighIns.length === 0;
+  const { checkins, weighIns, daily } = data;
+  const isEmpty = checkins.length === 0 && weighIns.length === 0 && daily.length === 0;
   const photoCount = checkins.reduce((n, c) => n + Object.values(c.photos).filter(Boolean).length, 0);
-  const dates = [...checkins, ...weighIns].map((x) => x.date).sort();
+  const dates = [...checkins, ...weighIns, ...daily].map((x) => x.date).sort();
+  const days = dates.length ? daysBetween(dates[0], dates[dates.length - 1]) : 0;
   const firstKg = weighIns[0];
   const lastKg = weighIns[weighIns.length - 1];
 
@@ -77,9 +82,9 @@ export default function Workspace({ athlete, title, greeting, backHref, onDelete
 
       {!isEmpty && (
         <div className="stats">
-          {checkins.length > 0 && <div className="stat"><b>{checkins.length}</b><span>καταγραφές</span></div>}
-          {photoCount > 0 && <div className="stat"><b>{photoCount}</b><span>φωτογραφίες</span></div>}
-          <div className="stat"><b>{daysBetween(dates[0], dates[dates.length - 1])}</b><span>ημέρες παρακολούθησης</span></div>
+          {checkins.length > 0 && <div className="stat"><b>{checkins.length}</b><span>{checkins.length === 1 ? 'καταγραφή' : 'καταγραφές'}</span></div>}
+          {photoCount > 0 && <div className="stat"><b>{photoCount}</b><span>{photoCount === 1 ? 'φωτογραφία' : 'φωτογραφίες'}</span></div>}
+          <div className="stat"><b>{days}</b><span>{days === 1 ? 'ημέρα' : 'ημέρες'} παρακολούθησης</span></div>
           {lastKg && <div className="stat"><b>{fmtKg(lastKg.weight)} kg</b><span>τρέχον βάρος</span></div>}
           {weighIns.length > 1 && (
             <div className="stat"><b>{fmtDelta(lastKg.weight - firstKg.weight)}</b><span>από την αρχή</span></div>
@@ -119,12 +124,13 @@ export default function Workspace({ athlete, title, greeting, backHref, onDelete
           <WeightLog athleteId={athlete.id} entries={weighIns} onChange={reload} />
         </div>
       )}
+      {tab === 'daily' && <DailyLog athleteId={athlete.id} entries={daily} onChange={reload} />}
 
       {onDeleteAthlete && (
         <div className="danger-zone">
           <button
             className="btn small ghost danger"
-            onClick={() => confirm(`Οριστική διαγραφή του φακέλου «${athlete.name}» με όλες τις καταγραφές, το βάρος και τις φωτογραφίες;`) && onDeleteAthlete()}
+            onClick={() => confirm(`Οριστική διαγραφή του φακέλου «${athlete.name}» με όλες τις καταγραφές, το βάρος, τα καθημερινά και τις φωτογραφίες;`) && onDeleteAthlete()}
           >
             Διαγραφή αθλούμενου
           </button>
