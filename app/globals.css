@@ -151,12 +151,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------- Ενότητες ---------- */
 .section { padding-top: 72px; padding-bottom: 72px; }
-.section h2, .final h2 { font-size: clamp(28px, 4vw, 40px); margin-bottom: 28px; }
+.section h2 { font-size: clamp(28px, 4vw, 40px); margin-bottom: 28px; }
 .band { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 
 .benefits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; padding-top: 48px; padding-bottom: 48px; }
 @media (max-width: 760px) { .benefits { grid-template-columns: 1fr; gap: 28px; } }
-.benefit .icon { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: var(--soft); font-size: 22px; margin-bottom: 14px; }
+.benefit .icon { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: var(--soft); color: var(--primary); margin-bottom: 14px; }
+.benefit .icon svg { width: 26px; height: 26px; }
 .benefit h3 { font-size: 20px; margin-bottom: 8px; }
 .benefit p { color: var(--muted); }
 
@@ -195,11 +196,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .faq details[open] summary::after { content: '−'; }
 .faq details p { color: var(--muted); padding-bottom: 16px; }
 
-.final {
-  background: var(--primary); color: var(--primary-ink); border-radius: 28px; padding: 56px 32px;
-  text-align: center; margin-bottom: 56px;
-}
-.final h2 { margin-bottom: 24px; }
 
 .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 24px; padding-bottom: 40px; border-top: 1px solid var(--line); }
 .foot-links { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; font-size: 14px; }
@@ -623,11 +619,9 @@ tr:last-child td { border-bottom: 0; }
   .preview-stats b { font-size: 17px; white-space: nowrap; }
 
   .section { padding-top: 44px; padding-bottom: 44px; }
-  .section h2, .final h2 { font-size: 26px; margin-bottom: 20px; }
+  .section h2 { font-size: 26px; margin-bottom: 20px; }
   .benefits { padding-top: 32px; padding-bottom: 32px; }
   .audience { padding: 22px; }
-  .final { padding: 36px 20px; margin-bottom: 36px; border-radius: 22px; }
-  .final .btn { width: 100%; }
 
   .app { padding-top: 24px; }
   .app-head { margin-bottom: 18px; }

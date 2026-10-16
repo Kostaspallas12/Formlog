@@ -4,17 +4,18 @@ import HomeRedirect from '@/components/HomeRedirect';
 
 const BENEFITS = [
   {
-    icon: '🗂️',
+    // Γραμμικά εικονίδια (αντί για emoji), στο χρώμα του site.
+    icon: <><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></>,
     title: 'Όλο το αρχείο σε ένα μέρος',
     text: 'Παλιές και καινούριες φωτογραφίες μπαίνουν αυτόματα σε χρονολογική σειρά, με ημερομηνία και βάρος. Όχι πια σκόρπιες στη συλλογή του κινητού.',
   },
   {
-    icon: '↔️',
+    icon: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M12 4v16M8 12H6m12 0h-2" /></>,
     title: 'Σύγκριση πριν και μετά',
     text: 'Διάλεξε δύο ημερομηνίες και δες τη διαφορά με slider ή δίπλα δίπλα, μαζί με τις ημέρες και τα κιλά που άλλαξαν.',
   },
   {
-    icon: '🔒',
+    icon: <><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
     title: 'Ιδιωτικό',
     text: 'Τις φωτογραφίες σου τις βλέπεις μόνο εσύ. Δεν τις πουλάμε, δεν τις δείχνουμε σε κανέναν και τις σβήνεις όποτε θέλεις.',
   },
@@ -61,20 +62,20 @@ export default function Home() {
           </div>
           <HeroPreview />
         </section>
-
         {/* Οφέλη */}
         <section className="band">
           <div className="wrap benefits">
             {BENEFITS.map((b) => (
               <div className="benefit" key={b.title}>
-                <span className="icon" aria-hidden="true">{b.icon}</span>
+                <span className="icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{b.icon}</svg>
+                </span>
                 <h3>{b.title}</h3>
                 <p>{b.text}</p>
               </div>
             ))}
           </div>
         </section>
-
         {/* Πώς δουλεύει */}
         <section id="how" className="section wrap">
           <h2>Πώς δουλεύει</h2>
@@ -88,7 +89,6 @@ export default function Home() {
             ))}
           </ol>
         </section>
-
         {/* Για ποιον */}
         <section className="section wrap">
           <h2>Για ποιον είναι</h2>
@@ -115,7 +115,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
         {/* Συμβουλές */}
         <section className="band">
           <div className="section wrap">
@@ -131,7 +130,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
         {/* Συχνές ερωτήσεις */}
         <section className="section wrap narrow">
           <h2>Συχνές ερωτήσεις</h2>
@@ -142,14 +140,6 @@ export default function Home() {
                 <p>{a}</p>
               </details>
             ))}
-          </div>
-        </section>
-
-        {/* Τελικό κάλεσμα */}
-        <section className="wrap">
-          <div className="final">
-            <h2>Η πρόοδός σου αξίζει να φαίνεται.</h2>
-            <Link href="/signup" className="btn big light">Δημιουργία λογαριασμού</Link>
           </div>
         </section>
       </main>
