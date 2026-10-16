@@ -30,25 +30,27 @@ export default function AthleteList({ user }) {
         <div>
           <p className="greeting">Γεια σου, {user.name.split(' ')[0]}</p>
           <h1>Οι αθλούμενοί μου</h1>
+          {athletes.length > 0 && (
+            <p className="athlete-count">
+              <b>{athletes.length}</b> {athletes.length === 1 ? 'αθλούμενος' : 'αθλούμενοι'}
+            </p>
+          )}
         </div>
         {!adding && <button className="btn primary" onClick={() => setAdding(true)}>+ Προσθήκη αθλούμενου</button>}
       </div>
 
-      {adding && (
+      {/* Όσο είναι ανοιχτή η φόρμα, δείχνουμε μόνο τη φόρμα. */}
+      {adding ? (
         <AthleteForm
           onCancel={() => setAdding(false)}
           onDone={async () => { await reload(); setAdding(false); }}
         />
-      )}
-
-      {athletes.length === 0 ? (
-        !adding && (
-          <div className="empty big">
-            <h3>Πρόσθεσε τον πρώτο σου αθλούμενο</h3>
-            <p>Κάθε αθλούμενος έχει τον δικό του φάκελο με φωτογραφίες, βάρος και σύγκριση προόδου.</p>
-            <button className="btn primary" onClick={() => setAdding(true)}>+ Προσθήκη αθλούμενου</button>
-          </div>
-        )
+      ) : athletes.length === 0 ? (
+        <div className="empty big">
+          <h3>Πρόσθεσε τον πρώτο σου αθλούμενο</h3>
+          <p>Κάθε αθλούμενος έχει τον δικό του φάκελο με φωτογραφίες, βάρος και σύγκριση προόδου.</p>
+          <button className="btn primary" onClick={() => setAdding(true)}>+ Προσθήκη αθλούμενου</button>
+        </div>
       ) : (
         <div className="athletes">
           {athletes.map((a) => <AthleteCard key={a.id} athlete={a} />)}

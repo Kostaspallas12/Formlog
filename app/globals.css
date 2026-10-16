@@ -532,6 +532,8 @@ tr:last-child td { border-bottom: 0; }
 .athlete-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .athlete-info h3 { font-size: 18px; }
 .athlete-age { font-weight: 500; color: var(--muted); font-size: 15px; }
+.athlete-count { margin-top: 6px; color: var(--muted); font-size: 15px; }
+.athlete-count b { color: var(--primary); font-size: 17px; }
 
 /* Φόρμα νέου αθλούμενου */
 .athlete-form { margin-bottom: 24px; box-shadow: var(--shadow); }
