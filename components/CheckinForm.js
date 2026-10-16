@@ -133,6 +133,13 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
                     <Photo id={s.id} alt={a.label} />
                   )}
                   <span className="slot-label">{a.label}</span>
+                  {/* Πατώντας πάνω στη φωτογραφία, την αλλάζεις απευθείας με άλλη. */}
+                  <label className="slot-replace" title={`Αλλαγή: ${a.label}`}>
+                    <input
+                      type="file" accept="image/*" aria-label={`Αλλαγή φωτογραφίας: ${a.label}`}
+                      onChange={(e) => { pick(a.id, e.target.files[0]); e.target.value = ''; }}
+                    />
+                  </label>
                   <button type="button" className="slot-x" onClick={() => clear(a.id)} aria-label={`Αφαίρεση: ${a.label}`}>✕</button>
                 </>
               ) : (

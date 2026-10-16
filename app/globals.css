@@ -593,3 +593,8 @@ tr:last-child td { border-bottom: 0; }
 .join-title { font-size: 26px; margin: 12px 0 8px; }
 .join-actions { display: grid; gap: 10px; margin-top: 8px; }
 .join-note { font-size: 14px; padding: 10px 12px; border-radius: 10px; background: var(--bg); margin-bottom: 14px; }
+/* Αλλαγή υπάρχουσας φωτογραφίας με κλικ πάνω της (το ✕ μένει από πάνω) */
+.slot-replace { position: absolute; inset: 0; cursor: pointer; z-index: 1; }
+.slot-replace input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.slot-x { z-index: 2; }
+.slot-label { z-index: 2; pointer-events: none; }
