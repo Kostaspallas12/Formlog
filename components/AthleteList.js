@@ -6,6 +6,7 @@ import { listAthletes, listCheckins, listWeighIns } from '@/lib/storage';
 import { ANGLES, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
 import AthleteForm from './AthleteForm';
 import Photo from './Photo';
+import { AthleteCardsSkeleton } from './Skeletons';
 
 // Οι αθλούμενοι του προπονητή, ο καθένας με το δικό του αρχείο.
 export default function AthleteList({ user }) {
@@ -22,7 +23,6 @@ export default function AthleteList({ user }) {
 
   useEffect(() => { reload(); }, [reload]);
 
-  if (!athletes) return null;
 
   return (
     <>
@@ -30,7 +30,7 @@ export default function AthleteList({ user }) {
         <div>
           <p className="greeting">Γεια σου, {user.name.split(' ')[0]}</p>
           <h1>Οι αθλούμενοί μου</h1>
-          {athletes.length > 0 && (
+          {athletes?.length > 0 && (
             <p className="athlete-count">
               <b>{athletes.length}</b> {athletes.length === 1 ? 'αθλούμενος' : 'αθλούμενοι'}
             </p>
@@ -40,7 +40,9 @@ export default function AthleteList({ user }) {
       </div>
 
       {/* Όσο είναι ανοιχτή η φόρμα, δείχνουμε μόνο τη φόρμα. */}
-      {adding ? (
+      {!athletes ? (
+        <AthleteCardsSkeleton />
+      ) : adding ? (
         <AthleteForm
           onCancel={() => setAdding(false)}
           onDone={async () => { await reload(); setAdding(false); }}
@@ -70,7 +72,7 @@ function AthleteCard({ athlete }) {
 
   return (
     <Link href={`/dashboard/athletes/${athlete.id}`} className="athlete">
-      {lastPhoto ? <Photo id={lastPhoto} alt="" className="athlete-photo" /> : <span className="athlete-photo ph" />}
+      {lastPhoto ? <Photo id={lastPhoto} alt="" className="athlete-photo" /> : <span className="athlete-photo no-photo" />}
       <div className="athlete-info">
         <h3>{athlete.name}{athlete.age != null && <span className="athlete-age"> · {athlete.age} ετών</span>}</h3>
         <span className="meta">

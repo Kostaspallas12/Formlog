@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRequireUser } from '@/lib/useAuthRedirect';
 import { MIN_PASSWORD, useAuth } from '@/lib/AuthContext';
 import { buildExportZip, exportFileName } from '@/lib/exportZip';
+import { AccountSkeleton } from '@/components/Skeletons';
 
 export default function AccountPage() {
   const { user, ready, deleteAccount } = useRequireUser();
@@ -14,7 +15,7 @@ export default function AccountPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  if (!ready || !user) return null;
+  if (!ready || !user) return <main className="wrap app narrow"><AccountSkeleton /></main>;
 
   // Δικαίωμα πρόσβασης/φορητότητας: ZIP με φωτογραφίες, CSV και JSON.
   const download = async () => {

@@ -543,7 +543,26 @@ tr:last-child td { border-bottom: 0; }
 .athlete-kg { font-size: 14px; color: var(--muted); }
 .athlete-kg b { color: var(--ink); }
 
+/* ---------- Σκελετοί φόρτωσης ---------- */
+.sk, .ph {
+  display: block; max-width: 100%;
+  background: linear-gradient(90deg, var(--line) 0%, color-mix(in srgb, var(--line) 45%, var(--surface)) 50%, var(--line) 100%);
+  background-size: 200% 100%; animation: sk-shine 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+.thumbs .missing .ph, .ph.failed { animation: none; background: var(--bg); }
+.no-photo { display: block; background: var(--bg); }
+@keyframes sk-shine { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+.sk-stack { display: grid; gap: 10px; }
+.sk-stat { display: grid; gap: 8px; }
+.sk-tabs { margin-bottom: 24px; }
+.sk-thumb { aspect-ratio: 3/4; }
+.sk-athlete { pointer-events: none; }
+.sk-title { margin: 10px 0 24px; }
+.sk-line { margin-top: 12px; }
+
 @media (prefers-reduced-motion: reduce) {
+  .sk, .ph { animation: none; }
   html { scroll-behavior: auto; }
   * { transition: none !important; }
 }

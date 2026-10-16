@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useRequireUser } from '@/lib/useAuthRedirect';
 import { deleteAthlete, getAthlete } from '@/lib/storage';
 import Workspace from '@/components/Workspace';
+import { WorkspaceSkeleton } from '@/components/Skeletons';
 
 export default function AthletePage() {
   const { id } = useParams();
@@ -22,7 +23,9 @@ export default function AthletePage() {
       .catch(() => setAthlete(null));
   }, [id, user]);
 
-  if (!ready || !user || athlete === undefined) return null;
+  if (!ready || !user || athlete === undefined) {
+    return <main className="wrap app"><WorkspaceSkeleton /></main>;
+  }
 
   return (
     <main className="wrap app">

@@ -10,6 +10,7 @@ import Compare from './Compare';
 import WeightChart from './WeightChart';
 import WeightLog from './WeightLog';
 import DailyLog from './DailyLog';
+import { WorkspaceBodySkeleton } from './Skeletons';
 
 const TABS = [
   { id: 'archive', label: 'Αρχείο' },
@@ -42,7 +43,21 @@ export default function Workspace({ athlete, title, greeting, backHref, onDelete
   if (loadError && !data) {
     return <div className="empty">Δεν φόρτωσαν τα δεδομένα. Έλεγξε τη σύνδεσή σου και ανανέωσε τη σελίδα.</div>;
   }
-  if (!data) return null;
+  // Όσο φορτώνει: η κεφαλίδα κανονικά και σκελετός στη θέση των δεδομένων.
+  if (!data) {
+    return (
+      <>
+        <div className="app-head">
+          <div>
+            {backHref && <Link href={backHref} className="back">← Όλοι οι αθλούμενοι</Link>}
+            {greeting && <p className="greeting">{greeting}</p>}
+            <h1>{title}</h1>
+          </div>
+        </div>
+        <WorkspaceBodySkeleton />
+      </>
+    );
+  }
 
   const { checkins, weighIns, daily } = data;
   const isEmpty = checkins.length === 0 && weighIns.length === 0 && daily.length === 0;
