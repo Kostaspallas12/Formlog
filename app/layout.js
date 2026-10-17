@@ -3,6 +3,7 @@ import { Manrope } from 'next/font/google';
 import { AuthProvider } from '@/lib/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import SiteChrome from '@/components/SiteChrome';
 
 const font = Manrope({
   subsets: ['greek', 'latin'],
@@ -20,9 +21,7 @@ export default function RootLayout({ children }) {
     <html lang="el" className={font.variable} data-scroll-behavior="smooth">
       <body>
         <AuthProvider>
-          <Header />
-          {children}
-          <Footer />
+          <SiteChrome header={<Header />} footer={<Footer />}>{children}</SiteChrome>
         </AuthProvider>
       </body>
     </html>

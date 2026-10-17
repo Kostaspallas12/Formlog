@@ -1,12 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { createInvite, disconnectCoach, listInvites, revokeInvite } from '@/lib/storage';
+import { createInvite, listInvites, revokeInvite } from '@/lib/storage';
 import { fmtDate } from '@/lib/utils';
+import Menu from './Menu';
+import { LinkIcon } from './Icons';
 
-// Για τον προπονητή, στη σελίδα ενός αθλούμενου: πρόσκληση (μοναδικός σύνδεσμος μιας χρήσης)
-// ή, αν έχει συνδεθεί, ποιος συνδέθηκε και «Διακοπή συνεργασίας».
-export default function CoachLink({ athlete, onDisconnected }) {
+// Για τον προπονητή, σε αθλούμενο που δεν έχει συνδεθεί ακόμα: η πρόσκληση σε μία γραμμή
+// (μοναδικός σύνδεσμος μιας χρήσης). Οι σπάνιες ενέργειες είναι στο «⋮».
+export default function CoachLink({ athlete }) {
   const [invites, setInvites] = useState(null);
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
@@ -21,7 +23,6 @@ export default function CoachLink({ athlete, onDisconnected }) {
   if (!invites) return null;
 
   const active = invites.find((i) => !i.usedAt && !i.revokedAt && new Date(i.expiresAt) > new Date());
-  const used = invites.find((i) => i.usedAt);
   const link = active && `${window.location.origin}/join/${active.token}`;
 
   const run = async (fn, ok) => {
@@ -40,71 +41,45 @@ export default function CoachLink({ athlete, onDisconnected }) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(link);
-      setMsg({ type: 'ok', text: 'Ο σύνδεσμος αντιγράφηκε. Στείλ’ τον στον αθλούμενο (π.χ. στο WhatsApp).' });
+      setMsg({ type: 'ok', text: 'Αντιγράφηκε. Στείλ’ τον στον αθλούμενο (π.χ. στο WhatsApp).' });
     } catch {
       setMsg({ type: 'error', text: 'Δεν έγινε αντιγραφή. Επίλεξε τον σύνδεσμο και αντέγραψέ τον.' });
     }
   };
 
-  // Συνδεδεμένος αθλούμενος
-  if (athlete.linked) {
-    return (
-      <section className="panel coach-link on">
-        <div>
-          <h3>✓ Συνδεδεμένος με τον λογαριασμό του</h3>
-          <p className="meta">
-            {used?.usedEmail ? `${used.usedEmail} · ` : ''}από {fmtDate((athlete.clientConsentAt || used?.usedAt || '').slice(0, 10))}
-          </p>
-        </div>
-        <button
-          className="btn small ghost danger" disabled={busy}
-          onClick={() =>
-            confirm(`Διακοπή συνεργασίας με «${athlete.name}»; Ο φάκελος μένει στον αθλούμενο και εσύ δεν θα έχεις πια πρόσβαση.`) &&
-            run(() => disconnectCoach(athlete.id)).then(onDisconnected)
-          }
-        >
-          Διακοπή συνεργασίας
-        </button>
-      </section>
-    );
-  }
-
   return (
-    <section className="panel coach-link">
-      <h3>{active ? '⏳ Αναμένει αποδοχή' : 'Πρόσκληση αθλούμενου'}</h3>
-
+    <section className="invite-bar">
+      <span className="invite-icon"><LinkIcon size={20} /></span>
       {active ? (
         <>
-          <div className="invite-link">
+          <div className="invite-text">
+            <b>Αναμένει αποδοχή</b>
             <input readOnly value={link} onFocus={(e) => e.target.select()} aria-label="Σύνδεσμος πρόσκλησης" />
-            <button className="btn primary small" onClick={copy}>📋 Αντιγραφή</button>
+            <span className="meta">
+              Λήγει {fmtDate(active.expiresAt.slice(0, 10))} · μιας χρήσης{active.email ? ` · μόνο για ${active.email}` : ''}
+            </span>
           </div>
-          <p className="meta">
-            Λήγει {fmtDate(active.expiresAt.slice(0, 10))} · μιας χρήσης{active.email ? ` · μόνο για ${active.email}` : ''}
-          </p>
-          <div className="row">
-            <button className="btn small" disabled={busy} onClick={() => run(() => createInvite(athlete.id, active.email || ''), 'Βγήκε νέος σύνδεσμος· ο παλιός δεν ισχύει πια.')}>
-              🔄 Νέος σύνδεσμος
-            </button>
-            <button className="btn small ghost danger" disabled={busy} onClick={() => run(() => revokeInvite(athlete.id), 'Η πρόσκληση ακυρώθηκε.')}>
-              Ακύρωση πρόσκλησης
-            </button>
+          <div className="invite-actions">
+            <button className="btn primary small" onClick={copy}>Αντιγραφή</button>
+            <Menu
+              label="Επιλογές πρόσκλησης"
+              items={[
+                { label: 'Νέος σύνδεσμος', onClick: () => run(() => createInvite(athlete.id, active.email || ''), 'Βγήκε νέος σύνδεσμος· ο παλιός δεν ισχύει πια.') },
+                { label: 'Ακύρωση πρόσκλησης', danger: true, onClick: () => run(() => revokeInvite(athlete.id), 'Η πρόσκληση ακυρώθηκε.') },
+              ]}
+            />
           </div>
         </>
       ) : (
-        <form
-          className="invite-form"
-          onSubmit={(e) => { e.preventDefault(); run(() => createInvite(athlete.id, email.trim())); }}
-        >
-          <label className="f">
-            Email αθλούμενου (προαιρετικό)
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="μόνο αυτό το email θα μπορεί να μπει" />
-          </label>
-          <button className="btn primary" type="submit" disabled={busy}>Δημιουργία συνδέσμου</button>
+        <form className="invite-text invite-new" onSubmit={(e) => { e.preventDefault(); run(() => createInvite(athlete.id, email.trim())); }}>
+          <b>Χωρίς λογαριασμό</b>
+          <div className="invite-new-row">
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email αθλούμενου (προαιρετικό)" aria-label="Email αθλούμενου (προαιρετικό)" />
+            <button className="btn primary small" type="submit" disabled={busy}>Σύνδεσμος πρόσκλησης</button>
+          </div>
         </form>
       )}
-
-      {msg && <p className={msg.type === 'error' ? 'error' : 'wl-ok'} role="status">{msg.text}</p>}
+      {msg && <p className={`invite-msg ${msg.type === 'error' ? 'error' : 'wl-ok'}`} role="status">{msg.text}</p>}
     </section>
   );
 }

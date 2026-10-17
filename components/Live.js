@@ -1,0 +1,197 @@
+'use client';
+
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+  announcePresence, getAthlete, getMyCoach, getSelfAthlete, listAllCheckins, listAllWeighIns, listAthletes, listInvites,
+  listUnreadMessages, listUnreadNotifications, markAthleteRead, onMessages, onNotification, watchPresence,
+} from '@/lib/storage';
+
+const noop = () => {};
+const EMPTY = {
+  online: new Set(), unread: {}, unreadMsgs: {}, lastMsg: {}, lastEvent: null, athletes: null, self: null, coach: null,
+  markRead: noop, clearMessages: noop, setOpenChat: noop,
+};
+const LiveContext = createContext(EMPTY);
+export const useLive = () => useContext(LiveContext);
+
+const countBy = (rows) => rows.reduce((m, r) => ({ ...m, [r.athleteId]: (m[r.athleteId] || 0) + 1 }), {});
+const without = (m, key) => {
+  if (!m[key]) return m;
+  const { [key]: _, ...rest } = m;
+  return rest;
+};
+
+// Μικρό μήνυμα κάτω δεξιά (σβήνει μόνο του).
+function useToast() {
+  const [toast, setToast] = useState(null);
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 7000);
+    return () => clearTimeout(t);
+  }, [toast]);
+  const node = toast && (
+    <Link
+      href={toast.href} className="toast" role="status"
+      onClick={(e) => { if (toast.onClick) { e.preventDefault(); toast.onClick(); } setToast(null); }}
+    >
+      <span className="toast-dot" aria-hidden="true" />
+      <span><b>{toast.title}</b><small>{toast.text}</small></span>
+    </Link>
+  );
+  return [setToast, node];
+}
+
+// Ειδοποίηση του υπολογιστή/κινητού, μόνο όταν η καρτέλα είναι στο παρασκήνιο (και την έχει επιτρέψει).
+function systemNotify(title, body, href, tag) {
+  if (!document.hidden || !('Notification' in window) || Notification.permission !== 'granted') return;
+  const n = new Notification(title, { body, icon: '/icon.svg', tag });
+  n.onclick = () => { window.focus(); window.location.href = href; };
+}
+
+const preview = (text) => (text.length > 70 ? `${text.slice(0, 70)}…` : text);
+
+// Αδιάβαστα μηνύματα ανά αθλούμενο + ζωντανή ενημέρωση. onIncoming: για κάθε νέο μήνυμα από τον άλλον.
+// onOpen: όταν ανοίγει μια συνομιλία (π.χ. για να κλείσει το μήνυμα στην οθόνη).
+function useMessages(user, onIncoming, onOpen) {
+  const [unreadMsgs, setUnreadMsgs] = useState({});
+  const [lastMsg, setLastMsg] = useState({}); // athleteId → τελευταίο μήνυμα
+  const openChat = useRef(null); // ποια συνομιλία είναι ανοιχτή τώρα (αυτή τη διαβάζει ήδη)
+  const incoming = useRef(onIncoming);
+  incoming.current = onIncoming;
+
+  useEffect(() => {
+    listUnreadMessages(user.id).then((rows) => {
+      setUnreadMsgs(countBy(rows));
+      setLastMsg(Object.fromEntries(rows.map((m) => [m.athleteId, m])));
+    }).catch(() => {});
+    return onMessages(null, (type, m) => {
+      if (type !== 'INSERT') return;
+      setLastMsg((l) => ({ ...l, [m.athleteId]: m }));
+      if (m.sender === user.id) return;
+      const open = openChat.current === m.athleteId;
+      if (!open) setUnreadMsgs((u) => ({ ...u, [m.athleteId]: (u[m.athleteId] || 0) + 1 }));
+      incoming.current?.(m, open);
+    });
+  }, [user.id]);
+
+  const clearMessages = useCallback((id) => setUnreadMsgs((u) => without(u, id)), []);
+  const opened = useRef(onOpen);
+  opened.current = onOpen;
+  const setOpenChat = useCallback((id) => { openChat.current = id; if (id) opened.current?.(id); }, []);
+  return { unreadMsgs, lastMsg, clearMessages, setOpenChat };
+}
+
+// Για τον προπονητή: οι αθλούμενοί του, ποιοι είναι online, νέα check-in και νέα μηνύματα.
+export function CoachLive({ user, children }) {
+  const path = usePathname();
+  const pathRef = useRef(path);
+  pathRef.current = path;
+  const [online, setOnline] = useState(() => new Set());
+  const [unread, setUnread] = useState({}); // athleteId → πλήθος νέων check-in
+  const [lastEvent, setLastEvent] = useState(null);
+  const [athletes, setAthletes] = useState(null);
+  const athletesRef = useRef(athletes);
+  athletesRef.current = athletes;
+  const [toast, toastNode] = useToast();
+  const enabled = user.notifyCheckins;
+
+  // Οι αθλούμενοι του προπονητή με τα δεδομένα τους (για τη λίστα και την επισκόπηση).
+  // 4 αιτήματα συνολικά, όσους αθλούμενους κι αν έχει.
+  const reloadAthletes = useCallback(async () => {
+    const [list, checkins, weighIns, invites] = await Promise.all([
+      listAthletes(), listAllCheckins(), listAllWeighIns(), listInvites(),
+    ]);
+    const byAthlete = (rows, id) => rows.filter((r) => r.athleteId === id);
+    setAthletes(list
+      .filter((a) => a.coachId === user.id) // όσοι προπονεί (συνδεδεμένοι ή όχι)
+      .map((a) => {
+        const c = byAthlete(checkins, a.id);
+        const w = byAthlete(weighIns, a.id);
+        return {
+          ...a, checkins: c, weighIns: w,
+          lastDate: [...c, ...w].map((x) => x.date).sort().pop() ?? null, // τελευταία καταγραφή ή ζύγισμα
+          pending: invites.some((i) => i.athleteId === a.id && !i.usedAt && !i.revokedAt && new Date(i.expiresAt) > new Date()),
+        };
+      }));
+  }, [user.id]);
+
+  // Ανανέωση σε κάθε αλλαγή σελίδας (π.χ. μετά από προσθήκη/διαγραφή) και σε κάθε νέο check-in.
+  useEffect(() => { reloadAthletes().catch(() => setAthletes((a) => a ?? [])); }, [reloadAthletes, path, lastEvent]);
+
+  useEffect(() => watchPresence(user.id, setOnline), [user.id]);
+
+  const nameOf = async (id) =>
+    athletesRef.current?.find((a) => a.id === id)?.name || (await getAthlete(id).catch(() => null))?.name || 'αθλούμενο';
+
+  // Νέα check-in
+  useEffect(() => {
+    if (!enabled) { setUnread({}); return; }
+    listUnreadNotifications().then((rows) => setUnread(countBy(rows))).catch(() => {});
+    return onNotification(user.id, async (n) => {
+      setLastEvent(n);
+      const href = `/dashboard/athletes/${n.athleteId}`;
+      const viewing = pathRef.current === href;
+      if (viewing) markAthleteRead(n.athleteId).catch(() => {});
+      else setUnread((u) => ({ ...u, [n.athleteId]: (u[n.athleteId] || 0) + 1 }));
+      const name = await nameOf(n.athleteId);
+      if (!viewing) toast({ title: 'Νέο check-in', text: `από ${name}`, href });
+      systemNotify('Νέο check-in', `Από ${name}`, href, n.id);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id, enabled]);
+
+  // Νέα μηνύματα
+  const msgs = useMessages(user, async (m, open) => {
+    if (!user.notifyMessages) return;
+    const href = `/dashboard/athletes/${m.athleteId}?tab=chat`;
+    const name = await nameOf(m.athleteId);
+    if (!open) toast({ title: `Μήνυμα από ${name}`, text: preview(m.body), href });
+    systemNotify(name, m.body, href, m.id);
+  }, () => toast(null));
+
+  const markRead = useCallback((athleteId) => {
+    setUnread((u) => without(u, athleteId));
+    markAthleteRead(athleteId).catch(() => {});
+  }, []);
+
+  return (
+    <LiveContext.Provider value={{ ...EMPTY, ...msgs, online, unread, lastEvent, markRead, athletes }}>
+      {children}
+      {toastNode}
+    </LiveContext.Provider>
+  );
+}
+
+// Για τον αθλούμενο: ο φάκελός του, ο προπονητής του, «online» για τον προπονητή και νέα μηνύματα.
+export function PersonalLive({ user, onOpenChat, children }) {
+  const [self, setSelf] = useState(null);
+  const [coach, setCoach] = useState(null);
+  const [toast, toastNode] = useToast();
+  const path = usePathname();
+
+  // Ξαναδιαβάζουμε σε κάθε αλλαγή σελίδας (π.χ. μόλις αποδεχτεί πρόσκληση ή διακόψει τη συνεργασία).
+  useEffect(() => {
+    getSelfAthlete(user).then(setSelf).catch(() => {});
+    getMyCoach().then(setCoach).catch(() => {});
+  }, [user, path]);
+
+  // Όσο έχει ανοιχτή την εφαρμογή, ο προπονητής τον βλέπει online.
+  const coachId = self?.linked ? self.coachId : null;
+  useEffect(() => (coachId ? announcePresence(coachId, self.id) : undefined), [coachId, self?.id]);
+
+  const msgs = useMessages(user, (m, open) => {
+    if (!user.notifyMessages) return;
+    const title = `Μήνυμα από ${coach?.name || 'τον προπονητή σου'}`;
+    if (!open) toast({ title, text: preview(m.body), href: '/dashboard', onClick: onOpenChat });
+    systemNotify(title, m.body, '/dashboard', m.id);
+  }, () => toast(null));
+
+  return (
+    <LiveContext.Provider value={{ ...EMPTY, ...msgs, self, coach: self?.linked ? coach : null }}>
+      {children}
+      {toastNode}
+    </LiveContext.Provider>
+  );
+}

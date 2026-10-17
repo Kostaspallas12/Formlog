@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ANGLES, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
 import Photo from './Photo';
+import Menu from './Menu';
 
 // Το αρχείο: όλες οι καταγραφές, από τη νεότερη στην παλαιότερη.
 export default function Timeline({ checkins, onEdit, onDelete }) {
@@ -29,15 +30,16 @@ export default function Timeline({ checkins, onEdit, onDelete }) {
                   {delta != null && <span className={delta < 0 ? 'down' : delta > 0 ? 'up' : ''}> · {fmtDelta(delta)}</span>}
                 </span>
               </div>
-              <div className="row">
-                <button className="btn small" onClick={() => onEdit(c)}>Επεξεργασία</button>
-                <button
-                  className="btn small ghost danger"
-                  onClick={() => confirm('Οριστική διαγραφή αυτής της καταγραφής και των φωτογραφιών της;') && onDelete(c)}
-                >
-                  Διαγραφή
-                </button>
-              </div>
+              <Menu
+                label="Επιλογές καταγραφής"
+                items={[
+                  { label: 'Επεξεργασία', onClick: () => onEdit(c) },
+                  {
+                    label: 'Διαγραφή', danger: true,
+                    onClick: () => confirm('Οριστική διαγραφή αυτής της καταγραφής και των φωτογραφιών της;') && onDelete(c),
+                  },
+                ]}
+              />
             </div>
 
             <div className="thumbs">

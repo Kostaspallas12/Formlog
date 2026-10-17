@@ -1,0 +1,112 @@
+'use client';
+
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { listMessages, markMessagesRead, onMessages, sendMessage } from '@/lib/storage';
+import { fmtDate } from '@/lib/utils';
+import { useLive } from './Live';
+import { SendIcon, TicksIcon } from './Icons';
+
+// Τοπική ημερομηνία (YYYY-MM-DD) για τα διαχωριστικά «Σήμερα», «Χθες», …
+const localDay = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+const dayLabel = (iso) => {
+  const today = new Date();
+  const yesterday = new Date(today.getTime() - 864e5);
+  if (iso === localDay(today)) return 'Σήμερα';
+  if (iso === localDay(yesterday)) return 'Χθες';
+  return fmtDate(iso, { weekday: 'long', day: 'numeric', month: 'long' });
+};
+const time = (ts) => new Date(ts).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
+
+// Η συνομιλία προπονητή ↔ αθλούμενου για έναν φάκελο (σαν το WhatsApp).
+// solo: χωρίς καρτέλες από πάνω (ο αθλούμενος), για σωστό ύψος.
+export default function Chat({ athleteId, me, otherName, solo = false }) {
+  const { clearMessages, setOpenChat } = useLive();
+  const [msgs, setMsgs] = useState(null);
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+  const scroller = useRef(null);
+  const input = useRef(null);
+
+  useEffect(() => {
+    let alive = true;
+    const read = () => markMessagesRead(athleteId, me).then(() => clearMessages(athleteId)).catch(() => {});
+    setOpenChat(athleteId);
+    listMessages(athleteId).then((m) => alive && setMsgs(m)).catch(() => alive && setMsgs([]));
+    read();
+    const stop = onMessages(athleteId, (type, m) => {
+      setMsgs((list) => {
+        if (!list) return list;
+        if (type === 'INSERT') return list.some((x) => x.id === m.id) ? list : [...list, m];
+        return list.map((x) => (x.id === m.id ? m : x)); // π.χ. «διαβάστηκε»
+      });
+      if (type === 'INSERT' && m.sender !== me) read();
+    });
+    return () => { alive = false; stop(); setOpenChat(null); };
+  }, [athleteId, me, clearMessages, setOpenChat]);
+
+  // Πάντα στο τελευταίο μήνυμα.
+  useLayoutEffect(() => {
+    if (scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight;
+  }, [msgs]);
+
+  const send = async (e) => {
+    e?.preventDefault();
+    const body = text.trim();
+    if (!body || sending) return;
+    setSending(true);
+    setError('');
+    try {
+      const m = await sendMessage(athleteId, body);
+      setMsgs((list) => (list?.some((x) => x.id === m.id) ? list : [...(list || []), m]));
+      setText('');
+    } catch {
+      setError('Το μήνυμα δεν στάλθηκε. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.');
+    }
+    setSending(false);
+    input.current?.focus();
+  };
+
+  let lastDay = null;
+  return (
+    <div className={`chatbox${solo ? ' solo' : ''}`}>
+      <div className="chat-scroll" ref={scroller}>
+        {!msgs ? (
+          <p className="chat-note">Φόρτωση…</p>
+        ) : msgs.length === 0 ? (
+          <p className="chat-note">Στείλε το πρώτο μήνυμα στον/στην {otherName}.</p>
+        ) : (
+          msgs.map((m) => {
+            const day = localDay(new Date(m.createdAt));
+            const sep = day !== lastDay && <div className="chat-day" key={`d${day}`}><span>{dayLabel(day)}</span></div>;
+            lastDay = day;
+            const mine = m.sender === me;
+            return [
+              sep,
+              <div key={m.id} className={`msg${mine ? ' me' : ''}`}>
+                <p>{m.body}</p>
+                <span className="msg-meta">
+                  {time(m.createdAt)}
+                  {mine && <TicksIcon size={16} className={m.readAt ? 'read' : ''} aria-label={m.readAt ? 'Διαβάστηκε' : 'Στάλθηκε'} />}
+                </span>
+              </div>,
+            ];
+          })
+        )}
+      </div>
+
+      {error && <p className="error chat-error" role="alert">{error}</p>}
+      <form className="chat-compose" onSubmit={send}>
+        <textarea
+          ref={input} rows={1} value={text} maxLength={4000} placeholder="Μήνυμα" aria-label="Μήνυμα"
+          onChange={(e) => setText(e.target.value)}
+          // Enter: αποστολή · Shift+Enter: νέα γραμμή
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}
+        />
+        <button type="submit" className="icon-btn round primary" disabled={!text.trim() || sending} aria-label="Αποστολή">
+          <SendIcon size={20} />
+        </button>
+      </form>
+    </div>
+  );
+}

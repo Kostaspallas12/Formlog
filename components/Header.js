@@ -1,12 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function Header() {
   const { user, ready, logout } = useAuth();
-  const router = useRouter();
 
   return (
     <header className="top">
@@ -24,7 +22,7 @@ export default function Header() {
                     <small>{user.type === 'coach' ? 'Προπονητής' : 'Προσωπικός λογαριασμός'}</small>
                   </span>
                 </Link>
-                <button className="btn" onClick={() => { logout(); router.push('/'); }}>Αποσύνδεση</button>
+                <button className="btn" onClick={async () => { await logout(); window.location.assign('/'); }}>Αποσύνδεση</button>
               </>
             ) : (
               <>

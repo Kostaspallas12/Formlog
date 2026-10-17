@@ -1,23 +1,30 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRequireUser } from '@/lib/useAuthRedirect';
 import { MIN_PASSWORD, useAuth } from '@/lib/AuthContext';
 import { buildExportZip, exportFileName } from '@/lib/exportZip';
 import { AccountSkeleton } from '@/components/Skeletons';
+import PaneHead from '@/components/PaneHead';
+import { LogoutIcon } from '@/components/Icons';
 import { disconnectCoach, getMyCoach } from '@/lib/storage';
 import { fmtDate } from '@/lib/utils';
 
 export default function AccountPage() {
-  const { user, ready, deleteAccount } = useRequireUser();
+  const { user, ready, deleteAccount, logout } = useRequireUser();
   const [exporting, setExporting] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  if (!ready || !user) return <main className="wrap app narrow"><AccountSkeleton /></main>;
+  const head = (
+    <PaneHead
+      title="Λογαριασμός"
+      actions={<button className="btn" onClick={async () => { await logout(); window.location.assign('/'); }}><LogoutIcon size={18} /><span>Αποσύνδεση</span></button>}
+    />
+  );
+  if (!ready || !user) return <>{head}<div className="pane-narrow"><AccountSkeleton /></div></>;
 
   // Δικαίωμα πρόσβασης/φορητότητας: ZIP με φωτογραφίες, CSV και JSON.
   const download = async () => {
@@ -46,9 +53,9 @@ export default function AccountPage() {
   };
 
   return (
-    <main className="wrap app narrow">
-      <Link href="/dashboard" className="back">← Πίσω</Link>
-      <h1 className="account-title">Ο λογαριασμός μου</h1>
+    <>
+      {head}
+      <div className="pane-narrow">
 
       <section className="panel account-block">
         <h2>Στοιχεία</h2>
@@ -65,6 +72,7 @@ export default function AccountPage() {
       </section>
 
       {user.type === 'personal' && <CoachSection />}
+      <NotifySection />
 
       <section className="panel account-block">
         <h2>Λήψη των δεδομένων μου</h2>
@@ -106,7 +114,8 @@ export default function AccountPage() {
           </form>
         )}
       </section>
-    </main>
+      </div>
+    </>
   );
 }
 
@@ -224,6 +233,64 @@ function PasswordRow() {
         <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" required />
       </label>
     </Setting>
+  );
+}
+
+/* ---------- Ειδοποιήσεις ---------- */
+
+function NotifySection() {
+  const { user, setNotify } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  // Ειδοποιήσεις του υπολογιστή/κινητού όταν η καρτέλα είναι στο παρασκήνιο.
+  const [perm, setPerm] = useState(null);
+  useEffect(() => { setPerm('Notification' in window ? Notification.permission : 'unsupported'); }, []);
+
+  const rows = [
+    user.type === 'coach' && { kind: 'checkins', label: 'Νέο check-in από αθλούμενο', on: user.notifyCheckins },
+    { kind: 'messages', label: 'Νέο μήνυμα', on: user.notifyMessages },
+  ].filter(Boolean);
+
+  const toggle = async (row) => {
+    setBusy(true);
+    const res = await setNotify(row.kind, !row.on);
+    setBusy(false);
+    setError(res.error || '');
+  };
+
+  return (
+    <section className="panel account-block">
+      <h2>Ειδοποιήσεις</h2>
+      <div className="settings">
+        {rows.map((row) => (
+          <div className="setting" key={row.kind}>
+            <div className="setting-head">
+              <div><b>{row.label}</b></div>
+              <button
+                type="button" role="switch" aria-checked={row.on} className="switch" disabled={busy}
+                onClick={() => toggle(row)} aria-label={`Ειδοποιήσεις: ${row.label}`}
+              />
+            </div>
+          </div>
+        ))}
+        {error && <p className="error" role="alert">{error}</p>}
+        {rows.some((r) => r.on) && perm && perm !== 'unsupported' && (
+          <div className="setting">
+            <div className="setting-head">
+              <div>
+                <b>Ειδοποίηση και όταν δεν κοιτάς το FormLog</b>
+                <span className="setting-label">
+                  {perm === 'granted' ? 'Ενεργή σε αυτή τη συσκευή' : perm === 'denied' ? 'Μπλοκαρισμένη από τον browser' : 'Ανενεργή σε αυτή τη συσκευή'}
+                </span>
+              </div>
+              {perm === 'default' && (
+                <button className="btn small" onClick={() => Notification.requestPermission().then(setPerm)}>Ενεργοποίηση</button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

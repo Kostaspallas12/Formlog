@@ -5,13 +5,14 @@ import { addAthlete, addPhoto, createInvite, deleteAthlete, putCheckin, setWeigh
 import { processImage } from '@/lib/images';
 import { ANGLES, todayISO } from '@/lib/utils';
 
-// Νέος αθλούμενος (για τον προπονητή): όνομα, ηλικία, αρχικό βάρος και αρχικές φωτογραφίες.
+// Νέος αθλούμενος (για τον προπονητή): όνομα, ηλικία, ύψος, αρχικό βάρος και αρχικές φωτογραφίες.
 // (Τη συγκατάθεση των αθλούμενων την έχει δηλώσει ο προπονητής στην εγγραφή του.)
 // Το βάρος μπαίνει στον πίνακα βάρους και οι φωτογραφίες ως η πρώτη καταγραφή, με σημερινή ημερομηνία.
 // Μαζί δημιουργείται αμέσως και ο σύνδεσμος πρόσκλησης (με προαιρετικό κλείδωμα στο email).
 export default function AthleteForm({ onDone, onCancel }) {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
+  const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
   const [email, setEmail] = useState('');
   const [files, setFiles] = useState({}); // { front: { file, preview }, … }
@@ -43,6 +44,8 @@ export default function AthleteForm({ onDone, onCancel }) {
     if (!name.trim()) return setError('Γράψε το όνομα του αθλούμενου.');
     const ageNum = age.trim() ? parseInt(age, 10) : null;
     if (ageNum != null && !(ageNum >= 5 && ageNum <= 120)) return setError('Γράψε μια έγκυρη ηλικία.');
+    const cm = height.trim() ? parseInt(height, 10) : null;
+    if (cm != null && !(cm >= 80 && cm <= 250)) return setError('Γράψε ένα έγκυρο ύψος σε εκατοστά.');
     const kg = weight.trim() ? parseFloat(weight.replace(',', '.')) : null;
     if (kg != null && !(kg > 20 && kg < 400)) return setError('Γράψε ένα έγκυρο βάρος σε κιλά.');
 
@@ -61,7 +64,7 @@ export default function AthleteForm({ onDone, onCancel }) {
         }
       }
 
-      athlete = await addAthlete(name, { age: ageNum, asCoach: true });
+      athlete = await addAthlete(name, { age: ageNum, height: cm, asCoach: true });
       const date = todayISO();
       if (kg != null) await setWeighIn({ athleteId: athlete.id, date, weight: Math.round(kg * 10) / 10 });
 
@@ -86,11 +89,6 @@ export default function AthleteForm({ onDone, onCancel }) {
 
   return (
     <form className="panel athlete-form" onSubmit={submit}>
-      <div className="panel-head">
-        <h2>Νέος αθλούμενος</h2>
-        <button type="button" className="x" onClick={onCancel} aria-label="Κλείσιμο">✕</button>
-      </div>
-
       <div className="athlete-fields">
         <label className="f">
           Όνομα
@@ -99,6 +97,10 @@ export default function AthleteForm({ onDone, onCancel }) {
         <label className="f">
           Ηλικία
           <input inputMode="numeric" value={age} maxLength={3} onChange={(e) => setAge(e.target.value.replace(/\D/g, ''))} />
+        </label>
+        <label className="f">
+          Ύψος (cm)
+          <input inputMode="numeric" placeholder="π.χ. 172" value={height} maxLength={3} onChange={(e) => setHeight(e.target.value.replace(/\D/g, ''))} />
         </label>
         <label className="f">
           Αρχικό βάρος (kg)
