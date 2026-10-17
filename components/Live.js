@@ -50,7 +50,8 @@ function systemNotify(title, body, href, tag) {
   n.onclick = () => { window.focus(); window.location.href = href; };
 }
 
-const preview = (text) => (text.length > 70 ? `${text.slice(0, 70)}…` : text);
+// Κείμενο μηνύματος για ειδοποιήσεις (σκέτη φωτογραφία → «Φωτογραφία»).
+const preview = (m) => (m.body ? (m.body.length > 70 ? `${m.body.slice(0, 70)}…` : m.body) : 'Φωτογραφία');
 
 // Αδιάβαστα μηνύματα ανά αθλούμενο + ζωντανή ενημέρωση. onIncoming: για κάθε νέο μήνυμα από τον άλλον.
 // onOpen: όταν ανοίγει μια συνομιλία (π.χ. για να κλείσει το μήνυμα στην οθόνη).
@@ -147,8 +148,8 @@ export function CoachLive({ user, children }) {
     if (!user.notifyMessages) return;
     const href = `/dashboard/athletes/${m.athleteId}?tab=chat`;
     const name = await nameOf(m.athleteId);
-    if (!open) toast({ title: `Μήνυμα από ${name}`, text: preview(m.body), href });
-    systemNotify(name, m.body, href, m.id);
+    if (!open) toast({ title: `Μήνυμα από ${name}`, text: preview(m), href });
+    systemNotify(name, preview(m), href, m.id);
   }, () => toast(null));
 
   const markRead = useCallback((athleteId) => {
@@ -184,8 +185,8 @@ export function PersonalLive({ user, onOpenChat, children }) {
   const msgs = useMessages(user, (m, open) => {
     if (!user.notifyMessages) return;
     const title = `Μήνυμα από ${coach?.name || 'τον προπονητή σου'}`;
-    if (!open) toast({ title, text: preview(m.body), href: '/dashboard', onClick: onOpenChat });
-    systemNotify(title, m.body, '/dashboard', m.id);
+    if (!open) toast({ title, text: preview(m), href: '/dashboard', onClick: onOpenChat });
+    systemNotify(title, preview(m), '/dashboard', m.id);
   }, () => toast(null));
 
   return (

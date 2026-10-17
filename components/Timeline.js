@@ -70,7 +70,8 @@ export default function Timeline({ checkins, onEdit, onDelete }) {
   );
 }
 
-function Lightbox({ id, label, onClose }) {
+// Μεγέθυνση φωτογραφίας (και στη συνομιλία).
+export function Lightbox({ id, label, onClose }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);

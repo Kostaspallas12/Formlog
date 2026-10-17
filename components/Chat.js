@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { listMessages, markMessagesRead, onMessages, sendMessage } from '@/lib/storage';
+import { addPhoto, listMessages, markMessagesRead, onMessages, sendMessage } from '@/lib/storage';
+import { processImage } from '@/lib/images';
 import { fmtDate } from '@/lib/utils';
 import { useLive } from './Live';
-import { SendIcon, TicksIcon } from './Icons';
+import Photo from './Photo';
+import { Lightbox } from './Timeline';
+import { ImageIcon, SendIcon, TicksIcon } from './Icons';
 
 // Τοπική ημερομηνία (YYYY-MM-DD) για τα διαχωριστικά «Σήμερα», «Χθες», …
 const localDay = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
@@ -17,14 +20,16 @@ const dayLabel = (iso) => {
 };
 const time = (ts) => new Date(ts).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
 
-// Η συνομιλία προπονητή ↔ αθλούμενου για έναν φάκελο (σαν το WhatsApp).
+// Η συνομιλία προπονητή ↔ αθλούμενου για έναν φάκελο (σαν το WhatsApp), με κείμενο και φωτογραφίες.
 // solo: χωρίς καρτέλες από πάνω (ο αθλούμενος), για σωστό ύψος.
 export default function Chat({ athleteId, me, otherName, solo = false }) {
   const { clearMessages, setOpenChat } = useLive();
   const [msgs, setMsgs] = useState(null);
   const [text, setText] = useState('');
+  const [photo, setPhoto] = useState(null); // { file, preview } πριν σταλεί
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [zoom, setZoom] = useState(null);
   const scroller = useRef(null);
   const input = useRef(null);
 
@@ -48,20 +53,41 @@ export default function Chat({ athleteId, me, otherName, solo = false }) {
   // Πάντα στο τελευταίο μήνυμα.
   useLayoutEffect(() => {
     if (scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight;
-  }, [msgs]);
+  }, [msgs, photo]);
+
+  // Καθάρισμα της προσωρινής προεπισκόπησης.
+  useEffect(() => () => { if (photo) URL.revokeObjectURL(photo.preview); }, [photo]);
+
+  const pick = (file) => {
+    if (!file) return;
+    setError('');
+    setPhoto({ file, preview: URL.createObjectURL(file) });
+    input.current?.focus();
+  };
 
   const send = async (e) => {
     e?.preventDefault();
     const body = text.trim();
-    if (!body || sending) return;
+    if ((!body && !photo) || sending) return;
     setSending(true);
     setError('');
     try {
-      const m = await sendMessage(athleteId, body);
+      let path = null;
+      if (photo) {
+        let versions;
+        try {
+          versions = await processImage(photo.file); // μικραίνει όπως στις καταγραφές
+        } catch {
+          throw new Error('Δεν διαβάστηκε η φωτογραφία. Δοκίμασε αρχείο JPG ή PNG.');
+        }
+        path = await addPhoto(versions, athleteId);
+      }
+      const m = await sendMessage(athleteId, body, path);
       setMsgs((list) => (list?.some((x) => x.id === m.id) ? list : [...(list || []), m]));
       setText('');
-    } catch {
-      setError('Το μήνυμα δεν στάλθηκε. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.');
+      setPhoto(null);
+    } catch (err) {
+      setError(err.message?.startsWith('Δεν') ? err.message : 'Το μήνυμα δεν στάλθηκε. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.');
     }
     setSending(false);
     input.current?.focus();
@@ -83,8 +109,11 @@ export default function Chat({ athleteId, me, otherName, solo = false }) {
             const mine = m.sender === me;
             return [
               sep,
-              <div key={m.id} className={`msg${mine ? ' me' : ''}`}>
-                <p>{m.body}</p>
+              <div key={m.id} className={`msg${mine ? ' me' : ''}${m.photo ? ' has-photo' : ''}`}>
+                {m.photo && (
+                  <Photo id={m.photo} alt="Φωτογραφία" className="msg-photo" onClick={() => setZoom({ id: m.photo, label: `Φωτογραφία · ${dayLabel(day)} ${time(m.createdAt)}` })} />
+                )}
+                {m.body && <p>{m.body}</p>}
                 <span className="msg-meta">
                   {time(m.createdAt)}
                   {mine && <TicksIcon size={16} className={m.readAt ? 'read' : ''} aria-label={m.readAt ? 'Διαβάστηκε' : 'Στάλθηκε'} />}
@@ -95,18 +124,32 @@ export default function Chat({ athleteId, me, otherName, solo = false }) {
         )}
       </div>
 
+      {photo && (
+        <div className="chat-attach">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photo.preview} alt="Φωτογραφία προς αποστολή" />
+          <span>{sending ? 'Αποστολή…' : 'Φωτογραφία'}</span>
+          <button type="button" className="x" onClick={() => setPhoto(null)} disabled={sending} aria-label="Αφαίρεση φωτογραφίας">✕</button>
+        </div>
+      )}
       {error && <p className="error chat-error" role="alert">{error}</p>}
       <form className="chat-compose" onSubmit={send}>
+        <label className="icon-btn chat-pick" title="Φωτογραφία" aria-label="Αποστολή φωτογραφίας">
+          <ImageIcon />
+          <input type="file" accept="image/*" onChange={(e) => { pick(e.target.files[0]); e.target.value = ''; }} disabled={sending} />
+        </label>
         <textarea
-          ref={input} rows={1} value={text} maxLength={4000} placeholder="Μήνυμα" aria-label="Μήνυμα"
+          ref={input} rows={1} value={text} maxLength={4000} placeholder={photo ? 'Λεζάντα' : 'Μήνυμα'} aria-label="Μήνυμα"
           onChange={(e) => setText(e.target.value)}
           // Enter: αποστολή · Shift+Enter: νέα γραμμή
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}
         />
-        <button type="submit" className="icon-btn round primary" disabled={!text.trim() || sending} aria-label="Αποστολή">
+        <button type="submit" className="icon-btn round primary" disabled={(!text.trim() && !photo) || sending} aria-label="Αποστολή">
           <SendIcon size={20} />
         </button>
       </form>
+
+      {zoom && <Lightbox {...zoom} onClose={() => setZoom(null)} />}
     </div>
   );
 }

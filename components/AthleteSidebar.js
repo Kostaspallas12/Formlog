@@ -116,7 +116,7 @@ function AthleteRow({ athlete, active, online, unread, message, date, toChat }) 
         </span>
         <span className="chat-bottom">
           {/* Αν έχει νέο μήνυμα, φαίνεται αυτό (όπως στο WhatsApp). */}
-          <span className={`chat-sub${message ? ' msg-preview' : ''}`}>{message ? message.body : sub}</span>
+          <span className={`chat-sub${message ? ' msg-preview' : ''}`}>{message ? message.body || 'Φωτογραφία' : sub}</span>
           {!athlete.linked && athlete.pending && <span className="chat-tag">Αναμένει</span>}
           {unread > 0 && <span className="badge" aria-label={`${unread} νέα`}>{unread}</span>}
         </span>

@@ -23,6 +23,7 @@ export const PlusIcon = icon(<path d="M12 5v14M5 12h14" />);
 export const BackIcon = icon(<path d="M15 18l-6-6 6-6" />);
 export const SearchIcon = icon(<><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></>);
 export const LinkIcon = icon(<><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1" /><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" /></>);
+export const ImageIcon = icon(<><rect x="3" y="4" width="18" height="16" rx="2.5" /><circle cx="9" cy="10" r="1.8" /><path d="M21 16l-5-5-9 9" /></>);
 export const ChatIcon = icon(<path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.1A8 8 0 1 1 20 12z" />);
 export const SendIcon = icon(<path d="M4 12l16-8-6 16-2.5-6.5L4 12z" />);
 export const TicksIcon = icon(<path d="M2 12.5l4 4 8-9M10 15l1.5 1.5 8-9" />);
