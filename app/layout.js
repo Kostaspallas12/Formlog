@@ -1,15 +1,8 @@
 import './globals.css';
-import { Manrope } from 'next/font/google';
 import { AuthProvider } from '@/lib/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SiteChrome from '@/components/SiteChrome';
-
-const font = Manrope({
-  subsets: ['greek', 'latin'],
-  variable: '--font-body',
-  display: 'swap',
-});
 
 export const metadata = {
   title: 'FormLog',
@@ -18,7 +11,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="el" className={font.variable} data-scroll-behavior="smooth">
+    <html lang="el" data-scroll-behavior="smooth">
       <body>
         <AuthProvider>
           <SiteChrome header={<Header />} footer={<Footer />}>{children}</SiteChrome>

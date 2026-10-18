@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { addPhoto, listMessages, markMessagesRead, onMessages, sendMessage } from '@/lib/storage';
+import {
+  addPhoto, listGroupMessages, listMessages, markGroupRead, markMessagesRead, onGroupMessages, onMessages,
+  sendGroupMessage, sendMessage,
+} from '@/lib/storage';
 import { processImage } from '@/lib/images';
 import { fmtDate } from '@/lib/utils';
 import { useLive } from './Live';
@@ -20,10 +23,14 @@ const dayLabel = (iso) => {
 };
 const time = (ts) => new Date(ts).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
 
-// Η συνομιλία προπονητή ↔ αθλούμενου για έναν φάκελο (σαν το WhatsApp), με κείμενο και φωτογραφίες.
-// solo: χωρίς καρτέλες από πάνω (ο αθλούμενος), για σωστό ύψος.
-export default function Chat({ athleteId, me, otherName, solo = false }) {
-  const { clearMessages, setOpenChat } = useLive();
+// Η συνομιλία (σαν το WhatsApp), με κείμενο και φωτογραφίες:
+//   ατομική: προπονητής ↔ αθλούμενος για έναν φάκελο (athleteId)
+//   ομάδα: groupId · people: { userId → { name, isCoach } } για να φαίνεται ποιος γράφει
+// solo: χωρίς καρτέλες από πάνω, για σωστό ύψος.
+export default function Chat({ athleteId, groupId, people = {}, me, otherName, solo = false }) {
+  const { clearMessages, clearGroup, setOpenChat } = useLive();
+  const isGroup = !!groupId;
+  const chatId = groupId || athleteId;
   const [msgs, setMsgs] = useState(null);
   const [text, setText] = useState('');
   const [photo, setPhoto] = useState(null); // { file, preview } πριν σταλεί
@@ -35,11 +42,13 @@ export default function Chat({ athleteId, me, otherName, solo = false }) {
 
   useEffect(() => {
     let alive = true;
-    const read = () => markMessagesRead(athleteId, me).then(() => clearMessages(athleteId)).catch(() => {});
-    setOpenChat(athleteId);
-    listMessages(athleteId).then((m) => alive && setMsgs(m)).catch(() => alive && setMsgs([]));
+    const read = () => (isGroup
+      ? markGroupRead(chatId).then(() => clearGroup(chatId))
+      : markMessagesRead(chatId, me).then(() => clearMessages(chatId))).catch(() => {});
+    setOpenChat(chatId);
+    (isGroup ? listGroupMessages : listMessages)(chatId).then((m) => alive && setMsgs(m)).catch(() => alive && setMsgs([]));
     read();
-    const stop = onMessages(athleteId, (type, m) => {
+    const stop = (isGroup ? onGroupMessages : onMessages)(chatId, (type, m) => {
       setMsgs((list) => {
         if (!list) return list;
         if (type === 'INSERT') return list.some((x) => x.id === m.id) ? list : [...list, m];
@@ -48,7 +57,7 @@ export default function Chat({ athleteId, me, otherName, solo = false }) {
       if (type === 'INSERT' && m.sender !== me) read();
     });
     return () => { alive = false; stop(); setOpenChat(null); };
-  }, [athleteId, me, clearMessages, setOpenChat]);
+  }, [chatId, isGroup, me, clearMessages, clearGroup, setOpenChat]);
 
   // Πάντα στο τελευταίο μήνυμα.
   useLayoutEffect(() => {
@@ -80,9 +89,9 @@ export default function Chat({ athleteId, me, otherName, solo = false }) {
         } catch {
           throw new Error('Δεν διαβάστηκε η φωτογραφία. Δοκίμασε αρχείο JPG ή PNG.');
         }
-        path = await addPhoto(versions, athleteId);
+        path = await addPhoto(versions, chatId); // στον φάκελο του αθλούμενου ή της ομάδας
       }
-      const m = await sendMessage(athleteId, body, path);
+      const m = await (isGroup ? sendGroupMessage : sendMessage)(chatId, body, path);
       setMsgs((list) => (list?.some((x) => x.id === m.id) ? list : [...(list || []), m]));
       setText('');
       setPhoto(null);
@@ -94,30 +103,50 @@ export default function Chat({ athleteId, me, otherName, solo = false }) {
   };
 
   let lastDay = null;
+  let prevSender = null;
   return (
     <div className={`chatbox${solo ? ' solo' : ''}`}>
       <div className="chat-scroll" ref={scroller}>
         {!msgs ? (
           <p className="chat-note">Φόρτωση…</p>
         ) : msgs.length === 0 ? (
-          <p className="chat-note">Στείλε το πρώτο μήνυμα στον/στην {otherName}.</p>
+          <p className="chat-note">{isGroup ? 'Κανένα μήνυμα ακόμα.' : `Στείλε το πρώτο μήνυμα στον/στην ${otherName}.`}</p>
         ) : (
           msgs.map((m) => {
             const day = localDay(new Date(m.createdAt));
             const sep = day !== lastDay && <div className="chat-day" key={`d${day}`}><span>{dayLabel(day)}</span></div>;
             lastDay = day;
             const mine = m.sender === me;
-            return [
-              sep,
+            // Στην ομάδα: όνομα και αρχικό του αποστολέα στο πρώτο από τα συνεχόμενα μηνύματά του.
+            const first = isGroup && !mine && (prevSender !== m.sender || !!sep);
+            prevSender = m.sender;
+            const who = people[m.sender];
+            const bubble = (
               <div key={m.id} className={`msg${mine ? ' me' : ''}${m.photo ? ' has-photo' : ''}`}>
+                {first && (
+                  <span className="msg-from">
+                    {who?.name || 'Πρώην μέλος'}
+                    {who?.isCoach && <em className="msg-role">Προπονητής</em>}
+                  </span>
+                )}
                 {m.photo && (
                   <Photo id={m.photo} alt="Φωτογραφία" className="msg-photo" onClick={() => setZoom({ id: m.photo, label: `Φωτογραφία · ${dayLabel(day)} ${time(m.createdAt)}` })} />
                 )}
                 {m.body && <p>{m.body}</p>}
                 <span className="msg-meta">
                   {time(m.createdAt)}
-                  {mine && <TicksIcon size={16} className={m.readAt ? 'read' : ''} aria-label={m.readAt ? 'Διαβάστηκε' : 'Στάλθηκε'} />}
+                  {mine && !isGroup && <TicksIcon size={16} className={m.readAt ? 'read' : ''} aria-label={m.readAt ? 'Διαβάστηκε' : 'Στάλθηκε'} />}
                 </span>
+              </div>
+            );
+            if (!isGroup || mine) return [sep, bubble];
+            return [
+              sep,
+              <div key={m.id} className={`msg-line${first ? ' first' : ''}`}>
+                {first
+                  ? <span className={`msg-avatar${who?.isCoach ? ' coach' : ''}`} aria-hidden="true">{(who?.name || '?').charAt(0).toUpperCase()}</span>
+                  : <span className="msg-avatar-space" />}
+                {bubble}
               </div>,
             ];
           })

@@ -6,8 +6,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { getLastUser } from '@/lib/lastUser';
 import AthleteSidebar from './AthleteSidebar';
+import GroupSidebar from './GroupSidebar';
 import { CoachLive, PersonalLive, useLive } from './Live';
-import { ArchiveIcon, ChatIcon, CompareIcon, DailyIcon, LogoutIcon, UserIcon, UsersIcon, WeightIcon } from './Icons';
+import { ArchiveIcon, ChatIcon, CompareIcon, DailyIcon, GroupsIcon, LogoutIcon, UserIcon, UsersIcon, WeightIcon } from './Icons';
 
 // Οι ενότητες του χώρου ενός αθλούμενου.
 export const VIEWS = [
@@ -18,6 +19,8 @@ export const VIEWS = [
 ];
 // Συνομιλία με τον προπονητή / τον αθλούμενο (μόνο όταν είναι συνδεδεμένοι).
 export const CHAT_VIEW = { id: 'chat', label: 'Συνομιλία', Icon: ChatIcon };
+// Ομάδες του προπονητή στις οποίες ανήκει ο αθλούμενος.
+export const GROUPS_VIEW = { id: 'groups', label: 'Ομάδες', Icon: GroupsIcon };
 
 // Ποια ενότητα έχει διαλέξει ο προσωπικός χρήστης από το πλαϊνό μενού.
 const ViewContext = createContext(null);
@@ -64,23 +67,33 @@ export default function AppShell({ children }) {
 function Shell({ coach, children }) {
   const { user, logout } = useAuth();
   const { view, setView } = useAppView();
-  const { unread, unreadMsgs, coach: myCoach } = useLive();
+  const { unread, unreadMsgs, coach: myCoach, groups } = useLive();
   const path = usePathname();
 
   const onAccount = path.startsWith('/account');
   const withList = coach && !onAccount;
-  const paneOpen = path.startsWith('/dashboard/athletes/');
+  const onGroups = path.startsWith('/dashboard/groups'); // ενότητα «Ομάδες» (σαν τις Κοινότητες του WhatsApp)
+  const paneOpen = path.startsWith('/dashboard/athletes/') || path.startsWith('/dashboard/groups/');
   const total = (m) => Object.values(m).reduce((a, b) => a + b, 0);
+  const groupUnread = (groups || []).reduce((a, g) => a + g.unread, 0);
+  const [listW, setListW] = useListWidth();
 
+  const groupsItem = { ...GROUPS_VIEW, href: '/dashboard/groups', active: onGroups, badge: groupUnread };
   const nav = coach
-    ? [{ id: 'athletes', label: 'Αθλούμενοι', Icon: UsersIcon, href: '/dashboard', active: !onAccount, badge: total(unread) + total(unreadMsgs) }]
-    : [...VIEWS, ...(myCoach ? [CHAT_VIEW] : [])].map((v) => ({
-      ...v, active: !onAccount && view === v.id, onClick: () => setView(v.id),
-      badge: v.id === 'chat' ? total(unreadMsgs) : 0,
-    }));
+    ? [
+      { id: 'athletes', label: 'Αθλούμενοι', Icon: UsersIcon, href: '/dashboard', active: !onAccount && !onGroups, badge: total(unread) + total(unreadMsgs) },
+      groupsItem,
+    ]
+    : [
+      ...[...VIEWS, ...(myCoach ? [CHAT_VIEW] : [])].map((v) => ({
+        ...v, active: !onAccount && !onGroups && view === v.id, onClick: () => setView(v.id),
+        badge: v.id === 'chat' ? total(unreadMsgs) : 0,
+      })),
+      ...(groups?.length ? [groupsItem] : []),
+    ];
 
   return (
-    <div className={`shell${withList ? ' with-list' : ''}${paneOpen ? ' pane-open' : ''}`}>
+    <div className={`shell${withList ? ' with-list' : ''}${paneOpen ? ' pane-open' : ''}`} style={listW ? { '--list-w': `${listW}px` } : undefined}>
       <nav className="rail" aria-label="Μενού">
         <Link href="/dashboard" className="rail-logo" aria-label="FormLog"><i /></Link>
         {nav.map(({ id, label, Icon, href, active, onClick, badge }) => {
@@ -112,9 +125,69 @@ function Shell({ coach, children }) {
         </button>
       </nav>
 
-      {withList && <AthleteSidebar />}
+      {withList && (onGroups ? <GroupSidebar /> : <AthleteSidebar />)}
+      {withList && <ListResizer width={listW} onChange={setListW} />}
 
       <main className="pane">{children}</main>
     </div>
+  );
+}
+
+/* ---------- Πλάτος της λίστας αθλούμενων (σύρεται, όπως στο WhatsApp) ---------- */
+
+const LIST_KEY = 'formlog:listWidth';
+const LIST_DEFAULT = 340;
+const LIST_MIN = 260;
+const LIST_MAX = 560;
+const RAIL = 84; // πλάτος της στήλης με τα εικονίδια
+const clampW = (w) => Math.round(Math.min(LIST_MAX, Math.max(LIST_MIN, w)));
+
+// Το πλάτος που διάλεξε ο χρήστης, αποθηκευμένο σε αυτόν τον browser.
+function useListWidth() {
+  const [w, setW] = useState(null); // null: το προκαθορισμένο της CSS
+  useEffect(() => {
+    try {
+      const v = Number(localStorage.getItem(LIST_KEY));
+      if (v) setW(clampW(v));
+    } catch {}
+  }, []);
+  const save = (next) => {
+    setW(next);
+    try {
+      if (next) localStorage.setItem(LIST_KEY, String(next));
+      else localStorage.removeItem(LIST_KEY);
+    } catch {}
+  };
+  return [w, save];
+}
+
+// Η «λαβή» στη δεξιά άκρη της λίστας: σύρσιμο = αλλαγή πλάτους, διπλό κλικ = επαναφορά,
+// και με το πληκτρολόγιο (βελάκια) όταν είναι επιλεγμένη.
+function ListResizer({ width, onChange }) {
+  const [drag, setDrag] = useState(false);
+  const current = width ?? LIST_DEFAULT;
+
+  const start = (e) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDrag(true);
+  };
+  const move = (e) => { if (drag) onChange(clampW(e.clientX - RAIL)); };
+  const stop = () => setDrag(false);
+  const key = (e) => {
+    const step = e.shiftKey ? 40 : 16;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); onChange(clampW(current - step)); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); onChange(clampW(current + step)); }
+  };
+
+  return (
+    <div
+      className={`list-resizer${drag ? ' dragging' : ''}`} style={{ left: RAIL + current - 5 }}
+      role="separator" aria-orientation="vertical" aria-label="Πλάτος λίστας αθλούμενων"
+      aria-valuenow={current} aria-valuemin={LIST_MIN} aria-valuemax={LIST_MAX} tabIndex={0}
+      title="Σύρε για αλλαγή πλάτους · διπλό κλικ για επαναφορά"
+      onPointerDown={start} onPointerMove={move} onPointerUp={stop} onPointerCancel={stop}
+      onDoubleClick={() => onChange(null)} onKeyDown={key}
+    />
   );
 }

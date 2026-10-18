@@ -5,13 +5,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   announcePresence, getAthlete, getMyCoach, getSelfAthlete, listAllCheckins, listAllWeighIns, listAthletes, listInvites,
-  listUnreadMessages, listUnreadNotifications, markAthleteRead, onMessages, onNotification, watchPresence,
+  listAthletePrefs, listMyGroups, listUnreadMessages, markMessagesRead, setAthletePref, listUnreadNotifications, markAthleteRead, onGroupMessages, onMessages, onNotification,
+  watchPresence,
 } from '@/lib/storage';
 
 const noop = () => {};
 const EMPTY = {
   online: new Set(), unread: {}, unreadMsgs: {}, lastMsg: {}, lastEvent: null, athletes: null, self: null, coach: null,
-  markRead: noop, clearMessages: noop, setOpenChat: noop,
+  markRead: noop, clearMessages: noop, setOpenChat: noop, groups: null, clearGroup: noop, reloadGroups: noop,
+  prefs: {}, setPref: noop, markAllRead: noop, markUnread: noop, reloadAthletes: noop,
 };
 const LiveContext = createContext(EMPTY);
 export const useLive = () => useContext(LiveContext);
@@ -81,7 +83,41 @@ function useMessages(user, onIncoming, onOpen) {
   const opened = useRef(onOpen);
   opened.current = onOpen;
   const setOpenChat = useCallback((id) => { openChat.current = id; if (id) opened.current?.(id); }, []);
-  return { unreadMsgs, lastMsg, clearMessages, setOpenChat };
+  return { unreadMsgs, lastMsg, clearMessages, setOpenChat, openChat };
+}
+
+// Οι ομάδες μου (προπονητής ή μέλος) με αδιάβαστα + ζωντανή ενημέρωση.
+// openChat: ποια συνομιλία είναι ανοιχτή (από το useMessages) · onIncoming(μήνυμα, ομάδα, ανοιχτή)
+function useGroups(user, openChat, onIncoming) {
+  const [groups, setGroups] = useState(null);
+  const groupsRef = useRef(groups);
+  groupsRef.current = groups;
+  const incoming = useRef(onIncoming);
+  incoming.current = onIncoming;
+
+  const reloadGroups = useCallback(
+    () => listMyGroups().then(setGroups).catch(() => setGroups((g) => g ?? [])),
+    []
+  );
+
+  useEffect(() => {
+    reloadGroups();
+    return onGroupMessages(null, (type, m) => {
+      const open = openChat.current === m.groupId;
+      const mine = m.sender === user.id;
+      const group = groupsRef.current?.find((g) => g.id === m.groupId);
+      if (!group) { reloadGroups(); return; } // π.χ. μόλις με πρόσθεσαν σε ομάδα
+      setGroups((list) => list
+        .map((g) => (g.id !== m.groupId ? g : {
+          ...g, lastBody: m.body, lastPhoto: !!m.photo, lastAt: m.createdAt, unread: mine || open ? g.unread : g.unread + 1,
+        }))
+        .sort((a, b) => (b.lastAt || '').localeCompare(a.lastAt || '')));
+      if (!mine) incoming.current?.(m, group, open);
+    });
+  }, [user.id, reloadGroups, openChat]);
+
+  const clearGroup = useCallback((id) => setGroups((list) => list?.map((g) => (g.id === id ? { ...g, unread: 0 } : g))), []);
+  return { groups, reloadGroups, clearGroup };
 }
 
 // Για τον προπονητή: οι αθλούμενοί του, ποιοι είναι online, νέα check-in και νέα μηνύματα.
@@ -97,6 +133,17 @@ export function CoachLive({ user, children }) {
   athletesRef.current = athletes;
   const [toast, toastNode] = useToast();
   const enabled = user.notifyCheckins;
+
+  // Επιλογές ανά αθλούμενο (καρφίτσωμα, αγαπημένα, σίγαση, αρχείο, μη αναγνωσμένο).
+  const [prefs, setPrefs] = useState({});
+  const prefsRef = useRef(prefs);
+  prefsRef.current = prefs;
+  useEffect(() => { listAthletePrefs().then(setPrefs).catch(() => {}); }, [user.id]);
+  const setPref = useCallback(async (id, patch) => {
+    setPrefs((p) => ({ ...p, [id]: { ...p[id], ...patch } }));
+    try { await setAthletePref(id, patch); } catch { listAthletePrefs().then(setPrefs).catch(() => {}); }
+  }, []);
+  const muted = (id) => !!prefsRef.current[id]?.muted;
 
   // Οι αθλούμενοι του προπονητή με τα δεδομένα τους (για τη λίστα και την επισκόπηση).
   // 4 αιτήματα συνολικά, όσους αθλούμενους κι αν έχει.
@@ -136,6 +183,7 @@ export function CoachLive({ user, children }) {
       const viewing = pathRef.current === href;
       if (viewing) markAthleteRead(n.athleteId).catch(() => {});
       else setUnread((u) => ({ ...u, [n.athleteId]: (u[n.athleteId] || 0) + 1 }));
+      if (muted(n.athleteId)) return; // σίγαση για αυτόν τον αθλούμενο
       const name = await nameOf(n.athleteId);
       if (!viewing) toast({ title: 'Νέο check-in', text: `από ${name}`, href });
       systemNotify('Νέο check-in', `Από ${name}`, href, n.id);
@@ -145,20 +193,42 @@ export function CoachLive({ user, children }) {
 
   // Νέα μηνύματα
   const msgs = useMessages(user, async (m, open) => {
-    if (!user.notifyMessages) return;
+    if (!user.notifyMessages || muted(m.athleteId)) return;
     const href = `/dashboard/athletes/${m.athleteId}?tab=chat`;
     const name = await nameOf(m.athleteId);
     if (!open) toast({ title: `Μήνυμα από ${name}`, text: preview(m), href });
     systemNotify(name, preview(m), href, m.id);
   }, () => toast(null));
 
+  // Νέα μηνύματα ομάδας
+  const grp = useGroups(user, msgs.openChat, (m, g, open) => {
+    if (!user.notifyMessages) return;
+    const href = `/dashboard/groups/${g.id}`;
+    if (!open) toast({ title: `«${g.name}»`, text: preview(m), href });
+    systemNotify(g.name, preview(m), href, m.id);
+  });
+  // Ανανέωση της λίστας ομάδων σε κάθε αλλαγή σελίδας (π.χ. μετά από νέα ομάδα ή διαγραφή).
+  useEffect(() => { grp.reloadGroups(); }, [path, grp.reloadGroups]);
+
+  // Ο προπονητής άνοιξε τον αθλούμενο: τα νέα check-in διαβάστηκαν και φεύγει το «μη αναγνωσμένο».
   const markRead = useCallback((athleteId) => {
     setUnread((u) => without(u, athleteId));
     markAthleteRead(athleteId).catch(() => {});
-  }, []);
+    if (prefsRef.current[athleteId]?.markedUnread) setPref(athleteId, { markedUnread: false });
+  }, [setPref]);
+  // Από το μενού: «Επισήμανση ως αναγνωσμένο» = check-in + μηνύματα.
+  const { clearMessages } = msgs;
+  const markAllRead = useCallback((athleteId) => {
+    markRead(athleteId);
+    markMessagesRead(athleteId, user.id).then(() => clearMessages(athleteId)).catch(() => {});
+  }, [markRead, clearMessages, user.id]);
+  const markUnread = useCallback((athleteId) => setPref(athleteId, { markedUnread: true }), [setPref]);
 
   return (
-    <LiveContext.Provider value={{ ...EMPTY, ...msgs, online, unread, lastEvent, markRead, athletes }}>
+    <LiveContext.Provider value={{
+      ...EMPTY, ...msgs, ...grp, online, unread, lastEvent, markRead, athletes, reloadAthletes,
+      prefs, setPref, markAllRead, markUnread,
+    }}>
       {children}
       {toastNode}
     </LiveContext.Provider>
@@ -189,8 +259,18 @@ export function PersonalLive({ user, onOpenChat, children }) {
     systemNotify(title, preview(m), '/dashboard', m.id);
   }, () => toast(null));
 
+  // Νέα μηνύματα ομάδας
+  const grp = useGroups(user, msgs.openChat, (m, g, open) => {
+    if (!user.notifyMessages) return;
+    const href = `/dashboard/groups/${g.id}`;
+    if (!open) toast({ title: `«${g.name}»`, text: preview(m), href });
+    systemNotify(g.name, preview(m), href, m.id);
+  });
+  // Ανανέωση της λίστας ομάδων σε κάθε αλλαγή σελίδας (π.χ. μετά από νέα ομάδα ή διαγραφή).
+  useEffect(() => { grp.reloadGroups(); }, [path, grp.reloadGroups]);
+
   return (
-    <LiveContext.Provider value={{ ...EMPTY, ...msgs, self, coach: self?.linked ? coach : null }}>
+    <LiveContext.Provider value={{ ...EMPTY, ...msgs, ...grp, self, coach: self?.linked ? coach : null }}>
       {children}
       {toastNode}
     </LiveContext.Provider>

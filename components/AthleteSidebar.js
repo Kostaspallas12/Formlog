@@ -1,16 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ANGLES, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
 import Photo from './Photo';
-import { PlusIcon, SearchIcon } from './Icons';
+import { ArchiveBoxIcon, BackIcon, BellOffIcon, ChevronIcon, GroupsIcon, PinIcon, PlusIcon, SearchIcon } from './Icons';
+import AthleteRowMenu from './AthleteRowMenu';
 import { useLive } from './Live';
 
+// Φίλτρα: τα δύο πρώτα φαίνονται πάντα, τα υπόλοιπα στο «▾» (όπως στο WhatsApp).
 const FILTERS = [
   { id: 'all', label: 'Όλοι' },
-  { id: 'linked', label: 'Συνδεδεμένοι' },
+  { id: 'unread', label: 'Μη αναγνωσμένα' },
+  { id: 'favorite', label: 'Αγαπημένοι' },
+];
+const MORE_FILTERS = [
+  { id: 'groups', label: 'Ομάδες' },
   { id: 'pending', label: 'Αναμένουν' },
 ];
 
@@ -29,30 +35,48 @@ export function AthleteAvatar({ athlete, online = false }) {
 }
 
 // Η λίστα αθλούμενων του προπονητή (σαν τις συνομιλίες του WhatsApp):
-// πρώτα όσοι έχουν νέο check-in, μετά όσοι έστειλαν πιο πρόσφατα.
+// πρώτα οι καρφιτσωμένοι, μετά όσοι έχουν κάτι νέο, μετά όσοι έστειλαν πιο πρόσφατα.
+// Κάθε γραμμή έχει μενού (βελάκι, δεξί κλικ ή παρατεταμένο πάτημα στο κινητό).
 export default function AthleteSidebar() {
   const path = usePathname();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
-  const { online, unread, unreadMsgs, lastMsg, athletes } = useLive();
+  const [showArchived, setShowArchived] = useState(false);
+  const [menu, setMenu] = useState(null); // { athlete, at, hasNew }
+  const { online, unread, unreadMsgs, lastMsg, athletes, prefs, groups } = useLive();
   const news = (id) => (unread[id] || 0) + (unreadMsgs[id] || 0);
+  const pref = (id) => prefs[id] || {};
   // Τελευταία κίνηση: καταγραφή, ζύγισμα ή μήνυμα.
   const activity = (a) => [a.lastDate, lastMsg[a.id]?.createdAt].filter(Boolean).sort().pop() || '';
+  const closeMenu = useCallback(() => setMenu(null), []);
 
   const q = query.trim().toLocaleLowerCase('el');
+  const archived = (athletes || []).filter((a) => pref(a.id).archived);
   const shown = (athletes || [])
     .filter((a) =>
+      !!pref(a.id).archived === showArchived &&
       (!q || a.name.toLocaleLowerCase('el').includes(q)) &&
-      (filter === 'all' || (filter === 'linked' ? a.linked : !a.linked && a.pending)))
+      (filter === 'all'
+        || (filter === 'unread' && (news(a.id) > 0 || pref(a.id).markedUnread))
+        || (filter === 'favorite' && pref(a.id).favorite)
+        || (filter === 'pending' && !a.linked && a.pending)))
     .sort((a, b) =>
-      (news(b.id) ? 1 : 0) - (news(a.id) ? 1 : 0) ||
+      (pref(b.id).pinned ? 1 : 0) - (pref(a.id).pinned ? 1 : 0) ||
+      (news(b.id) || pref(b.id).markedUnread ? 1 : 0) - (news(a.id) || pref(a.id).markedUnread ? 1 : 0) ||
       activity(b).localeCompare(activity(a)) ||
       (b.createdAt || '').localeCompare(a.createdAt || ''));
 
   return (
     <aside className="list">
       <div className="list-head">
-        <h2>Αθλούμενοι{athletes?.length > 0 && <span className="list-count">{athletes.length}</span>}</h2>
+        {showArchived ? (
+          <h2 className="list-back">
+            <button type="button" className="icon-btn" onClick={() => setShowArchived(false)} aria-label="Πίσω"><BackIcon /></button>
+            Αρχειοθετημένοι
+          </h2>
+        ) : (
+          <h2>Αθλούμενοι{athletes?.length > 0 && <span className="list-count">{athletes.length}</span>}</h2>
+        )}
         <Link href="/dashboard/athletes/new" className="icon-btn round primary" aria-label="Προσθήκη αθλούμενου" title="Προσθήκη αθλούμενου">
           <PlusIcon />
         </Link>
@@ -62,11 +86,22 @@ export default function AthleteSidebar() {
         <SearchIcon size={18} />
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Αναζήτηση" aria-label="Αναζήτηση αθλούμενου" />
       </label>
-      <div className="list-filters">
-        {FILTERS.map((f) => (
-          <button key={f.id} type="button" className="chip" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>{f.label}</button>
-        ))}
-      </div>
+      {!showArchived && (
+        <div className="list-filters">
+          {FILTERS.map((f) => (
+            <button key={f.id} type="button" className="chip" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>{f.label}</button>
+          ))}
+          <MoreFilters value={filter} onChange={setFilter} />
+        </div>
+      )}
+
+      {/* Όπως στο WhatsApp: οι αρχειοθετημένοι σε μία γραμμή πάνω από τη λίστα */}
+      {!showArchived && archived.length > 0 && filter !== 'groups' && (
+        <button type="button" className="chat archived-row" onClick={() => setShowArchived(true)}>
+          <span className="chat-pic archived-icon"><ArchiveBoxIcon size={22} /></span>
+          <span className="chat-body"><span className="chat-top"><b>Αρχειοθετημένοι</b><small>{archived.length}</small></span></span>
+        </button>
+      )}
 
       {!athletes ? (
         <div role="status" aria-label="Φόρτωση">
@@ -82,6 +117,19 @@ export default function AthleteSidebar() {
           <p>Δεν έχεις αθλούμενους ακόμα.</p>
           <Link href="/dashboard/athletes/new" className="btn primary">Προσθήκη αθλούμενου</Link>
         </div>
+      ) : filter === 'groups' ? (
+        // Φίλτρο «Ομάδες»: οι ομάδες μέσα στην ίδια λίστα (όπως στο WhatsApp)
+        <nav className="chats">
+          {(groups || []).filter((g) => !q || g.name.toLocaleLowerCase('el').includes(q)).map((g) => (
+            <GroupRow key={g.id} group={g} active={path === `/dashboard/groups/${g.id}`} />
+          ))}
+          {groups?.length === 0 && (
+            <div className="list-empty">
+              <p>Δεν έχεις ομάδες ακόμα.</p>
+              <Link href="/dashboard/groups/new" className="btn primary">Νέα ομάδα</Link>
+            </div>
+          )}
+        </nav>
       ) : shown.length === 0 ? (
         <p className="list-empty">Κανένα αποτέλεσμα.</p>
       ) : (
@@ -89,36 +137,144 @@ export default function AthleteSidebar() {
           {shown.map((a) => (
             <AthleteRow
               key={a.id} athlete={a} active={path === `/dashboard/athletes/${a.id}`}
-              online={a.linked && online.has(a.id)} unread={news(a.id)}
+              online={a.linked && online.has(a.id)} unread={news(a.id)} pref={pref(a.id)}
               message={unreadMsgs[a.id] ? lastMsg[a.id] : null} date={activity(a).slice(0, 10)}
               toChat={!!unreadMsgs[a.id] && !unread[a.id]}
+              onMenu={(at) => setMenu({ athlete: a, at, hasNew: news(a.id) > 0 })}
             />
           ))}
         </nav>
       )}
+
+      {menu && <AthleteRowMenu key={menu.athlete.id} {...menu} onClose={closeMenu} />}
     </aside>
   );
 }
 
-function AthleteRow({ athlete, active, online, unread, message, date, toChat }) {
+// Το «▾» με τα υπόλοιπα φίλτρα. Μένει πάντα μικρό· όταν είναι επιλεγμένο ένα από αυτά, γίνεται πράσινο.
+// Το μενού του ανοίγει πάντα ολόκληρο μέσα στην οθόνη (δεν κόβεται από την άκρη της λίστας).
+function MoreFilters({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState(null);
+  const ref = useRef(null);
+  const btn = useRef(null);
+  const menu = useRef(null);
+  const current = MORE_FILTERS.find((f) => f.id === value);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const b = btn.current.getBoundingClientRect();
+    const w = menu.current.offsetWidth;
+    setPos({ top: b.bottom + 6, left: Math.max(8, Math.min(b.left, window.innerWidth - w - 8)) });
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const out = (e) => { if (!ref.current?.contains(e.target)) setOpen(false); };
+    const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
+    const close = () => setOpen(false);
+    document.addEventListener('pointerdown', out);
+    document.addEventListener('keydown', esc);
+    window.addEventListener('resize', close);
+    return () => {
+      document.removeEventListener('pointerdown', out);
+      document.removeEventListener('keydown', esc);
+      window.removeEventListener('resize', close);
+    };
+  }, [open]);
+
+  return (
+    <div className="chip-more" ref={ref}>
+      <button
+        ref={btn} type="button" className="chip" aria-pressed={!!current} aria-expanded={open}
+        aria-label={current ? `Φίλτρο: ${current.label}` : 'Περισσότερα φίλτρα'} title={current?.label}
+        onClick={() => { setPos(null); setOpen((o) => !o); }}
+      >
+        <ChevronIcon size={16} />
+      </button>
+      {open && (
+        <div className="chip-menu" role="menu" ref={menu} style={pos ? { top: pos.top, left: pos.left } : { visibility: 'hidden' }}>
+          {MORE_FILTERS.map((f) => (
+            <button
+              key={f.id} type="button" role="menuitemradio" aria-checked={value === f.id}
+              onClick={() => { onChange(value === f.id ? 'all' : f.id); setOpen(false); }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AthleteRow({ athlete, active, online, unread, pref, message, date, toChat, onMenu }) {
   const { checkins, weighIns: kgs } = athlete;
   const sub = kgs.length
     ? `${fmtKg(kgs[kgs.length - 1].weight)} kg${kgs.length > 1 ? ` · ${fmtDelta(kgs[kgs.length - 1].weight - kgs[0].weight)}` : ''}`
     : checkins.length ? `${checkins.length} ${checkins.length === 1 ? 'καταγραφή' : 'καταγραφές'}` : 'Καμία καταγραφή';
+  const isNew = unread > 0 || pref.markedUnread;
+
+  // Παρατεταμένο πάτημα (κινητό) = μενού, χωρίς να ανοίξει ο αθλούμενος.
+  const press = useRef({ timer: null, opened: false });
+  const touchStart = (e) => {
+    const t = e.touches[0];
+    press.current.opened = false;
+    press.current.timer = setTimeout(() => { press.current.opened = true; onMenu({ x: t.clientX, y: t.clientY }); }, 500);
+  };
+  const touchEnd = () => clearTimeout(press.current.timer);
 
   return (
-    <Link href={`/dashboard/athletes/${athlete.id}${toChat ? '?tab=chat' : ''}`} className="chat" aria-current={active ? 'page' : undefined}>
-      <AthleteAvatar athlete={athlete} online={online} />
+    <div className="chat-row">
+      <Link
+        href={`/dashboard/athletes/${athlete.id}${toChat ? '?tab=chat' : ''}`} className="chat" aria-current={active ? 'page' : undefined}
+        onContextMenu={(e) => { e.preventDefault(); onMenu({ x: e.clientX, y: e.clientY }); }}
+        onTouchStart={touchStart} onTouchEnd={touchEnd} onTouchMove={touchEnd}
+        onClick={(e) => { if (press.current.opened) { e.preventDefault(); press.current.opened = false; } }}
+      >
+        <AthleteAvatar athlete={athlete} online={online} />
+        <span className="chat-body">
+          <span className="chat-top">
+            <b>{athlete.name}</b>
+            {date && <small className={isNew && !pref.muted ? 'new' : ''}>{fmtDate(date, { day: 'numeric', month: 'short' })}</small>}
+          </span>
+          <span className="chat-bottom">
+            {/* Αν έχει νέο μήνυμα, φαίνεται αυτό (όπως στο WhatsApp). */}
+            <span className={`chat-sub${message ? ' msg-preview' : ''}`}>{message ? message.body || 'Φωτογραφία' : sub}</span>
+            {!athlete.linked && athlete.pending && <span className="chat-tag">Αναμένει</span>}
+            {pref.muted && <BellOffIcon size={16} className="chat-flag" aria-label="Σίγαση" />}
+            {pref.pinned && <PinIcon size={16} className="chat-flag" aria-label="Καρφιτσωμένος" />}
+            {unread > 0
+              ? <span className={`badge${pref.muted ? ' muted' : ''}`} aria-label={`${unread} νέα`}>{unread}</span>
+              : pref.markedUnread && <span className="badge dot" aria-label="Μη αναγνωσμένο" />}
+          </span>
+        </span>
+      </Link>
+      <button
+        type="button" className="chat-chev" aria-label={`Επιλογές: ${athlete.name}`} title="Επιλογές"
+        onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); onMenu({ x: r.left, y: r.bottom + 4 }); }}
+      >
+        <ChevronIcon size={20} />
+      </button>
+    </div>
+  );
+}
+
+// Μία ομάδα στη λίστα (για προπονητή και αθλούμενο).
+export function GroupRow({ group: g, active }) {
+  return (
+    <Link href={`/dashboard/groups/${g.id}`} className="chat" aria-current={active ? 'page' : undefined}>
+      <span className="chat-pic"><span className="chat-avatar initial group"><GroupsIcon size={24} /></span></span>
       <span className="chat-body">
         <span className="chat-top">
-          <b>{athlete.name}</b>
-          {date && <small className={unread ? 'new' : ''}>{fmtDate(date, { day: 'numeric', month: 'short' })}</small>}
+          <b>{g.name}</b>
+          {g.lastAt && <small className={g.unread ? 'new' : ''}>{fmtDate(g.lastAt.slice(0, 10), { day: 'numeric', month: 'short' })}</small>}
         </span>
         <span className="chat-bottom">
-          {/* Αν έχει νέο μήνυμα, φαίνεται αυτό (όπως στο WhatsApp). */}
-          <span className={`chat-sub${message ? ' msg-preview' : ''}`}>{message ? message.body || 'Φωτογραφία' : sub}</span>
-          {!athlete.linked && athlete.pending && <span className="chat-tag">Αναμένει</span>}
-          {unread > 0 && <span className="badge" aria-label={`${unread} νέα`}>{unread}</span>}
+          <span className={`chat-sub${g.unread ? ' msg-preview' : ''}`}>
+            {g.lastAt ? g.lastBody || 'Φωτογραφία' : `${g.members} ${g.members === 1 ? 'μέλος' : 'μέλη'}`}
+          </span>
+          {g.unread > 0 && <span className="badge" aria-label={`${g.unread} νέα`}>{g.unread}</span>}
         </span>
       </span>
     </Link>

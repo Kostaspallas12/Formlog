@@ -35,7 +35,7 @@ function LoadingSkeleton() {
 const QUIET_DAYS = 7;
 
 function CoachHome() {
-  const { athletes, unread, unreadMsgs, online } = useLive();
+  const { athletes, unread, unreadMsgs, online, groups } = useLive();
   const head = (
     <PaneHead
       title="Επισκόπηση"
@@ -68,7 +68,7 @@ function CoachHome() {
     .sort((a, b) => ago(b) - ago(a));
   const sum = (m) => Object.values(m).reduce((x, y) => x + y, 0);
   const newCount = sum(unread);
-  const msgCount = sum(unreadMsgs);
+  const msgCount = sum(unreadMsgs) + (groups || []).reduce((a, g) => a + g.unread, 0); // ατομικά + ομάδες
   const onlineCount = athletes.filter((a) => a.linked && online.has(a.id)).length;
 
   return (
@@ -123,7 +123,7 @@ function MyProgress({ user }) {
   const { view } = useAppView();
   const { coach } = useLive();
   const [me, setMe] = useState(null);
-  const current = view === 'chat' && !coach ? 'archive' : view;
+  const current = (view === 'chat' && !coach) || view === 'groups' ? 'archive' : view;
   const title = current === 'chat' ? coach.name : [...VIEWS, CHAT_VIEW].find((v) => v.id === current)?.label;
 
   useEffect(() => {
