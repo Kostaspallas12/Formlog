@@ -13,6 +13,7 @@ import EmptyState from '@/components/EmptyState';
 import Select from '@/components/Select';
 import { GroupsIcon } from '@/components/Icons';
 import { WorkspaceSkeleton } from '@/components/Skeletons';
+import { isUuid } from '@/lib/utils';
 
 // Μια ομάδα: η ομαδική συνομιλία και (για τον προπονητή) τα μέλη της.
 export default function GroupPage() {
@@ -26,6 +27,7 @@ export default function GroupPage() {
 
   // Ομάδα και μέλη μαζί, ώστε να μη φαίνεται για μια στιγμή «Χωρίς μέλη».
   const load = useCallback(async () => {
+    if (!isUuid(id)) return setGroup(null); // χαλασμένη διεύθυνση: κατευθείαν «Δεν βρέθηκε»
     const [g, p] = await Promise.all([getGroup(id).catch(() => null), groupPeople(id).catch(() => [])]);
     setPeople(p);
     setGroup(g);

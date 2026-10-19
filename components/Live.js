@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  announcePresence, getAthlete, getMyCoach, getSelfAthlete, listAllCheckins, listAllWeighIns, listAthletes, listInvites,
+  announcePresence, getAthlete, getAthletePlans, getMyCoach, getSelfAthlete, listAllCheckins, listAllWeighIns, listAthletes, listInvites,
   listAthletePrefs, listMyGroups, listUnreadMessages, markMessagesRead, setAthletePref, listUnreadNotifications, markAthleteRead, onGroupMessages, onMessages, onNotification,
   watchPresence,
 } from '@/lib/storage';
@@ -13,7 +13,7 @@ const noop = () => {};
 const EMPTY = {
   online: new Set(), unread: {}, unreadMsgs: {}, lastMsg: {}, lastEvent: null, athletes: null, self: null, coach: null,
   markRead: noop, clearMessages: noop, setOpenChat: noop, groups: null, clearGroup: noop, reloadGroups: noop,
-  prefs: {}, setPref: noop, markAllRead: noop, markUnread: noop, reloadAthletes: noop,
+  hasPlans: false, prefs: {}, setPref: noop, markAllRead: noop, markUnread: noop, reloadAthletes: noop,
 };
 const LiveContext = createContext(EMPTY);
 export const useLive = () => useContext(LiveContext);
@@ -100,8 +100,8 @@ function useGroups(user, openChat, onIncoming) {
     []
   );
 
+  // (Η πρώτη φόρτωση γίνεται από την ανανέωση ανά σελίδα στο CoachLive/PersonalLive.)
   useEffect(() => {
-    reloadGroups();
     return onGroupMessages(null, (type, m) => {
       const open = openChat.current === m.groupId;
       const mine = m.sender === user.id;
@@ -165,8 +165,22 @@ export function CoachLive({ user, children }) {
       }));
   }, [user.id]);
 
-  // Ανανέωση σε κάθε αλλαγή σελίδας (π.χ. μετά από προσθήκη/διαγραφή) και σε κάθε νέο check-in.
-  useEffect(() => { reloadAthletes().catch(() => setAthletes((a) => a ?? [])); }, [reloadAthletes, path, lastEvent]);
+  // Η λίστα φορτώνει όλες τις καταγραφές όλων, οπότε δεν την ξαναφορτώνουμε σε κάθε κλικ:
+  //   αμέσως: στην αρχή, σε κάθε νέο check-in και όταν η εφαρμογή αλλάζει κάτι (refreshAthletes)
+  //   αλλιώς: σε αλλαγή σελίδας ή επιστροφή στην εφαρμογή, μόνο αν πέρασε πάνω από 1 λεπτό
+  const loadedAt = useRef(0);
+  const refreshAthletes = useCallback(() => {
+    loadedAt.current = Date.now();
+    return reloadAthletes().catch(() => setAthletes((a) => a ?? []));
+  }, [reloadAthletes]);
+  useEffect(() => { refreshAthletes(); }, [refreshAthletes, lastEvent]);
+  useEffect(() => {
+    const stale = () => Date.now() - loadedAt.current > 60000;
+    if (stale()) refreshAthletes();
+    const back = () => { if (document.visibilityState === 'visible' && stale()) refreshAthletes(); };
+    document.addEventListener('visibilitychange', back);
+    return () => document.removeEventListener('visibilitychange', back);
+  }, [path, refreshAthletes]);
 
   useEffect(() => watchPresence(user.id, setOnline), [user.id]);
 
@@ -226,7 +240,7 @@ export function CoachLive({ user, children }) {
 
   return (
     <LiveContext.Provider value={{
-      ...EMPTY, ...msgs, ...grp, online, unread, lastEvent, markRead, athletes, reloadAthletes,
+      ...EMPTY, ...msgs, ...grp, online, unread, lastEvent, markRead, athletes, reloadAthletes: refreshAthletes,
       prefs, setPref, markAllRead, markUnread,
     }}>
       {children}
@@ -250,6 +264,13 @@ export function PersonalLive({ user, onOpenChat, children }) {
 
   // Όσο έχει ανοιχτή την εφαρμογή, ο προπονητής τον βλέπει online.
   const coachId = self?.linked ? self.coachId : null;
+
+  // Πρόγραμμα από (πρώην) προπονητή: μένει ορατό και μετά τη διακοπή της συνεργασίας.
+  const [hasPlans, setHasPlans] = useState(false);
+  useEffect(() => {
+    if (!self || self.linked) return setHasPlans(!!self?.linked);
+    getAthletePlans(self.id).then((p) => setHasPlans(!!(p.training || p.nutrition))).catch(() => {});
+  }, [self]);
   useEffect(() => (coachId ? announcePresence(coachId, self.id) : undefined), [coachId, self?.id]);
 
   const msgs = useMessages(user, (m, open) => {
@@ -270,7 +291,7 @@ export function PersonalLive({ user, onOpenChat, children }) {
   useEffect(() => { grp.reloadGroups(); }, [path, grp.reloadGroups]);
 
   return (
-    <LiveContext.Provider value={{ ...EMPTY, ...msgs, ...grp, self, coach: self?.linked ? coach : null }}>
+    <LiveContext.Provider value={{ ...EMPTY, ...msgs, ...grp, self, coach: self?.linked ? coach : null, hasPlans }}>
       {children}
       {toastNode}
     </LiveContext.Provider>

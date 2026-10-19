@@ -11,23 +11,26 @@ import WeightLog from './WeightLog';
 import DailyLog from './DailyLog';
 import PaneHead from './PaneHead';
 import BodyInfo from './BodyInfo';
-import { CHAT_VIEW, VIEWS } from './AppShell';
+import { CHAT_VIEW, PLAN_VIEW, VIEWS } from './AppShell';
 import { ArchiveIcon, PlusIcon } from './Icons';
 import EmptyState from './EmptyState';
 import { WorkspaceBodySkeleton } from './Skeletons';
+import { useLive } from './Live';
 
 // Τι φορτώνεται για έναν αθλούμενο (το καθένα ξεχωριστά, για να ανανεώνεται μόνο ό,τι άλλαξε).
 const LOADERS = { checkins: listCheckins, weighIns: listWeighIns, daily: listDailyLogs };
 
 // Ο χώρος ενός αθλούμενου: κεφαλίδα, (καρτέλες), αρχείο, σύγκριση, βάρος, καθημερινά.
 // view: η ενότητα από το πλαϊνό μενού (προσωπικός χρήστης). Χωρίς view δείχνει δικές του καρτέλες (προπονητής).
-export default function Workspace({ athlete, title, subtitle, avatar, backHref, view, banner, menu, onAthleteChange, reloadSignal, chat, chatBadge = 0, initialTab }) {
+export default function Workspace({ athlete, title, subtitle, avatar, backHref, view, banner, menu, onAthleteChange, reloadSignal, chat, chatBadge = 0, plans, initialTab }) {
   const [raw, setRaw] = useState(null); // { checkins, weighIns, daily }
   const [loadError, setLoadError] = useState(false);
   const [ownTab, setOwnTab] = useState('archive');
   const [editing, setEditing] = useState(null); // null | 'new' | καταγραφή
-  // Η «Συνομιλία» υπάρχει μόνο όταν δίνεται (συνδεδεμένοι προπονητής και αθλούμενος).
-  const tab = (view ?? ownTab) === 'chat' && !chat ? 'archive' : view ?? ownTab;
+  const { reloadAthletes } = useLive(); // η λίστα του προπονητή (τελευταία καταγραφή, βάρος)
+  // «Πρόγραμμα» και «Συνομιλία» υπάρχουν μόνο όταν δίνονται.
+  const wanted = view ?? ownTab;
+  const tab = (wanted === 'chat' && !chat) || (wanted === 'plan' && !plans) ? 'archive' : wanted;
   useEffect(() => { if (initialTab) setOwnTab(initialTab); }, [initialTab]);
 
   // Φορτώνει μόνο ό,τι ζητηθεί (π.χ. μετά από αλλαγή βάρους μόνο το βάρος), όχι τα πάντα.
@@ -54,7 +57,7 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
     <PaneHead
       title={title} subtitle={subtitle} avatar={avatar} backHref={backHref}
       actions={<>
-        {data && !editing && tab !== 'chat' && (
+        {data && !editing && tab !== 'chat' && tab !== 'plan' && (
           <button className="btn primary" onClick={startNew}>
             <PlusIcon size={18} /><span className="long">Νέα καταγραφή</span><span className="short">Νέα</span>
           </button>
@@ -65,8 +68,11 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
   );
   const tabs = view === undefined && (
     <div className="tabs" role="tablist">
-      {[...VIEWS, ...(chat ? [CHAT_VIEW] : [])].map((t) => (
-        <button key={t.id} role="tab" className="tab" aria-selected={tab === t.id} onClick={() => setOwnTab(t.id)}>
+      {[...VIEWS, ...(plans ? [PLAN_VIEW] : []), ...(chat ? [CHAT_VIEW] : [])].map((t) => (
+        <button
+          key={t.id} role="tab" className="tab" aria-selected={tab === t.id}
+          onClick={(e) => { setOwnTab(t.id); e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }}
+        >
           {t.label}
           {t.id === 'chat' && chatBadge > 0 && tab !== 'chat' && <span className="badge">{chatBadge}</span>}
         </button>
@@ -89,6 +95,7 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
   const done = () => {
     setEditing(null);
     refresh(['checkins', 'weighIns']);
+    reloadAthletes();
   };
 
   return (
@@ -136,7 +143,7 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
             <Timeline
               checkins={checkins}
               onEdit={(c) => { setEditing(c); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              onDelete={async (c) => { await deleteCheckin(c); refresh(['checkins']); }}
+              onDelete={async (c) => { await deleteCheckin(c); refresh(['checkins']); reloadAthletes(); }}
             />
           )}
         </>
@@ -146,10 +153,11 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
         <div className="weight">
           {onAthleteChange && <BodyInfo athlete={athlete} onChange={onAthleteChange} />}
           <WeightChart entries={weighIns} />
-          <WeightLog athleteId={athlete.id} entries={weighIns} onChange={() => refresh(['weighIns'])} />
+          <WeightLog athleteId={athlete.id} entries={weighIns} onChange={() => { reloadAthletes(); return refresh(['weighIns']); }} />
         </div>
       )}
       {tab === 'chat' && chat}
+      {tab === 'plan' && plans}
       {tab === 'daily' && <DailyLog athleteId={athlete.id} entries={daily} onChange={() => refresh(['daily'])} />}
     </>
   );

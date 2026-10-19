@@ -19,9 +19,14 @@ export const DailyIcon = icon(<><rect x="3" y="5" width="18" height="16" rx="2.5
 export const UsersIcon = icon(<><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0" /><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.6a6.5 6.5 0 0 1 3.5 5.4" /></>);
 // Ομάδες / κοινότητα: τρία άτομα
 export const GroupsIcon = icon(<><circle cx="12" cy="7.5" r="3" /><circle cx="5" cy="10" r="2.2" /><circle cx="19" cy="10" r="2.2" /><path d="M6.8 20a5.2 5.2 0 0 1 10.4 0" /><path d="M1.5 19a3.5 3.5 0 0 1 4.3-3.4M22.5 19a3.5 3.5 0 0 0-4.3-3.4" /></>);
-export const UserIcon = icon(<><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>);
+export const PlanIcon = icon(<><rect x="5" y="4" width="14" height="17" rx="2.5" /><path d="M9 4V2.8h6V4M9 10h6M9 14h6M9 18h3" /></>);
+export const DumbbellIcon = icon(<path d="M6.5 6v12M17.5 6v12M3.5 9v6M20.5 9v6M6.5 12h11" />);
+export const FoodIcon = icon(<path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17.5 21V3c-2.2 1.2-3.5 4-3.5 7.5V14h3.5" />);
+export const UserIcon =icon(<><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>);
 export const LogoutIcon = icon(<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11" />);
-export const PlusIcon = icon(<path d="M12 5v14M5 12h14" />);
+export const UploadIcon = icon(<path d="M12 16V4M7 9l5-5 5 5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />);
+export const CloseIcon =icon(<path d="M6 6l12 12M18 6L6 18" />);
+export const PlusIcon =icon(<path d="M12 5v14M5 12h14" />);
 export const BackIcon = icon(<path d="M15 18l-6-6 6-6" />);
 export const SearchIcon = icon(<><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></>);
 export const LinkIcon = icon(<><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1" /><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" /></>);

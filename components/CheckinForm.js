@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { addPhoto, deleteWeighInOn, putCheckin, removePhotos, setWeighIn, uuid } from '@/lib/storage';
 import { processImage } from '@/lib/images';
-import { ANGLES, todayISO } from '@/lib/utils';
+import { ANGLES, parseDecimal, todayISO } from '@/lib/utils';
 import Photo from './Photo';
 import DateField from './DateField';
 
@@ -39,7 +39,7 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    const kg = weight.trim() ? parseFloat(weight.replace(',', '.')) : null;
+    const kg = weight.trim() ? parseDecimal(weight) : null;
     if (kg != null && !(kg > 20 && kg < 400)) return setError('Γράψε ένα έγκυρο βάρος σε κιλά.');
     const hasPhoto = Object.values(slots).some((s) => s.id || s.file);
     if (!hasPhoto && kg == null) return setError('Πρόσθεσε τουλάχιστον μία φωτογραφία ή το βάρος.');
@@ -157,7 +157,7 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
 
       <label className="f">
         Σημείωση (προαιρετικά)
-        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="π.χ. αρχή νέου προγράμματος" />
+        <input value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="π.χ. αρχή νέου προγράμματος" />
       </label>
 
       {error && <p className="error" role="alert">{error}</p>}

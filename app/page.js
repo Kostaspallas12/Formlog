@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import HeroPreview from '@/components/HeroPreview';
 import HomeRedirect from '@/components/HomeRedirect';
@@ -27,6 +28,26 @@ const STEPS = [
   ['Δες την πρόοδο', 'Σύγκρινε οποιεσδήποτε δύο φωτογραφίες και δες πόσο έχεις αλλάξει.'],
 ];
 
+const PERSONAL = [
+  'Όλες οι φωτογραφίες σου σε ένα αρχείο',
+  'Σύγκριση πριν και μετά',
+  'Βάρος, θερμίδες, βήματα και νερό',
+  'Συνομιλία με τον προπονητή σου',
+];
+
+const COACH = [
+  'Όλοι οι αθλούμενοί σου σε μία λίστα',
+  'Συνομιλία με τον αθλούμενο, μέσα στην εφαρμογή',
+  'Ομάδες με κοινή συνομιλία',
+  'Ειδοποίηση όταν στέλνει check-in',
+  'Βλέπεις ποιος έχει μείνει πίσω',
+];
+
+const PLANS = [
+  { name: 'Προσωπικός', type: 'personal', items: ['Απεριόριστες φωτογραφίες', 'Σύγκριση και γράφημα βάρους', 'Καθημερινές μετρήσεις'] },
+  { name: 'Προπονητής', type: 'coach', items: ['Απεριόριστοι αθλούμενοι', 'Συνομιλίες και ομάδες', 'Ειδοποιήσεις για check-in'] },
+];
+
 const TIPS = [
   ['Ίδιο φως', 'Ίδιο σημείο του σπιτιού και φως από μπροστά. Οι σκιές αλλάζουν το πώς φαίνεται το σώμα.'],
   ['Ίδια απόσταση', 'Κινητό στο ύψος της μέσης, στην ίδια απόσταση κάθε φορά. Ιδανικά σε τρίποδο με χρονοδιακόπτη.'],
@@ -41,12 +62,14 @@ const FAQ = [
   ['Μπορώ να σβήσω τα δεδομένα μου;', 'Ναι. Μπορείς να σβήσεις μία φωτογραφία ή ολόκληρο τον λογαριασμό σου, οριστικά.'],
 ];
 
+const Checks = ({ items }) => <ul className="checks">{items.map((t) => <li key={t}>{t}</li>)}</ul>;
+
 export default function Home() {
   return (
     <>
       <HomeRedirect />
       <main>
-        {/* Hero */}
+        {/* Hero: κείμενο αριστερά, φωτογραφία με την προεπισκόπηση του αρχείου δεξιά */}
         <section className="hero wrap">
           <div className="hero-text">
             <span className="eyebrow">Το αρχείο της προόδου σου</span>
@@ -60,7 +83,12 @@ export default function Home() {
               <a href="#how" className="btn big">Πώς δουλεύει</a>
             </div>
           </div>
-          <HeroPreview />
+          <div className="hero-visual">
+            <div className="hero-photo">
+              <Image src="/landing/athlete.jpg" alt="Αθλητής στο γυμναστήριο" fill priority sizes="(max-width: 860px) 90vw, 400px" />
+            </div>
+            <HeroPreview />
+          </div>
         </section>
         {/* Οφέλη */}
         <section className="band">
@@ -89,31 +117,49 @@ export default function Home() {
             ))}
           </ol>
         </section>
-        {/* Για ποιον */}
-        <section className="section wrap">
-          <h2>Για ποιον είναι</h2>
-          <div className="audiences">
-            <div className="audience">
-              <span className="pill">Προσωπική χρήση</span>
-              <h3>Για εσένα</h3>
-              <ul>
-                <li>Όλες οι φωτογραφίες σου σε ένα αρχείο</li>
-                <li>Σύγκριση πριν και μετά</li>
-                <li>Βάρος, θερμίδες, βήματα και νερό</li>
-              </ul>
-              <Link href="/signup?type=personal" className="btn primary">Ξεκίνα</Link>
+        {/* Για εσένα */}
+        <section className="section wrap split">
+          <div className="split-photo">
+            <Image src="/landing/training.jpg" alt="Προπόνηση με αλτήρα" fill sizes="(max-width: 860px) 90vw, 520px" />
+          </div>
+          <div>
+            <span className="pill">Προσωπική χρήση</span>
+            <h2>Για εσένα</h2>
+            <p className="sub">Ένα ιδιωτικό αρχείο για τις φωτογραφίες, το βάρος και τις καθημερινές σου μετρήσεις.</p>
+            <Checks items={PERSONAL} />
+            <Link href="/signup?type=personal" className="btn primary big">Ξεκίνα</Link>
+          </div>
+        </section>
+        {/* Για προπονητές: πραγματικό στιγμιότυπο της εφαρμογής */}
+        <section id="coaches" className="band">
+          <div className="section wrap">
+            <div className="coach-intro">
+              <div>
+                <span className="pill amber">Επαγγελματική χρήση</span>
+                <h2>Για προπονητές</h2>
+                <p className="sub">Όλοι οι αθλούμενοί σου, οι φωτογραφίες τους και οι συνομιλίες σας σε ένα σημείο.</p>
+                <Link href="/signup?type=coach" className="btn primary big">Ξεκίνα ως προπονητής</Link>
+              </div>
+              <Checks items={COACH} />
             </div>
-            <div className="audience">
-              <span className="pill amber">Επαγγελματική χρήση</span>
-              <h3>Για προπονητές</h3>
-              <ul>
-                <li>Όλοι οι αθλούμενοί σου σε μία λίστα</li>
-                <li>Συνομιλία με τον αθλούμενο, μέσα στην εφαρμογή</li>
-                <li>Ειδοποίηση όταν στέλνει check-in</li>
-                <li>Βλέπεις ποιος έχει μείνει πίσω</li>
-              </ul>
-              <Link href="/signup?type=coach" className="btn primary">Ξεκίνα ως προπονητής</Link>
+            <div className="app-frame">
+              <div className="app-frame-bar" aria-hidden="true"><i /><i /><i /></div>
+              <Image src="/landing/coach-app.webp" alt="Η επισκόπηση του προπονητή στο FormLog" width={1600} height={700} sizes="(max-width: 1080px) 100vw, 1032px" />
             </div>
+          </div>
+        </section>
+        {/* Τιμές */}
+        <section id="pricing" className="section wrap">
+          <h2>Τιμές</h2>
+          <p className="sub">Το FormLog είναι δωρεάν σε αυτή την πρώτη του έκδοση.</p>
+          <div className="plans">
+            {PLANS.map((p) => (
+              <div className="plan" key={p.type}>
+                <h3>{p.name}</h3>
+                <p className="price"><b>0 €</b><span>/ μήνα</span></p>
+                <Checks items={p.items} />
+              </div>
+            ))}
           </div>
         </section>
         {/* Συμβουλές */}
@@ -132,7 +178,7 @@ export default function Home() {
           </div>
         </section>
         {/* Συχνές ερωτήσεις */}
-        <section className="section wrap narrow">
+        <section id="faq" className="section wrap narrow">
           <h2>Συχνές ερωτήσεις</h2>
           <div className="faq">
             {FAQ.map(([q, a]) => (

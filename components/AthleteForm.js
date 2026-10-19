@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { addAthlete, addPhoto, createInvite, deleteAthlete, putCheckin, setWeighIn, uuid } from '@/lib/storage';
 import { processImage } from '@/lib/images';
-import { ANGLES, todayISO } from '@/lib/utils';
+import { ANGLES, parseDecimal, todayISO } from '@/lib/utils';
 
 // Νέος αθλούμενος (για τον προπονητή): όνομα, ηλικία, ύψος, αρχικό βάρος και αρχικές φωτογραφίες.
 // (Τη συγκατάθεση των αθλούμενων την έχει δηλώσει ο προπονητής στην εγγραφή του.)
@@ -46,7 +46,7 @@ export default function AthleteForm({ onDone, onCancel }) {
     if (ageNum != null && !(ageNum >= 5 && ageNum <= 120)) return setError('Γράψε μια έγκυρη ηλικία.');
     const cm = height.trim() ? parseInt(height, 10) : null;
     if (cm != null && !(cm >= 80 && cm <= 250)) return setError('Γράψε ένα έγκυρο ύψος σε εκατοστά.');
-    const kg = weight.trim() ? parseFloat(weight.replace(',', '.')) : null;
+    const kg = weight.trim() ? parseDecimal(weight) : null;
     if (kg != null && !(kg > 20 && kg < 400)) return setError('Γράψε ένα έγκυρο βάρος σε κιλά.');
 
     setBusy(true);

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { deleteWeighIn, setWeighIn, updateWeighIn } from '@/lib/storage';
-import { fmtDate, fmtDelta, fmtKg, todayISO } from '@/lib/utils';
+import { fmtDate, fmtDelta, fmtKg, parseDecimal, todayISO } from '@/lib/utils';
 import EmptyState from './EmptyState';
 import DateField from './DateField';
 import { WeightIcon } from './Icons';
@@ -11,7 +11,7 @@ import { WeightIcon } from './Icons';
 // Enter ή κλικ έξω = αποθήκευση, Esc = ακύρωση.
 
 const parseKg = (s) => {
-  const v = parseFloat(String(s).trim().replace(',', '.'));
+  const v = parseDecimal(s);
   return v > 20 && v < 400 ? Math.round(v * 10) / 10 : null;
 };
 

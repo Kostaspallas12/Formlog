@@ -5,10 +5,12 @@ import { createInvite, listInvites, revokeInvite } from '@/lib/storage';
 import { fmtDate } from '@/lib/utils';
 import Menu from './Menu';
 import { LinkIcon } from './Icons';
+import { useLive } from './Live';
 
 // Για τον προπονητή, σε αθλούμενο που δεν έχει συνδεθεί ακόμα: η πρόσκληση σε μία γραμμή
 // (μοναδικός σύνδεσμος μιας χρήσης). Οι σπάνιες ενέργειες είναι στο «⋮».
 export default function CoachLink({ athlete }) {
+  const { reloadAthletes } = useLive();
   const [invites, setInvites] = useState(null);
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
@@ -31,6 +33,7 @@ export default function CoachLink({ athlete }) {
     try {
       await fn();
       await reload();
+      reloadAthletes(); // «αναμένει αποδοχή» στη λίστα
       if (ok) setMsg({ type: 'ok', text: ok });
     } catch {
       setMsg({ type: 'error', text: 'Κάτι πήγε στραβά. Δοκίμασε ξανά.' });

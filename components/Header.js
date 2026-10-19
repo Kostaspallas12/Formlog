@@ -27,6 +27,11 @@ export default function Header() {
               </>
             ) : (
               <>
+                <span className="top-links">
+                  <Link href="/#how">Πώς δουλεύει</Link>
+                  <Link href="/#coaches">Προπονητές</Link>
+                  <Link href="/#pricing">Τιμές</Link>
+                </span>
                 <Link href="/login" className="btn ghost">Είσοδος</Link>
                 <Link href="/signup" className="btn primary">
                   <span className="long">Δημιουργία λογαριασμού</span><span className="short">Εγγραφή</span>

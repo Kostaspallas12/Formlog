@@ -9,7 +9,7 @@ import AthleteSidebar from './AthleteSidebar';
 import LogoMark from './Logo';
 import GroupSidebar from './GroupSidebar';
 import { CoachLive, PersonalLive, useLive } from './Live';
-import { ArchiveIcon, ChatIcon, CompareIcon, DailyIcon, GroupsIcon, LogoutIcon, UserIcon, UsersIcon, WeightIcon } from './Icons';
+import { ArchiveIcon, ChatIcon, CompareIcon, DailyIcon, GroupsIcon, LogoutIcon, PlanIcon, UserIcon, UsersIcon, WeightIcon } from './Icons';
 
 // Οι ενότητες του χώρου ενός αθλούμενου.
 export const VIEWS = [
@@ -20,6 +20,8 @@ export const VIEWS = [
 ];
 // Συνομιλία με τον προπονητή / τον αθλούμενο (μόνο όταν είναι συνδεδεμένοι).
 export const CHAT_VIEW = { id: 'chat', label: 'Συνομιλία', Icon: ChatIcon };
+// Πρόγραμμα προπόνησης/διατροφής από τον προπονητή (μόνο όταν υπάρχει προπονητής).
+export const PLAN_VIEW = { id: 'plan', label: 'Πρόγραμμα', Icon: PlanIcon };
 // Ομάδες του προπονητή στις οποίες ανήκει ο αθλούμενος.
 export const GROUPS_VIEW = { id: 'groups', label: 'Ομάδες', Icon: GroupsIcon };
 
@@ -42,7 +44,7 @@ export default function AppShell({ children }) {
     setLastType(getLastUser()?.type ?? null);
     try {
       const v = sessionStorage.getItem(VIEW_KEY);
-      if ([...VIEWS, CHAT_VIEW].some((x) => x.id === v)) setViewState(v);
+      if ([...VIEWS, PLAN_VIEW, CHAT_VIEW].some((x) => x.id === v)) setViewState(v);
     } catch {}
   }, []);
 
@@ -68,7 +70,7 @@ export default function AppShell({ children }) {
 function Shell({ coach, children }) {
   const { user, logout } = useAuth();
   const { view, setView } = useAppView();
-  const { unread, unreadMsgs, coach: myCoach, groups } = useLive();
+  const { unread, unreadMsgs, coach: myCoach, groups, hasPlans } = useLive();
   const path = usePathname();
 
   const onAccount = path.startsWith('/account');
@@ -86,7 +88,7 @@ function Shell({ coach, children }) {
       groupsItem,
     ]
     : [
-      ...[...VIEWS, ...(myCoach ? [CHAT_VIEW] : [])].map((v) => ({
+      ...[...VIEWS, ...(myCoach || hasPlans ? [PLAN_VIEW] : []), ...(myCoach ? [CHAT_VIEW] : [])].map((v) => ({
         ...v, active: !onAccount && !onGroups && view === v.id, onClick: () => setView(v.id),
         badge: v.id === 'chat' ? total(unreadMsgs) : 0,
       })),
@@ -95,7 +97,7 @@ function Shell({ coach, children }) {
 
   return (
     <div className={`shell${withList ? ' with-list' : ''}${paneOpen ? ' pane-open' : ''}`} style={listW ? { '--list-w': `${listW}px` } : undefined}>
-      <nav className="rail" aria-label="Μενού">
+      <nav className={`rail${nav.length > 5 ? ' crowded' : ''}`} aria-label="Μενού">
         <Link href="/dashboard" className="rail-logo" aria-label="FormLog"><LogoMark size={40} /></Link>
         {nav.map(({ id, label, Icon, href, active, onClick, badge }) => {
           const inner = (

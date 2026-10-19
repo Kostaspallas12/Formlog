@@ -1,4 +1,4 @@
-// Προεπισκόπηση του αρχείου προόδου στην αρχική: στατιστικά, γράφημα βάρους, τελευταίες καταχωρήσεις.
+// Προεπισκόπηση του αρχείου προόδου στην αρχική: στατιστικά και γράφημα βάρους.
 // Ενδεικτικά δεδομένα, μόνο για παρουσίαση.
 
 const ENTRIES = [
@@ -28,7 +28,6 @@ export default function HeroPreview() {
   const pts = chartPoints();
   const line = pts.map(([x, y]) => `${x},${y}`).join(' ');
   const area = `${PAD},${H} ${line} ${W - PAD},${H}`;
-  const recent = ENTRIES.slice(-3).reverse();
 
   return (
     <div className="preview" aria-label="Παράδειγμα του αρχείου προόδου">
@@ -48,16 +47,6 @@ export default function HeroPreview() {
         <polyline points={line} className="line" />
         {pts.map(([x, y]) => <circle key={x} cx={x} cy={y} r="3.5" className="dot" />)}
       </svg>
-
-      <ul className="preview-list">
-        {recent.map((e, i) => (
-          <li key={e.date}>
-            <span className={`thumb t${i}`} aria-hidden="true" />
-            <span className="when"><b>{e.date}</b><small>Μπροστά · Πλάγια · Πίσω</small></span>
-            <span className="kg">{e.kg.toFixed(1).replace('.', ',')} kg</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

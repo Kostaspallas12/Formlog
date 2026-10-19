@@ -8,8 +8,9 @@ import { getLastUser } from '@/lib/lastUser';
 import Workspace from '@/components/Workspace';
 import MyCoach from '@/components/MyCoach';
 import PaneHead from '@/components/PaneHead';
-import { CHAT_VIEW, useAppView, VIEWS } from '@/components/AppShell';
+import { CHAT_VIEW, PLAN_VIEW, useAppView, VIEWS } from '@/components/AppShell';
 import Chat from '@/components/Chat';
+import AthletePlans from '@/components/AthletePlans';
 import { PlusIcon, UsersIcon } from '@/components/Icons';
 import { AthleteAvatar } from '@/components/AthleteSidebar';
 import { useLive } from '@/components/Live';
@@ -147,10 +148,10 @@ function Group({ title, items, sub, online, hrefOf = (a) => `/dashboard/athletes
 // Προσωπικός λογαριασμός: ο χώρος του ίδιου του χρήστη, με την ενότητα από το πλαϊνό μενού.
 function MyProgress({ user }) {
   const { view } = useAppView();
-  const { coach } = useLive();
+  const { coach, hasPlans } = useLive();
   const [me, setMe] = useState(null);
-  const current = (view === 'chat' && !coach) || view === 'groups' ? 'archive' : view;
-  const title = current === 'chat' ? coach.name : [...VIEWS, CHAT_VIEW].find((v) => v.id === current)?.label;
+  const current = (view === 'chat' && !coach) || (view === 'plan' && !coach && !hasPlans) || view === 'groups' ? 'archive' : view;
+  const title = current === 'chat' ? coach.name : [...VIEWS, PLAN_VIEW, CHAT_VIEW].find((v) => v.id === current)?.label;
 
   useEffect(() => {
     getSelfAthlete(user).then(setMe);
@@ -161,6 +162,7 @@ function MyProgress({ user }) {
     <Workspace
       athlete={me} title={title} subtitle={current === 'chat' ? 'Προπονητής' : <MyCoach />} view={current} onAthleteChange={setMe}
       chat={coach ? <Chat athleteId={me.id} me={user.id} otherName={coach.name} solo /> : null}
+      plans={coach || hasPlans ? <AthletePlans athleteId={me.id} /> : null}
     />
   );
 }

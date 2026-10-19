@@ -13,20 +13,23 @@ import { WorkspaceSkeleton } from '@/components/Skeletons';
 import { useLive } from '@/components/Live';
 import EmptyState from '@/components/EmptyState';
 import Chat from '@/components/Chat';
+import AthletePlans from '@/components/AthletePlans';
+import { isUuid } from '@/lib/utils';
 
 export default function AthletePage() {
   const { id } = useParams();
   const router = useRouter();
   const { user, ready } = useRequireUser();
   const [athlete, setAthlete] = useState(undefined); // undefined: φορτώνει, null: δεν βρέθηκε
-  const { online, lastEvent, markRead, unreadMsgs } = useLive();
+  const { online, lastEvent, markRead, unreadMsgs, reloadAthletes } = useLive();
   const tabParam = useSearchParams().get('tab'); // π.χ. ?tab=chat από ειδοποίηση μηνύματος
 
   // Ό,τι νέο είχε έρθει από αυτόν τον αθλούμενο θεωρείται πλέον διαβασμένο.
-  useEffect(() => { markRead(id); }, [id, markRead]);
+  useEffect(() => { if (isUuid(id)) markRead(id); }, [id, markRead]);
 
   useEffect(() => {
     if (!user) return;
+    if (!isUuid(id)) return setAthlete(null); // χαλασμένη διεύθυνση: κατευθείαν «Δεν βρέθηκε»
     setAthlete(undefined);
     // Ο προπονητής βλέπει μόνο όσους προπονεί.
     // (Η βάση επιστρέφει μόνο αυτούς, χάρη στο RLS· ελέγχουμε και εδώ.)
@@ -63,6 +66,7 @@ export default function AthletePage() {
       onAthleteChange={setAthlete}
       chat={athlete.linked ? <Chat athleteId={athlete.id} me={user.id} otherName={athlete.name} /> : null}
       chatBadge={unreadMsgs[athlete.id] || 0}
+      plans={<AthletePlans athleteId={athlete.id} coach />}
       initialTab={tabParam}
       // Μόλις ο αθλούμενος ανεβάσει check-in, εμφανίζεται εδώ χωρίς ανανέωση σελίδας.
       reloadSignal={lastEvent?.athleteId === athlete.id ? lastEvent.id : null}
@@ -75,6 +79,7 @@ export default function AthletePage() {
               onClick: async () => {
                 if (!confirm(`Διακοπή συνεργασίας με «${athlete.name}»; Ο φάκελος μένει στον αθλούμενο και εσύ δεν θα έχεις πια πρόσβαση.`)) return;
                 await disconnectCoach(athlete.id);
+                reloadAthletes();
                 router.push('/dashboard');
               },
             },
@@ -83,6 +88,7 @@ export default function AthletePage() {
               onClick: async () => {
                 if (!confirm(`Οριστική διαγραφή του φακέλου «${athlete.name}» με όλες τις καταγραφές, το βάρος, τα καθημερινά και τις φωτογραφίες;`)) return;
                 await deleteAthlete(athlete.id);
+                reloadAthletes();
                 router.push('/dashboard');
               },
             },
