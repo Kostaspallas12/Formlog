@@ -14,6 +14,7 @@ import { useLive } from '@/components/Live';
 import EmptyState from '@/components/EmptyState';
 import Chat from '@/components/Chat';
 import AthletePlans from '@/components/AthletePlans';
+import AvatarPicker from '@/components/AvatarPicker';
 import { isUuid } from '@/lib/utils';
 
 export default function AthletePage() {
@@ -62,6 +63,7 @@ export default function AthletePage() {
       title={athlete.name}
       subtitle={subtitle.length ? subtitle : null}
       backHref="/dashboard"
+      avatar={<AvatarPicker avatar={athlete.avatar} name={athlete.name} size={44} editable={false} />}
       banner={athlete.linked ? null : <CoachLink athlete={athlete} />}
       onAthleteChange={setAthlete}
       chat={athlete.linked ? <Chat athleteId={athlete.id} me={user.id} otherName={athlete.name} /> : null}

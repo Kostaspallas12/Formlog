@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRequireUser } from '@/lib/useAuthRedirect';
-import { getSelfAthlete } from '@/lib/storage';
+import { getSelfAthlete, revokeInvite } from '@/lib/storage';
 import { getLastUser } from '@/lib/lastUser';
 import Workspace from '@/components/Workspace';
 import MyCoach from '@/components/MyCoach';
@@ -11,7 +11,7 @@ import PaneHead from '@/components/PaneHead';
 import { CHAT_VIEW, PLAN_VIEW, useAppView, VIEWS } from '@/components/AppShell';
 import Chat from '@/components/Chat';
 import AthletePlans from '@/components/AthletePlans';
-import { PlusIcon, UsersIcon } from '@/components/Icons';
+import { ArchiveIcon, ChatIcon, CloseIcon, PlusIcon, UsersIcon } from '@/components/Icons';
 import { AthleteAvatar } from '@/components/AthleteSidebar';
 import { useLive } from '@/components/Live';
 import { ANGLES, daysBetween, fmtDate, todayISO } from '@/lib/utils';
@@ -37,7 +37,7 @@ function LoadingSkeleton() {
 const QUIET_DAYS = 7;
 
 function CoachHome() {
-  const { athletes, unread, unreadMsgs, online, groups } = useLive();
+  const { athletes, unread, unreadMsgs, online, groups, reloadAthletes } = useLive();
   const head = (
     <PaneHead
       title="Επισκόπηση"
@@ -73,13 +73,19 @@ function CoachHome() {
   const msgCount = sum(unreadMsgs) + (groups || []).reduce((a, g) => a + g.unread, 0); // ατομικά + ομάδες
   const onlineCount = athletes.filter((a) => a.linked && online.has(a.id)).length;
 
+  // Ακύρωση πρόσκλησης (με επιβεβαίωση) από την κάρτα «Αναμένουν».
+  const cancelInvite = async (a) => {
+    if (!confirm('Ακύρωση της πρόσκλησης για «' + a.name + '»; Ο σύνδεσμος που έχεις στείλει δεν θα ισχύει πια.')) return;
+    try { await revokeInvite(a.id); } finally { reloadAthletes(); }
+  };
+
   return (
     <>
       {head}
       <div className="stats">
-        <div className="stat"><b className={newCount ? 'good' : ''}>{newCount}</b><span>νέα check-in</span></div>
-        <div className="stat"><b className={msgCount ? 'good' : ''}>{msgCount}</b><span>νέα μηνύματα</span></div>
-        <div className="stat"><b>{onlineCount}</b><span>online τώρα</span></div>
+        <Stat Icon={ArchiveIcon} value={newCount} label="νέα check-in" good />
+        <Stat Icon={ChatIcon} value={msgCount} label="νέα μηνύματα" good />
+        <Stat Icon={UsersIcon} value={onlineCount} label="online τώρα" />
       </div>
 
       <RecentPhotos athletes={athletes} />
@@ -97,11 +103,22 @@ function CoachHome() {
         title={`Χωρίς καταγραφή ${QUIET_DAYS}+ ημέρες`} items={quiet} online={online}
         sub={(a) => (a.lastDate ? `Τελευταία πριν ${ago(a)} ημέρες` : 'Καμία καταγραφή ακόμα')}
       />
-      <Group title="Δεν έχουν αποδεχτεί την πρόσκληση" items={pending} sub={() => 'Αναμένει αποδοχή'} online={online} />
+      <Group title="Δεν έχουν αποδεχτεί την πρόσκληση" items={pending} sub={() => 'Αναμένει αποδοχή'} online={online} muted onCancel={cancelInvite} />
       {!fresh.length && !quiet.length && !pending.length && (
         <p className="ov-ok">Όλοι οι αθλούμενοι είναι ενημερωμένοι.</p>
       )}
     </>
+  );
+}
+
+// Μία κάρτα στατιστικού: εικονίδιο, αριθμός (γκρι όταν είναι 0), ετικέτα.
+function Stat({ Icon, value, label, good }) {
+  return (
+    <div className="stat">
+      <span className="stat-icon" aria-hidden="true"><Icon size={18} /></span>
+      <b className={value ? (good ? 'good' : '') : 'zero'}>{value}</b>
+      <span>{label}</span>
+    </div>
   );
 }
 
@@ -128,18 +145,28 @@ function RecentPhotos({ athletes }) {
   );
 }
 
-function Group({ title, items, sub, online, hrefOf = (a) => `/dashboard/athletes/${a.id}` }) {
+function Group({ title, items, sub, online, muted, onCancel, hrefOf = (a) => `/dashboard/athletes/${a.id}` }) {
   if (!items.length) return null;
   return (
-    <section className="ov-group">
+    <section className={"ov-group" + (muted ? " muted" : "")}>
       <h2>{title} <span className="ov-count">{items.length}</span></h2>
       <div className="ov-list">
-        {items.map((a) => (
-          <Link key={a.id} href={hrefOf(a)} className="ov-row">
-            <AthleteAvatar athlete={a} online={a.linked && online.has(a.id)} />
-            <span className="ov-name"><b>{a.name}</b><small>{sub(a)}</small></span>
-          </Link>
-        ))}
+        {items.map((a) => {
+          const inner = (
+            <>
+              <AthleteAvatar athlete={a} online={a.linked && online.has(a.id)} />
+              <span className="ov-name"><b>{a.name}</b><small>{sub(a)}</small></span>
+            </>
+          );
+          return onCancel ? (
+            <div className="ov-row-wrap" key={a.id}>
+              <Link href={hrefOf(a)} className="ov-row">{inner}</Link>
+              <button type="button" className="icon-btn ov-cancel" title="Ακύρωση πρόσκλησης" aria-label={'Ακύρωση πρόσκλησης: ' + a.name} onClick={() => onCancel(a)}><CloseIcon size={18} /></button>
+            </div>
+          ) : (
+            <Link key={a.id} href={hrefOf(a)} className="ov-row">{inner}</Link>
+          );
+        })}
       </div>
     </section>
   );

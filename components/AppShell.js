@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { getLastUser } from '@/lib/lastUser';
 import AthleteSidebar from './AthleteSidebar';
 import LogoMark from './Logo';
+import Photo from './Photo';
 import GroupSidebar from './GroupSidebar';
 import { CoachLive, PersonalLive, useLive } from './Live';
 import { ArchiveIcon, ChatIcon, CompareIcon, DailyIcon, GroupsIcon, LogoutIcon, PlanIcon, UserIcon, UsersIcon, WeightIcon } from './Icons';
@@ -118,7 +119,7 @@ function Shell({ coach, children }) {
         <span className="rail-spacer" />
         <Link href="/account" className="rail-item rail-account" aria-current={onAccount ? 'page' : undefined} title={user?.name}>
           <span className="rail-icon">
-            {user ? <span className="avatar">{user.name.charAt(0).toUpperCase()}</span> : <UserIcon />}
+            {user?.avatar ? <Photo id={user.avatar} alt="" className="avatar" /> : user ? <span className="avatar">{user.name.charAt(0).toUpperCase()}</span> : <UserIcon />}
           </span>
           <span className="rail-label">Λογαριασμός</span>
         </Link>

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ANGLES, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
+import { createPortal } from 'react-dom';
+import { fmtDate, fmtSince } from '@/lib/utils';
 import Photo from './Photo';
 import { ArchiveBoxIcon, BackIcon, BellOffIcon, ChevronIcon, GroupsIcon, PinIcon, PlusIcon, SearchIcon } from './Icons';
 import AthleteRowMenu from './AthleteRowMenu';
@@ -22,13 +23,10 @@ const MORE_FILTERS = [
 
 // Φωτογραφία του αθλούμενου (η πιο πρόσφατη) ή το αρχικό του σε κύκλο.
 export function AthleteAvatar({ athlete, online = false }) {
-  const lastPhoto = [...athlete.checkins].reverse()
-    .map((c) => ANGLES.map((x) => c.photos[x.id]).find(Boolean))
-    .find(Boolean);
   return (
     <span className={`chat-pic${online ? ' online' : ''}`} title={online ? 'Online' : undefined}>
-      {lastPhoto
-        ? <Photo id={lastPhoto} alt="" className="chat-avatar" />
+      {athlete.avatar
+        ? <Photo id={athlete.avatar} alt="" className="chat-avatar" />
         : <span className="chat-avatar initial">{athlete.name.charAt(0).toUpperCase()}</span>}
     </span>
   );
@@ -165,21 +163,25 @@ function MoreFilters({ value, onChange }) {
     if (!open) return;
     const b = btn.current.getBoundingClientRect();
     const w = menu.current.offsetWidth;
-    setPos({ top: b.bottom + 6, left: Math.max(8, Math.min(b.left, window.innerWidth - w - 8)) });
+    // Στοιχισμένο στη δεξιά άκρη του ▾, για να μην ξεχειλίζει πάνω στο περιεχόμενο.
+    const left = Math.max(8, Math.min(b.right - w, window.innerWidth - w - 8));
+    setPos({ top: b.bottom + 6, left });
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
-    const out = (e) => { if (!ref.current?.contains(e.target)) setOpen(false); };
+    const out = (e) => { if (!ref.current?.contains(e.target) && !menu.current?.contains(e.target)) setOpen(false); };
     const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
     const close = () => setOpen(false);
     document.addEventListener('pointerdown', out);
     document.addEventListener('keydown', esc);
     window.addEventListener('resize', close);
+    window.addEventListener('scroll', close, true);
     return () => {
       document.removeEventListener('pointerdown', out);
       document.removeEventListener('keydown', esc);
       window.removeEventListener('resize', close);
+      window.removeEventListener('scroll', close, true);
     };
   }, [open]);
 
@@ -192,7 +194,7 @@ function MoreFilters({ value, onChange }) {
       >
         <ChevronIcon size={16} />
       </button>
-      {open && (
+      {open && createPortal((
         <div className="chip-menu" role="menu" ref={menu} style={pos ? { top: pos.top, left: pos.left } : { visibility: 'hidden' }}>
           {MORE_FILTERS.map((f) => (
             <button
@@ -203,16 +205,17 @@ function MoreFilters({ value, onChange }) {
             </button>
           ))}
         </div>
-      )}
+      ), document.body)}
     </div>
   );
 }
 
 function AthleteRow({ athlete, active, online, unread, pref, message, date, toChat, onMenu }) {
-  const { checkins, weighIns: kgs } = athlete;
-  const sub = kgs.length
-    ? `${fmtKg(kgs[kgs.length - 1].weight)} kg${kgs.length > 1 ? ` · ${fmtDelta(kgs[kgs.length - 1].weight - kgs[0].weight)}` : ''}`
-    : checkins.length ? `${checkins.length} ${checkins.length === 1 ? 'καταγραφή' : 'καταγραφές'}` : 'Καμία καταγραφή';
+  const sub = !athlete.linked && athlete.pending
+    ? 'Δεν αποδέχτηκε ακόμα'
+    : athlete.lastDate
+      ? 'Τελευταία ' + fmtSince(athlete.lastDate)
+      : 'Καμία καταγραφή';
   const isNew = unread > 0 || pref.markedUnread;
 
   // Παρατεταμένο πάτημα (κινητό) = μενού, χωρίς να ανοίξει ο αθλούμενος.
@@ -241,7 +244,6 @@ function AthleteRow({ athlete, active, online, unread, pref, message, date, toCh
           <span className="chat-bottom">
             {/* Αν έχει νέο μήνυμα, φαίνεται αυτό (όπως σε μια εφαρμογή μηνυμάτων). */}
             <span className={`chat-sub${message ? ' msg-preview' : ''}`}>{message ? message.body || 'Φωτογραφία' : sub}</span>
-            {!athlete.linked && athlete.pending && <span className="chat-tag">Αναμένει</span>}
             {pref.muted && <BellOffIcon size={16} className="chat-flag" aria-label="Σίγαση" />}
             {pref.pinned && <PinIcon size={16} className="chat-flag" aria-label="Καρφιτσωμένος" />}
             {unread > 0

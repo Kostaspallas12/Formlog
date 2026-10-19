@@ -25,6 +25,7 @@ export const FoodIcon = icon(<path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17.5 2
 export const UserIcon =icon(<><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>);
 export const LogoutIcon = icon(<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11" />);
 export const UploadIcon = icon(<path d="M12 16V4M7 9l5-5 5 5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />);
+export const DownloadIcon = icon(<path d="M12 4v11M7 10l5 5 5-5M5 20h14" />);
 export const CloseIcon =icon(<path d="M6 6l12 12M18 6L6 18" />);
 export const PlusIcon =icon(<path d="M12 5v14M5 12h14" />);
 export const BackIcon = icon(<path d="M15 18l-6-6 6-6" />);

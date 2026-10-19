@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { addGroupMember, deleteAthlete, disconnectCoach } from '@/lib/storage';
 import { useLive } from './Live';
 import {
@@ -86,7 +87,8 @@ export default function AthleteRowMenu({ athlete, hasNew, at, onClose }) {
     }
   };
 
-  return (
+  if (typeof document === 'undefined') return null;
+  return createPortal(
     <div className="row-menu" ref={ref} style={pos} role="menu" onContextMenu={(e) => e.preventDefault()}>
       {sub === 'groups' ? (
         <>
@@ -110,6 +112,7 @@ export default function AthleteRowMenu({ athlete, hasNew, at, onClose }) {
           </button>
         )))
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }

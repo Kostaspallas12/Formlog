@@ -1236,3 +1236,58 @@ tr:last-child td { border-bottom: 0; }
 
 /* Πολύ μεγάλες λέξεις (π.χ. σύνδεσμοι) σπάνε σε γραμμές αντί να φαρδαίνουν τη σελίδα. */
 .plan-view, .plan-title, .account-block p { overflow-wrap: anywhere; }
+
+/* ---------- Φωτογραφία προφίλ ---------- */
+img.avatar { object-fit: cover; }
+.avatar-picker { position: relative; display: inline-flex; flex-wrap: wrap; }
+.avatar-pic { position: relative; flex: none; display: block; padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; }
+.avatar-pic:disabled { opacity: 0.55; cursor: default; }
+.avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: grid; place-items: center; }
+.avatar-img.initial { background: var(--soft); color: var(--primary); font-weight: 700; font-size: 1.5em; }
+.avatar-pic .ph { width: 100%; height: 100%; border-radius: 50%; }
+.avatar-edit { position: absolute; right: -2px; bottom: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: var(--primary-ink); display: grid; place-items: center; border: 2px solid var(--surface); }
+.avatar-remove { position: absolute; top: -6px; right: -6px; width: 24px; height: 24px; background: var(--surface); border: 1px solid var(--line); }
+.avatar-error { flex-basis: 100%; margin-top: 8px; }
+.avatar-block { display: flex; align-items: center; gap: 18px; }
+.avatar-block h2 { margin-bottom: 4px; }
+.avatar-pic.static { cursor: default; }
+
+/* Προγράμματα: εικόνες ως προεπισκόπηση (JPG/PNG), έγγραφα ως κάρτες */
+.plan-photos { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; }
+.plan-photo { position: relative; }
+.plan-photo-open { display: block; width: 150px; height: 150px; padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); cursor: pointer; }
+.plan-photo-open img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.plan-photo-open .ph { width: 100%; height: 100%; display: block; border-radius: 0; }
+.plan-photo > .icon-btn { position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; background: var(--surface); border: 1px solid var(--line); }
+
+/* Παράθυρο προβολής αρχείου (μέσα στη σελίδα) */
+.viewer { position: fixed; inset: 0; z-index: 100; background: rgba(8, 13, 17, 0.82); display: grid; place-items: center; padding: 20px; }
+.viewer-box { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; width: min(900px, 100%); max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow); }
+.viewer-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.viewer-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.viewer-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.viewer-actions .btn { display: inline-flex; align-items: center; gap: 6px; }
+.viewer-body { flex: 1; min-height: 0; overflow: auto; display: grid; place-items: center; background: var(--bg); }
+.viewer-body img { max-width: 100%; max-height: 86vh; display: block; }
+.viewer-body iframe { width: 100%; height: 86vh; border: 0; background: #fff; }
+.viewer-body pre { margin: 0; padding: 20px; width: 100%; align-self: start; white-space: pre-wrap; word-break: break-word; font-size: 15px; line-height: 1.5; }
+.viewer-noprev { display: grid; gap: 14px; justify-items: center; text-align: center; padding: 48px 24px; }
+.viewer-noprev .btn { display: inline-flex; align-items: center; gap: 6px; }
+.viewer-sk { width: min(500px, 80%); height: 320px; border-radius: 10px; }
+
+/* Επισκόπηση coach: διακριτικά «0», πρόσφατη δραστηριότητα, πιο αραιές ενότητες */
+.stat { position: relative; }
+.stat-icon { position: absolute; top: 12px; right: 12px; color: var(--muted); opacity: 0.5; }
+.stat b.zero { color: var(--muted); }
+.ov-group { margin-bottom: 30px; }
+/* «Αναμένουν»: ταυτότητα του site με τον τόνο του αμπέρ (= σε αναμονή), όχι άδειο πλαίσιο */
+.ov-group.muted .ov-row { background: color-mix(in srgb, var(--amber) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--amber) 30%, var(--line)); }
+.ov-group.muted .ov-row:hover { border-color: color-mix(in srgb, var(--amber) 55%, var(--line)); }
+.ov-group.muted .ov-name small { display: inline-flex; align-items: center; gap: 7px; color: color-mix(in srgb, var(--amber) 80%, var(--ink)); font-weight: 600; }
+.ov-group.muted .ov-name small::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); flex: none; }
+
+/* Κουμπί ✕ για ακύρωση πρόσκλησης στην κάρτα «Αναμένουν» */
+.ov-row-wrap { position: relative; }
+.ov-row-wrap .ov-row { padding-right: 46px; }
+.ov-cancel { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); width: 30px; height: 30px; color: var(--muted); }
+.ov-cancel:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 10%, transparent); }

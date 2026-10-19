@@ -2,21 +2,20 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  deleteAthletePlan, downloadPlanFile, getAthletePlans, PLAN_FILE_TYPES, removePlanFiles, saveAthletePlan, uploadPlanFile,
+  deleteAthletePlan, getAthletePlans, PLAN_FILE_TYPES, removePlanFiles, saveAthletePlan, uploadPlanFile,
 } from '@/lib/storage';
 import { fmtDate } from '@/lib/utils';
 import PlanView, { hasWritten, PLAN_KINDS } from './PlanView';
 import PlanEditor from './PlanEditor';
 import EmptyState from './EmptyState';
 import Menu from './Menu';
-import { CloseIcon, PlanIcon, UploadIcon } from './Icons';
+import PlanFiles from './PlanFiles';
+import { PlanIcon, UploadIcon } from './Icons';
 
 const MAX_FILES = 10;
 const ACCEPT = Object.keys(PLAN_FILE_TYPES).map((x) => `.${x}`).join(',');
 // Αρχεία που ανοίγουν στον browser (τα υπόλοιπα κατεβαίνουν).
-const VIEWABLE = ['application/pdf', 'text/plain', 'image/jpeg', 'image/png'];
-const fmtSize = (b) => (b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1).replace('.', ',')} MB`);
-const fileExt = (name) => name.split('.').pop().toUpperCase().slice(0, 4);
+
 
 // Η καρτέλα «Πρόγραμμα» ενός αθλούμενου: προπόνηση / διατροφή, μόνο δικά του.
 // coach: ο προπονητής γράφει το πρόγραμμα ή ανεβάζει αρχεία από τον υπολογιστή · αλλιώς μόνο ανάγνωση.
@@ -123,20 +122,6 @@ export default function AthletePlans({ athleteId, coach = false }) {
     }
   };
 
-  const open = async (f) => {
-    // Το παράθυρο ανοίγει αμέσως (αλλιώς ο browser το μπλοκάρει), και γεμίζει όταν κατέβει το αρχείο.
-    const win = VIEWABLE.includes(f.type) ? window.open('', '_blank') : null;
-    try {
-      const url = URL.createObjectURL(await downloadPlanFile(f.path));
-      if (win) win.location.href = url;
-      else Object.assign(document.createElement('a'), { href: url, download: f.name }).click();
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-    } catch {
-      win?.close();
-      setError('Το αρχείο δεν άνοιξε. Δοκίμασε ξανά.');
-    }
-  };
-
   const uploadBtn = coach && (
     <>
       <input ref={fileInput} type="file" accept={ACCEPT} multiple hidden onChange={(e) => upload(e.target.files)} />
@@ -182,23 +167,7 @@ export default function AthletePlans({ athleteId, coach = false }) {
         <>
           {written && <div className="panel"><PlanView plan={current} /></div>}
           {!written && current.title && <h3 className="plan-title">{current.title}</h3>}
-          {files.length > 0 && (
-            <div className="plan-files">
-              {files.map((f) => (
-                <div className="plan-file" key={f.path}>
-                  <button type="button" className="plan-file-open" onClick={() => open(f)} title="Άνοιγμα">
-                    <span className="plan-file-ext">{fileExt(f.name)}</span>
-                    <span className="plan-file-name"><b>{f.name}</b><small>{fmtSize(f.size)}</small></span>
-                  </button>
-                  {coach && (
-                    <button type="button" className="icon-btn" aria-label={`Αφαίρεση ${f.name}`} title="Αφαίρεση" disabled={busy} onClick={() => removeFile(f)}>
-                      <CloseIcon size={18} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          {files.length > 0 && <PlanFiles files={files} coach={coach} busy={busy} onRemove={removeFile} setError={setError} />}
           <p className="meta plan-updated">Ενημερώθηκε {fmtDate(current.updatedAt.slice(0, 10))}</p>
         </>
       )}

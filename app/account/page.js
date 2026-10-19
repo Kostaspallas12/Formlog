@@ -6,12 +6,13 @@ import { MIN_PASSWORD, useAuth } from '@/lib/AuthContext';
 import { buildExportZip, exportFileName } from '@/lib/exportZip';
 import { AccountSkeleton } from '@/components/Skeletons';
 import PaneHead from '@/components/PaneHead';
+import AvatarPicker from '@/components/AvatarPicker';
 import { LogoutIcon } from '@/components/Icons';
 import { disconnectCoach, getMyCoach } from '@/lib/storage';
 import { fmtDate } from '@/lib/utils';
 
 export default function AccountPage() {
-  const { user, ready, deleteAccount, logout } = useRequireUser();
+  const { user, ready, deleteAccount, logout, updateAvatar, removeAvatar } = useRequireUser();
   const [exporting, setExporting] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [password, setPassword] = useState('');
@@ -56,6 +57,14 @@ export default function AccountPage() {
     <>
       {head}
       <div className="pane-narrow">
+
+      <section className="panel account-block avatar-block">
+        <AvatarPicker avatar={user.avatar} name={user.name} size={72} onPick={updateAvatar} onRemove={user.avatar ? removeAvatar : null} />
+        <div>
+          <h2>Φωτογραφία προφίλ</h2>
+          <p>Μια φωτογραφία που σε αντιπροσωπεύει.</p>
+        </div>
+      </section>
 
       <section className="panel account-block">
         <h2>Στοιχεία</h2>
