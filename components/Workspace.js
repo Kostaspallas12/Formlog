@@ -12,7 +12,8 @@ import DailyLog from './DailyLog';
 import PaneHead from './PaneHead';
 import BodyInfo from './BodyInfo';
 import { CHAT_VIEW, VIEWS } from './AppShell';
-import { PlusIcon } from './Icons';
+import { ArchiveIcon, PlusIcon } from './Icons';
+import EmptyState from './EmptyState';
 import { WorkspaceBodySkeleton } from './Skeletons';
 
 // Τι φορτώνεται για έναν αθλούμενο (το καθένα ξεχωριστά, για να ανανεώνεται μόνο ό,τι άλλαξε).
@@ -74,7 +75,7 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
   );
 
   if (loadError && !data) {
-    return <>{head}<div className="empty">Δεν φόρτωσαν τα δεδομένα. Έλεγξε τη σύνδεσή σου και ανανέωσε τη σελίδα.</div></>;
+    return <>{head}<EmptyState title="Δεν φόρτωσαν τα δεδομένα" text="Έλεγξε τη σύνδεσή σου και ανανέωσε τη σελίδα." /></>;
   }
   // Όσο φορτώνει: η κεφαλίδα κανονικά και σκελετός στη θέση των δεδομένων.
   if (!data) return <>{head}{banner}{tabs}<WorkspaceBodySkeleton /></>;
@@ -127,10 +128,9 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
           )}
           {checkins.length === 0 ? (
             !editing && (
-              <div className="empty big">
-                <h3>Ξεκίνα το αρχείο</h3>
-                <button className="btn primary" onClick={startNew}>Πρώτη καταγραφή</button>
-              </div>
+              <EmptyState icon={ArchiveIcon} title="Καμία καταγραφή ακόμα">
+                <button className="btn primary" onClick={startNew}><PlusIcon size={18} /> Πρώτη καταγραφή</button>
+              </EmptyState>
             )
           ) : (
             <Timeline

@@ -9,6 +9,8 @@ import Chat from '@/components/Chat';
 import Menu from '@/components/Menu';
 import PaneHead from '@/components/PaneHead';
 import { useLive } from '@/components/Live';
+import EmptyState from '@/components/EmptyState';
+import Select from '@/components/Select';
 import { GroupsIcon } from '@/components/Icons';
 import { WorkspaceSkeleton } from '@/components/Skeletons';
 
@@ -35,7 +37,7 @@ export default function GroupPage() {
     return (
       <>
         <PaneHead title="Δεν βρέθηκε" backHref="/dashboard/groups" />
-        <div className="empty">Δεν βρέθηκε αυτή η ομάδα. <Link href="/dashboard/groups">Επιστροφή</Link></div>
+        <EmptyState title="Δεν βρέθηκε αυτή η ομάδα"><Link href="/dashboard/groups" className="btn">Επιστροφή</Link></EmptyState>
       </>
     );
   }
@@ -137,10 +139,10 @@ function GroupMembers({ groupId, members, athletes, onChange, onClose }) {
       )}
       {candidates.length > 0 ? (
         <form className="member-add" onSubmit={(e) => { e.preventDefault(); if (pick) run(() => addGroupMember(groupId, pick)).then(() => setPick('')); }}>
-          <select value={pick} onChange={(e) => setPick(e.target.value)} aria-label="Αθλούμενος">
-            <option value="">Διάλεξε αθλούμενο…</option>
-            {candidates.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </select>
+          <Select
+            value={pick} onChange={setPick} label="Αθλούμενος" placeholder="Διάλεξε αθλούμενο…"
+            options={candidates.map((a) => ({ value: a.id, label: a.name }))}
+          />
           <button type="submit" className="btn primary small" disabled={!pick || busy}>Προσθήκη</button>
         </form>
       ) : (

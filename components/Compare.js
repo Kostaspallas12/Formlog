@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { ANGLES, daysBetween, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
 import BeforeAfter from './BeforeAfter';
 import { usePhotoUrl } from './Photo';
+import EmptyState from './EmptyState';
+import Select from './Select';
+import { CompareIcon } from './Icons';
 
 // Σύγκριση δύο καταγραφών: ίδια πλευρά, slider ή δίπλα δίπλα, ημέρες και διαφορά βάρους.
 export default function Compare({ checkins }) {
@@ -24,24 +27,22 @@ export default function Compare({ checkins }) {
   const urlB = usePhotoUrl(side ? b.photos[side.id] : null);
 
   if (withPhotos.length < 2) {
-    return <div className="empty">Χρειάζονται τουλάχιστον δύο καταγραφές με φωτογραφίες για σύγκριση.</div>;
+    return <EmptyState icon={CompareIcon} title="Χρειάζονται δύο καταγραφές με φωτογραφίες" />;
   }
 
   const days = Math.abs(daysBetween(a.date, b.date));
   const hasKg = a.weight != null && b.weight != null;
   const dKg = hasKg ? b.weight - a.weight : 0;
 
-  const options = withPhotos.map((c) => (
-    <option key={c.id} value={c.id}>
-      {fmtDate(c.date)}{c.weight != null ? ` · ${fmtKg(c.weight)} kg` : ''}
-    </option>
-  ));
+  const options = withPhotos.map((c) => ({
+    value: c.id, label: `${fmtDate(c.date)}${c.weight != null ? ` · ${fmtKg(c.weight)} kg` : ''}`,
+  }));
 
   return (
     <div className="cmp-layout">
       <div className="cmp-view">
         {!side ? (
-          <div className="empty">Αυτές οι δύο καταγραφές δεν έχουν φωτογραφία από την ίδια πλευρά.</div>
+          <EmptyState icon={CompareIcon} title="Δεν υπάρχει φωτογραφία από την ίδια πλευρά" />
         ) : !urlA || !urlB ? (
           <div className="cmp-loading" />
         ) : mode === 'slider' ? (
@@ -63,14 +64,14 @@ export default function Compare({ checkins }) {
       </div>
 
       <div className="cmp-controls">
-        <label className="f">
+        <div className="f">
           Πριν
-          <select value={a.id} onChange={(e) => setA(e.target.value)}>{options}</select>
-        </label>
-        <label className="f">
+          <Select value={a.id} options={options} onChange={setA} label="Πριν" />
+        </div>
+        <div className="f">
           Μετά
-          <select value={b.id} onChange={(e) => setB(e.target.value)}>{options}</select>
-        </label>
+          <Select value={b.id} options={options} onChange={setB} label="Μετά" />
+        </div>
 
         <div className="seg-group">
           <span className="seg-label">Πλευρά</span>

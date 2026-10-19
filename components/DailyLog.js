@@ -3,6 +3,9 @@
 import { useEffect, useId, useState } from 'react';
 import { deleteDailyLog, setDailyLog, updateDailyLog } from '@/lib/storage';
 import { fmtDate, todayISO } from '@/lib/utils';
+import EmptyState from './EmptyState';
+import DateField from './DateField';
+import { DailyIcon } from './Icons';
 
 // Καθημερινά: θερμίδες που έφαγε, πρόγραμμα προπόνησης, βήματα και νερό, μία γραμμή ανά ημέρα.
 
@@ -50,7 +53,7 @@ export default function DailyLog({ athleteId, entries, onChange }) {
       {msg && <p className={msg.type === 'error' ? 'error' : 'wl-ok'} role={msg.type === 'error' ? 'alert' : 'status'}>{msg.text}</p>}
 
       {entries.length === 0 ? (
-        <div className="empty">Δεν υπάρχει καθημερινή καταγραφή ακόμα. Γράψε τη σημερινή σου μέρα παραπάνω.</div>
+        <EmptyState icon={DailyIcon} title="Καμία καθημερινή καταγραφή ακόμα" />
       ) : (
         <div className="table-wrap">
           <table className="sheet daily-sheet">
@@ -186,10 +189,10 @@ function AddForm({ athleteId, byDate, listId, onChange, flash }) {
   return (
     <form className="panel daily-add" onSubmit={save}>
       <div className="daily-grid">
-        <label>
+        <div className="field">
           <span>Ημερομηνία</span>
-          <input type="date" value={date} max={todayISO()} onChange={(e) => setDate(e.target.value)} required />
-        </label>
+          <DateField value={date} onChange={setDate} />
+        </div>
         {FIELDS.map((f) => (
           <label key={f.key} className={f.type === 'text' ? 'wide' : ''}>
             <span>{f.label}{f.unit ? ` (${f.unit})` : ''}</span>

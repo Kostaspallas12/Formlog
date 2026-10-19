@@ -11,6 +11,7 @@ import Menu from '@/components/Menu';
 import PaneHead from '@/components/PaneHead';
 import { WorkspaceSkeleton } from '@/components/Skeletons';
 import { useLive } from '@/components/Live';
+import EmptyState from '@/components/EmptyState';
 import Chat from '@/components/Chat';
 
 export default function AthletePage() {
@@ -40,7 +41,7 @@ export default function AthletePage() {
     return (
       <>
         <PaneHead title="Δεν βρέθηκε" backHref="/dashboard" />
-        <div className="empty">Δεν βρέθηκε αυτός ο αθλούμενος. <Link href="/dashboard">Επιστροφή</Link></div>
+        <EmptyState title="Δεν βρέθηκε αυτός ο αθλούμενος"><Link href="/dashboard" className="btn">Επιστροφή</Link></EmptyState>
       </>
     );
   }

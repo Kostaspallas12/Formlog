@@ -5,6 +5,7 @@ import { addPhoto, deleteWeighInOn, putCheckin, removePhotos, setWeighIn, uuid }
 import { processImage } from '@/lib/images';
 import { ANGLES, todayISO } from '@/lib/utils';
 import Photo from './Photo';
+import DateField from './DateField';
 
 // Νέα καταγραφή ή επεξεργασία υπάρχουσας: ημερομηνία, βάρος, έως 3 φωτογραφίες, σημείωση.
 export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
@@ -102,10 +103,10 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
       </div>
 
       <div className="form-row">
-        <label className="f">
+        <div className="f">
           Ημερομηνία λήψης
-          <input type="date" value={date} max={todayISO()} onChange={(e) => setDate(e.target.value)} required />
-        </label>
+          <DateField value={date} onChange={setDate} label="Ημερομηνία λήψης" />
+        </div>
         <label className="f">
           Βάρος (kg)
           <input

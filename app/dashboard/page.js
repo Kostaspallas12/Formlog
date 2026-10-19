@@ -13,7 +13,8 @@ import Chat from '@/components/Chat';
 import { PlusIcon, UsersIcon } from '@/components/Icons';
 import { AthleteAvatar } from '@/components/AthleteSidebar';
 import { useLive } from '@/components/Live';
-import { daysBetween, todayISO } from '@/lib/utils';
+import { ANGLES, daysBetween, fmtDate, todayISO } from '@/lib/utils';
+import Photo from '@/components/Photo';
 import { WorkspaceSkeleton } from '@/components/Skeletons';
 
 export default function DashboardPage() {
@@ -80,6 +81,8 @@ function CoachHome() {
         <div className="stat"><b>{onlineCount}</b><span>online τώρα</span></div>
       </div>
 
+      <RecentPhotos athletes={athletes} />
+
       <Group
         title="Νέα" items={fresh} online={online}
         // Μόνο μηνύματα → κατευθείαν στη συνομιλία.
@@ -98,6 +101,29 @@ function CoachHome() {
         <p className="ov-ok">Όλοι οι αθλούμενοι είναι ενημερωμένοι.</p>
       )}
     </>
+  );
+}
+
+// Οι πιο πρόσφατες καταγραφές με φωτογραφία, από όλους τους αθλούμενους.
+function RecentPhotos({ athletes }) {
+  const recent = athletes
+    .flatMap((a) => a.checkins.map((c) => ({ a, c, photo: ANGLES.map((x) => c.photos[x.id]).find(Boolean) })))
+    .filter((r) => r.photo)
+    .sort((x, y) => y.c.date.localeCompare(x.c.date) || (y.c.createdAt || '').localeCompare(x.c.createdAt || ''))
+    .slice(0, 8);
+  if (!recent.length) return null;
+  return (
+    <section className="ov-group">
+      <h2>Πρόσφατες φωτογραφίες</h2>
+      <div className="recent-photos">
+        {recent.map(({ a, c, photo }) => (
+          <Link key={c.id} href={`/dashboard/athletes/${a.id}`} className="recent-photo">
+            <Photo id={photo} alt={`${a.name}, ${fmtDate(c.date)}`} />
+            <span className="recent-cap"><b>{a.name}</b><small>{fmtDate(c.date, { day: 'numeric', month: 'short' })}</small></span>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 

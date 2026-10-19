@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { deleteWeighIn, setWeighIn, updateWeighIn } from '@/lib/storage';
 import { fmtDate, fmtDelta, fmtKg, todayISO } from '@/lib/utils';
+import EmptyState from './EmptyState';
+import DateField from './DateField';
+import { WeightIcon } from './Icons';
 
 // Πίνακας βάρους τύπου Excel: γρήγορη προσθήκη πάνω, και κάθε κελί αλλάζει με κλικ.
 // Enter ή κλικ έξω = αποθήκευση, Esc = ακύρωση.
@@ -51,10 +54,10 @@ export default function WeightLog({ athleteId, entries, onChange }) {
   return (
     <div className="weightlog">
       <form className="wl-add" onSubmit={add}>
-        <label>
+        <div className="field">
           <span>Ημερομηνία</span>
-          <input type="date" value={date} max={todayISO()} onChange={(e) => setDate(e.target.value)} required />
-        </label>
+          <DateField value={date} onChange={setDate} />
+        </div>
         <label>
           <span>Βάρος (kg)</span>
           <input
@@ -72,7 +75,7 @@ export default function WeightLog({ athleteId, entries, onChange }) {
       {msg && <p className={msg.type === 'error' ? 'error' : 'wl-ok'} role={msg.type === 'error' ? 'alert' : 'status'}>{msg.text}</p>}
 
       {rows.length === 0 ? (
-        <div className="empty">Δεν υπάρχει καταγραφή βάρους ακόμα. Γράψε το πρώτο σου βάρος παραπάνω.</div>
+        <EmptyState icon={WeightIcon} title="Καμία μέτρηση βάρους ακόμα" />
       ) : (
         <div className="table-wrap">
           <table className="sheet">
@@ -134,11 +137,6 @@ function Row({ entry, delta, onChange, flash }) {
     else setKg(fmtKg(v));
   };
 
-  const saveDate = () => {
-    if (!date || date > todayISO()) return setDate(entry.date);
-    if (date !== entry.date) save({ date }, () => setDate(entry.date));
-  };
-
   const saveNote = () => {
     if (note.trim() !== entry.note) save({ note: note.trim() }, () => setNote(entry.note));
   };
@@ -165,10 +163,9 @@ function Row({ entry, delta, onChange, flash }) {
   return (
     <tr className={saving ? 'saving' : ''}>
       <td>
-        <input
-          className="cell" type="date" value={date} max={todayISO()} aria-label="Ημερομηνία"
-          onChange={(e) => setDate(e.target.value)} onBlur={saveDate}
-          onKeyDown={keys(() => setDate(entry.date))}
+        <DateField
+          compact value={date} label="Ημερομηνία"
+          onChange={(d) => { setDate(d); if (d !== entry.date) save({ date: d }, () => setDate(entry.date)); }}
         />
       </td>
       <td className="num">
