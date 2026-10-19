@@ -92,7 +92,7 @@ export default function AccountPage() {
           Δεν μπορεί να αναιρεθεί. Αν θες να τα κρατήσεις, κάνε πρώτα «Λήψη δεδομένων».
         </p>
         {!confirming ? (
-          <button className="btn danger-solid" onClick={() => setConfirming(true)}>Διαγραφή λογαριασμού</button>
+          <button className="btn danger" onClick={() => setConfirming(true)}>Διαγραφή λογαριασμού</button>
         ) : (
           <form onSubmit={remove}>
             <label className="f">
@@ -327,7 +327,7 @@ function CoachSection() {
             Συνεργάζεσαι με <b>{coach.name}</b>{coach.since ? ` από ${fmtDate(coach.since.slice(0, 10))}` : ''}. Βλέπει και
             καταχωρεί στον φάκελό σου φωτογραφίες, βάρος και καθημερινά.
           </p>
-          <button className="btn danger-solid" onClick={stop} disabled={busy}>Διακοπή συνεργασίας</button>
+          <button className="btn danger" onClick={stop} disabled={busy}>Διακοπή συνεργασίας</button>
         </>
       ) : (
         <p>Δεν συνεργάζεσαι με προπονητή. Αν σου στείλει πρόσκληση, άνοιξε τον σύνδεσμο που σου έδωσε.</p>

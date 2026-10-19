@@ -44,7 +44,7 @@ export default function GroupPage() {
   const home = '/dashboard/groups'; // η λίστα με τις ομάδες
   const members = people.filter((p) => !p.isCoach);
   const names = Object.fromEntries(people.map((p) => [p.userId, { name: p.name, isCoach: p.isCoach }]));
-  // Όπως στο WhatsApp: «Εσύ, Μαρία, Γιάννης…»
+  // Όπως σε μια εφαρμογή μηνυμάτων: «Εσύ, Μαρία, Γιάννης…»
   const others = people.filter((p) => p.userId !== user.id).map((p) => p.name);
   const subtitle = members.length
     ? ['Εσύ', ...others.slice(0, 4)].join(', ') + (others.length > 4 ? ` +${others.length - 4}` : '')

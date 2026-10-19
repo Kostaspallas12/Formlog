@@ -41,7 +41,7 @@ export default function CoachLink({ athlete }) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(link);
-      setMsg({ type: 'ok', text: 'Αντιγράφηκε. Στείλ’ τον στον αθλούμενο (π.χ. στο WhatsApp).' });
+      setMsg({ type: 'ok', text: 'Αντιγράφηκε. Στείλ’ τον στον αθλούμενο με μήνυμα ή email.' });
     } catch {
       setMsg({ type: 'error', text: 'Δεν έγινε αντιγραφή. Επίλεξε τον σύνδεσμο και αντέγραψέ τον.' });
     }

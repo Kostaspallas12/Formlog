@@ -23,7 +23,7 @@ const dayLabel = (iso) => {
 };
 const time = (ts) => new Date(ts).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
 
-// Η συνομιλία (σαν το WhatsApp), με κείμενο και φωτογραφίες:
+// Η συνομιλία (σαν εφαρμογή μηνυμάτων), με κείμενο και φωτογραφίες:
 //   ατομική: προπονητής ↔ αθλούμενος για έναν φάκελο (athleteId)
 //   ομάδα: groupId · people: { userId → { name, isCoach } } για να φαίνεται ποιος γράφει
 // solo: χωρίς καρτέλες από πάνω, για σωστό ύψος.

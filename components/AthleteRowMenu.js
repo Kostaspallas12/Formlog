@@ -8,7 +8,7 @@ import {
   ArchiveBoxIcon, BackIcon, BellOffIcon, GroupAddIcon, GroupsIcon, HeartIcon, PinIcon, ReadIcon, TrashIcon, UnreadIcon,
 } from './Icons';
 
-// Το μενού ενός αθλούμενου στη λίστα (σαν το μενού μιας συνομιλίας στο WhatsApp).
+// Το μενού ενός αθλούμενου στη λίστα (σαν το μενού μιας συνομιλίας σε μια εφαρμογή μηνυμάτων).
 // at: { x, y } σημείο στην οθόνη από το οποίο ανοίγει.
 export default function AthleteRowMenu({ athlete, hasNew, at, onClose }) {
   const { prefs, setPref, markAllRead, markUnread, groups, reloadAthletes, reloadGroups } = useLive();

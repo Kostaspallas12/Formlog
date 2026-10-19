@@ -9,7 +9,7 @@ import { ArchiveBoxIcon, BackIcon, BellOffIcon, ChevronIcon, GroupsIcon, PinIcon
 import AthleteRowMenu from './AthleteRowMenu';
 import { useLive } from './Live';
 
-// Φίλτρα: τα δύο πρώτα φαίνονται πάντα, τα υπόλοιπα στο «▾» (όπως στο WhatsApp).
+// Φίλτρα: τα δύο πρώτα φαίνονται πάντα, τα υπόλοιπα στο «▾» (όπως σε μια εφαρμογή μηνυμάτων).
 const FILTERS = [
   { id: 'all', label: 'Όλοι' },
   { id: 'unread', label: 'Μη αναγνωσμένα' },
@@ -34,7 +34,7 @@ export function AthleteAvatar({ athlete, online = false }) {
   );
 }
 
-// Η λίστα αθλούμενων του προπονητή (σαν τις συνομιλίες του WhatsApp):
+// Η λίστα αθλούμενων του προπονητή (σαν τις συνομιλίες μιας εφαρμογής μηνυμάτων):
 // πρώτα οι καρφιτσωμένοι, μετά όσοι έχουν κάτι νέο, μετά όσοι έστειλαν πιο πρόσφατα.
 // Κάθε γραμμή έχει μενού (βελάκι, δεξί κλικ ή παρατεταμένο πάτημα στο κινητό).
 export default function AthleteSidebar() {
@@ -95,7 +95,7 @@ export default function AthleteSidebar() {
         </div>
       )}
 
-      {/* Όπως στο WhatsApp: οι αρχειοθετημένοι σε μία γραμμή πάνω από τη λίστα */}
+      {/* Όπως σε μια εφαρμογή μηνυμάτων: οι αρχειοθετημένοι σε μία γραμμή πάνω από τη λίστα */}
       {!showArchived && archived.length > 0 && filter !== 'groups' && (
         <button type="button" className="chat archived-row" onClick={() => setShowArchived(true)}>
           <span className="chat-pic archived-icon"><ArchiveBoxIcon size={22} /></span>
@@ -118,7 +118,7 @@ export default function AthleteSidebar() {
           <Link href="/dashboard/athletes/new" className="btn primary">Προσθήκη αθλούμενου</Link>
         </div>
       ) : filter === 'groups' ? (
-        // Φίλτρο «Ομάδες»: οι ομάδες μέσα στην ίδια λίστα (όπως στο WhatsApp)
+        // Φίλτρο «Ομάδες»: οι ομάδες μέσα στην ίδια λίστα (όπως σε μια εφαρμογή μηνυμάτων)
         <nav className="chats">
           {(groups || []).filter((g) => !q || g.name.toLocaleLowerCase('el').includes(q)).map((g) => (
             <GroupRow key={g.id} group={g} active={path === `/dashboard/groups/${g.id}`} />
@@ -239,7 +239,7 @@ function AthleteRow({ athlete, active, online, unread, pref, message, date, toCh
             {date && <small className={isNew && !pref.muted ? 'new' : ''}>{fmtDate(date, { day: 'numeric', month: 'short' })}</small>}
           </span>
           <span className="chat-bottom">
-            {/* Αν έχει νέο μήνυμα, φαίνεται αυτό (όπως στο WhatsApp). */}
+            {/* Αν έχει νέο μήνυμα, φαίνεται αυτό (όπως σε μια εφαρμογή μηνυμάτων). */}
             <span className={`chat-sub${message ? ' msg-preview' : ''}`}>{message ? message.body || 'Φωτογραφία' : sub}</span>
             {!athlete.linked && athlete.pending && <span className="chat-tag">Αναμένει</span>}
             {pref.muted && <BellOffIcon size={16} className="chat-flag" aria-label="Σίγαση" />}

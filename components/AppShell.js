@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { getLastUser } from '@/lib/lastUser';
 import AthleteSidebar from './AthleteSidebar';
+import LogoMark from './Logo';
 import GroupSidebar from './GroupSidebar';
 import { CoachLive, PersonalLive, useLive } from './Live';
 import { ArchiveIcon, ChatIcon, CompareIcon, DailyIcon, GroupsIcon, LogoutIcon, UserIcon, UsersIcon, WeightIcon } from './Icons';
@@ -27,7 +28,7 @@ const ViewContext = createContext(null);
 export const useAppView = () => useContext(ViewContext);
 const VIEW_KEY = 'formlog:view';
 
-// Διάταξη τύπου WhatsApp:
+// Διάταξη τύπου εφαρμογής μηνυμάτων:
 //   υπολογιστής: στενή στήλη με εικονίδια αριστερά · (προπονητής: λίστα αθλούμενων) · περιεχόμενο
 //   κινητό: μπάρα κάτω · ο προπονητής βλέπει ή τη λίστα ή έναν αθλούμενο (με «πίσω»)
 export default function AppShell({ children }) {
@@ -72,7 +73,7 @@ function Shell({ coach, children }) {
 
   const onAccount = path.startsWith('/account');
   const withList = coach && !onAccount;
-  const onGroups = path.startsWith('/dashboard/groups'); // ενότητα «Ομάδες» (σαν τις Κοινότητες του WhatsApp)
+  const onGroups = path.startsWith('/dashboard/groups'); // ενότητα «Ομάδες» (ενότητα ομάδων)
   const paneOpen = path.startsWith('/dashboard/athletes/') || path.startsWith('/dashboard/groups/');
   const total = (m) => Object.values(m).reduce((a, b) => a + b, 0);
   const groupUnread = (groups || []).reduce((a, g) => a + g.unread, 0);
@@ -95,7 +96,7 @@ function Shell({ coach, children }) {
   return (
     <div className={`shell${withList ? ' with-list' : ''}${paneOpen ? ' pane-open' : ''}`} style={listW ? { '--list-w': `${listW}px` } : undefined}>
       <nav className="rail" aria-label="Μενού">
-        <Link href="/dashboard" className="rail-logo" aria-label="FormLog"><i /></Link>
+        <Link href="/dashboard" className="rail-logo" aria-label="FormLog"><LogoMark size={40} /></Link>
         {nav.map(({ id, label, Icon, href, active, onClick, badge }) => {
           const inner = (
             <>
@@ -133,7 +134,7 @@ function Shell({ coach, children }) {
   );
 }
 
-/* ---------- Πλάτος της λίστας αθλούμενων (σύρεται, όπως στο WhatsApp) ---------- */
+/* ---------- Πλάτος της λίστας αθλούμενων (σύρεται, όπως σε μια εφαρμογή μηνυμάτων) ---------- */
 
 const LIST_KEY = 'formlog:listWidth';
 const LIST_DEFAULT = 340;

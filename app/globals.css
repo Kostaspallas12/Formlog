@@ -36,7 +36,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  /* Η γραμματοσειρά του συστήματος, όπως το WhatsApp: Segoe UI (Windows), San Francisco (Apple), Roboto (Android). */
+  /* Η γραμματοσειρά του συστήματος, όπως οι εφαρμογές μηνυμάτων: Segoe UI (Windows), San Francisco (Apple), Roboto (Android). */
   font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 17px;
   line-height: 1.6;
@@ -87,9 +87,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .top .wrap { display: flex; align-items: center; justify-content: space-between; height: 68px; gap: 12px; }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; font-size: 21px; letter-spacing: -0.02em; }
-.logo i { width: 24px; height: 24px; border-radius: 8px; background: linear-gradient(135deg, var(--primary) 55%, var(--amber) 55%); }
+.logo-mark { display: block; flex: none; }
 .logo.small { font-size: 18px; }
-.logo.small i { width: 18px; height: 18px; border-radius: 6px; }
 .top .short { display: none; }
 
 /* ---------- Hero ---------- */
@@ -308,7 +307,7 @@ label.f small { display: block; font-weight: 400; font-size: 14px; margin-top: 6
 .back:hover { color: var(--ink); }
 .row.end { justify-content: flex-end; }
 .btn.small { padding: 6px 12px; font-size: 15px; border-radius: 8px; }
-.btn.danger { color: var(--danger); }
+.btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, var(--line)); }
 .btn.danger:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
 .x {
   background: none; border: 0; cursor: pointer; color: var(--muted); font-size: 18px; line-height: 1;
@@ -609,7 +608,7 @@ tr:last-child td { border-bottom: 0; }
   .wrap { padding: 0 16px; }
   .top .wrap { height: 60px; }
   .logo { font-size: 19px; gap: 8px; }
-  .logo i { width: 22px; height: 22px; }
+  .logo .logo-mark { width: 30px; height: 30px; }
   .top .row { gap: 6px; flex-wrap: nowrap; }
   .top .btn { padding: 8px 12px; font-size: 15px; white-space: nowrap; }
   .top .long { display: none; }
@@ -647,7 +646,7 @@ tr:last-child td { border-bottom: 0; }
   .danger-zone { margin-top: 32px; margin-bottom: 28px; }
 }
 
-/* ---------- Εφαρμογή: διάταξη τύπου WhatsApp ---------- */
+/* ---------- Εφαρμογή: διάταξη τύπου εφαρμογής μηνυμάτων ---------- */
 /* υπολογιστής: [μενού με εικονίδια] [λίστα αθλούμενων (προπονητής)] [κύριος χώρος] */
 .shell { flex: 1; display: grid; grid-template-columns: 84px minmax(0, 1fr); min-height: 100vh; min-height: 100dvh; }
 .shell.with-list { grid-template-columns: 84px var(--list-w, 340px) minmax(0, 1fr); }
@@ -666,8 +665,8 @@ tr:last-child td { border-bottom: 0; }
   display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 6px;
   background: var(--bg); border-right: 1px solid var(--line);
 }
-.rail-logo { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 12px; }
-.rail-logo i { width: 28px; height: 28px; border-radius: 9px; background: linear-gradient(135deg, var(--primary) 55%, var(--amber) 55%); }
+.rail-logo { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 12px; }
+.rail-logo .logo-mark { width: 40px; height: 40px; }
 .rail-item {
   display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; padding: 6px 0;
   border: 0; background: none; cursor: pointer; color: var(--muted); text-decoration: none; font-size: 12px; font-weight: 600;
@@ -681,7 +680,7 @@ tr:last-child td { border-bottom: 0; }
 .rail-account .avatar { width: 30px; height: 30px; font-size: 14px; }
 .rail-item[aria-current='page'] .avatar { background: var(--primary); color: var(--primary-ink); }
 
-/* Λίστα αθλούμενων (σαν τις συνομιλίες του WhatsApp) */
+/* Λίστα αθλούμενων (σαν τις συνομιλίες μιας εφαρμογής μηνυμάτων) */
 .list {
   position: sticky; top: 0; align-self: start; height: 100vh; height: 100dvh; overflow-y: auto; overflow-x: hidden;
   background: var(--surface); border-right: 1px solid var(--line); padding: 16px 8px; container-type: inline-size;
@@ -738,7 +737,7 @@ tr:last-child td { border-bottom: 0; }
   content: ''; position: absolute; right: 0; bottom: 1px; width: 12px; height: 12px; border-radius: 50%;
   background: var(--primary); border: 2px solid var(--surface);
 }
-/* Χωρίς γραμμές ανάμεσα: μόνο αέρας (όπως στο WhatsApp) */
+/* Χωρίς γραμμές ανάμεσα: μόνο αέρας (όπως σε μια εφαρμογή μηνυμάτων) */
 .chat-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .chat-top, .chat-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .chat-top b { font-size: 17px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -816,7 +815,7 @@ tr:last-child td { border-bottom: 0; }
 .pane > .timeline { max-width: 680px; }
 .pane > .weight { max-width: 760px; }
 
-/* Συνομιλία (σαν το WhatsApp) */
+/* Συνομιλία (σαν εφαρμογή μηνυμάτων) */
 .pane:has(.chatbox) { padding-bottom: 0; }
 .chatbox {
   display: flex; flex-direction: column; height: calc(100vh - 178px); height: calc(100dvh - 178px); min-height: 320px;
@@ -850,7 +849,7 @@ tr:last-child td { border-bottom: 0; }
 .chat-compose .icon-btn { width: 44px; height: 44px; }
 .chat-compose .icon-btn:disabled { opacity: 0.45; cursor: default; }
 .chat-error { padding: 8px 12px 0; margin: 0; background: var(--surface); }
-/* ---------- Μενού αθλούμενου στη λίστα (σαν το WhatsApp) ---------- */
+/* ---------- Μενού αθλούμενου στη λίστα (σαν εφαρμογή μηνυμάτων) ---------- */
 .chat-row { position: relative; }
 /* Το βελάκι φαίνεται όταν περνάς από πάνω (στο κινητό: παρατεταμένο πάτημα). */
 .chat-chev {
@@ -948,7 +947,7 @@ tr:last-child td { border-bottom: 0; }
 .chat-sub.msg-preview { color: var(--ink); }
 .tab .badge { margin-left: 6px; }
 
-/* Νέα check-in: αριθμός σαν τα αδιάβαστα του WhatsApp */
+/* Νέα check-in: αριθμός σαν τα αδιάβαστα μιας εφαρμογής μηνυμάτων */
 .badge {
   display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; flex: none;
   border-radius: 99px; background: var(--primary); color: var(--primary-ink); font-size: 13px; font-weight: 700; line-height: 1;
@@ -1051,8 +1050,17 @@ tr:last-child td { border-bottom: 0; }
   /* Στο κινητό πάνω (όπως οι ειδοποιήσεις), για να μην κρύβει το κουτί γραφής ή τη μπάρα. */
   .toast { left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top)); bottom: auto; }
 
-  .tabs { gap: 18px; }
+  /* Στο κινητό χωράνε και οι 5 καρτέλες, μοιρασμένες σε όλο το πλάτος (καμία κομμένη). */
+  .tabs { gap: 0; justify-content: space-between; }
+  .tab { font-size: 14px; padding: 10px 2px; }
+  .tab .badge { margin-left: 3px; min-width: 16px; height: 16px; padding: 0 4px; font-size: 10px; }
   .chatbox { height: calc(100vh - 160px); height: calc(100dvh - 160px); margin-bottom: 8px; }
   .chatbox.solo { height: calc(100vh - 152px); height: calc(100dvh - 152px - env(safe-area-inset-bottom)); }
   .msg { max-width: 85%; }
 }
+
+/* ---------- Σελίδα «δεν βρέθηκε» (404) ---------- */
+.not-found { flex: 1; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding-top: 64px; padding-bottom: 80px; }
+.not-found-code { margin-top: 10px; font-size: 15px; font-weight: 700; letter-spacing: 0.2em; color: var(--primary); }
+.not-found h1 { font-size: clamp(26px, 4vw, 34px); }
+.not-found-text { color: var(--muted); max-width: 40ch; margin-bottom: 14px; }

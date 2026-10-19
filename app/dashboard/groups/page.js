@@ -9,7 +9,7 @@ import { GroupsIcon } from '@/components/Icons';
 import { WorkspaceSkeleton } from '@/components/Skeletons';
 
 // Ενότητα «Ομάδες».
-//   προπονητής: η λίστα είναι αριστερά, εδώ (δεξιά) η κενή οθόνη με «Νέα ομάδα» — όπως οι Κοινότητες του WhatsApp
+//   προπονητής: η λίστα είναι αριστερά, εδώ (δεξιά) η κενή οθόνη με «Νέα ομάδα» — όπως σε μια εφαρμογή μηνυμάτων
 //   αθλούμενος: οι ομάδες στις οποίες ανήκει
 export default function GroupsPage() {
   const { user, ready } = useRequireUser();

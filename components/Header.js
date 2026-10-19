@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
+import LogoMark from './Logo';
 
 export default function Header() {
   const { user, ready, logout } = useAuth();
@@ -9,7 +10,7 @@ export default function Header() {
   return (
     <header className="top">
       <div className="wrap">
-        <Link href={user ? '/dashboard' : '/'} className="logo"><i aria-hidden="true" /> FormLog</Link>
+        <Link href={user ? '/dashboard' : '/'} className="logo"><LogoMark size={34} /> FormLog</Link>
 
         {ready && (
           <nav className="row">

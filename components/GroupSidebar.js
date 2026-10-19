@@ -7,7 +7,7 @@ import { GroupRow } from './AthleteSidebar';
 import { GroupsIcon, PlusIcon, SearchIcon } from './Icons';
 import { useLive } from './Live';
 
-// Οι ομάδες του προπονητή (σαν τις «Κοινότητες» του WhatsApp): λίστα + νέα ομάδα.
+// Οι ομάδες του προπονητή (ενότητα ομάδων): λίστα + νέα ομάδα.
 export default function GroupSidebar() {
   const path = usePathname();
   const { groups } = useLive();
