@@ -75,6 +75,7 @@ export default function AthletePage() {
       onAthleteChange={setAthlete}
       chat={athlete.linked ? <Chat athleteId={athlete.id} me={user.id} otherName={athlete.name} /> : null}
       chatBadge={unreadMsgs[athlete.id] || 0}
+      canConfigureJournal // ο προπονητής ορίζει πεδία και στόχους του Ημερολογίου
       plans={<AthletePlans athleteId={athlete.id} coach names={{ athlete: athlete.name, coach: user.name }} />}
       initialTab={tabParam}
       // Μόλις ο αθλούμενος ανεβάσει check-in, εμφανίζεται εδώ χωρίς ανανέωση σελίδας.

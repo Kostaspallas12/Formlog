@@ -11,14 +11,14 @@ import { AppLockProvider } from './AppLock';
 import Photo from './Photo';
 import GroupSidebar from './GroupSidebar';
 import { CoachLive, PersonalLive, useLive } from './Live';
-import { ArchiveIcon, ChatIcon, CompareIcon, DailyIcon, GroupsIcon, LogoutIcon, PlanIcon, UserIcon, UsersIcon, WeightIcon } from './Icons';
+import { ArchiveIcon, ChatIcon, DailyIcon, GroupsIcon, LogoutIcon, PlanIcon, UserIcon, UsersIcon, WeightIcon } from './Icons';
 
 // Οι ενότητες του χώρου ενός αθλούμενου.
+// (Τα id μένουν ίδια με πριν: σε αυτά δένουν οι ειδοποιήσεις ανά ενότητα.)
 export const VIEWS = [
-  { id: 'archive', label: 'Αρχείο', Icon: ArchiveIcon },
-  { id: 'compare', label: 'Σύγκριση', Icon: CompareIcon },
+  { id: 'archive', label: 'Πρόοδος', Icon: ArchiveIcon }, // φωτογραφίες + σύγκριση
   { id: 'weight', label: 'Βάρος', Icon: WeightIcon },
-  { id: 'daily', label: 'Καθημερινά', Icon: DailyIcon },
+  { id: 'daily', label: 'Ημερολόγιο', Icon: DailyIcon }, // ύπνος, νερό, θερμίδες, βήματα, προπόνηση
 ];
 // Συνομιλία με τον προπονητή / τον αθλούμενο (μόνο όταν είναι συνδεδεμένοι).
 export const CHAT_VIEW = { id: 'chat', label: 'Συνομιλία', Icon: ChatIcon };

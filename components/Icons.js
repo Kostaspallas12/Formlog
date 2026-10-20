@@ -59,3 +59,5 @@ export const LockIcon = icon(<><rect x="4.5" y="10.5" width="15" height="10" rx=
 export const CopyIcon = icon(<><rect x="8.5" y="8.5" width="12" height="12" rx="2.5" /><path d="M15.5 8.5V6a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 6 15.5h2.5" /></>);
 export const CheckIcon = icon(<path d="M5 12.5l4.5 4.5L19 7.5" />);
 export const BackspaceIcon = icon(<><path d="M9 5h10.5a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6.5-7z" /><path d="M12 9.5l5 5M17 9.5l-5 5" /></>);
+export const MoonIcon = icon(<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />);
+export const SlidersIcon = icon(<><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" /><circle cx="15" cy="6" r="2" /><circle cx="9" cy="12" r="2" /><circle cx="17" cy="18" r="2" /></>);

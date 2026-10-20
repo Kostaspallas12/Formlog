@@ -16,7 +16,7 @@ import { CHAT_VIEW, PLAN_VIEW, useAppView, VIEWS } from '@/components/AppShell';
 import Chat from '@/components/Chat';
 import AthletePlans from '@/components/AthletePlans';
 import PendingInvites from '@/components/PendingInvites';
-import { ArchiveIcon, ChatIcon, CloseIcon, PlusIcon, UsersIcon } from '@/components/Icons';
+import { ArchiveIcon, ChatIcon, CloseIcon, UsersIcon } from '@/components/Icons';
 import { AthleteAvatar } from '@/components/AthleteSidebar';
 import { useLive, useSignal } from '@/components/Live';
 import { ANGLES, daysBetween, fmtDate, todayISO } from '@/lib/utils';
@@ -46,11 +46,7 @@ function CoachHome() {
   const head = (
     <PaneHead
       title="Επισκόπηση"
-      actions={
-        <Link href="/dashboard/athletes/new" className="btn primary">
-          <PlusIcon size={18} /><span className="long">Προσθήκη αθλούμενου</span><span className="short">Νέος</span>
-        </Link>
-      }
+      // (Νέος αθλούμενος: το «+» της λίστας, που φαίνεται πάντα δίπλα στην επισκόπηση.)
     />
   );
 
@@ -198,6 +194,7 @@ function MyProgress({ user }) {
     <Workspace
       athlete={me} title={title} subtitle={current === 'chat' ? 'Προπονητής' : <MyCoach />} view={current} onAthleteChange={setMe}
       banner={<PendingInvites />}
+      canConfigureJournal={!coach} // χωρίς προπονητή, ορίζει μόνος του πεδία και στόχους
       menu={(
         <Menu items={[
           (coach || groups?.length > 0) && { label: 'Μηνύματα με αστέρι', onClick: () => router.push('/dashboard/starred') },

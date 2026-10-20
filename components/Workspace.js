@@ -8,7 +8,7 @@ import Timeline from './Timeline';
 import Compare from './Compare';
 import WeightChart from './WeightChart';
 import WeightLog from './WeightLog';
-import DailyLog from './DailyLog';
+import Journal from './Journal';
 import PaneHead from './PaneHead';
 import BodyInfo from './BodyInfo';
 import { CHAT_VIEW, PLAN_VIEW, VIEWS } from './AppShell';
@@ -22,11 +22,12 @@ const LOADERS = { checkins: listCheckins, weighIns: listWeighIns, daily: listDai
 
 // Ο χώρος ενός αθλούμενου: κεφαλίδα, (καρτέλες), αρχείο, σύγκριση, βάρος, καθημερινά.
 // view: η ενότητα από το πλαϊνό μενού (προσωπικός χρήστης). Χωρίς view δείχνει δικές του καρτέλες (προπονητής).
-export default function Workspace({ athlete, title, subtitle, avatar, backHref, view, banner, menu, onAthleteChange, reloadSignal, chat, chatBadge = 0, plans, initialTab }) {
+export default function Workspace({ athlete, title, subtitle, avatar, backHref, view, banner, menu, onAthleteChange, reloadSignal, chat, chatBadge = 0, plans, initialTab, canConfigureJournal = false }) {
   const [raw, setRaw] = useState(null); // { checkins, weighIns, daily }
   const [loadError, setLoadError] = useState(false);
   const [ownTab, setOwnTab] = useState('archive');
   const [editing, setEditing] = useState(null); // null | 'new' | καταγραφή
+  const [progressMode, setProgressMode] = useState('timeline'); // Πρόοδος: 'timeline' | 'compare'
   const { reloadAthletes } = useLive(); // η λίστα του προπονητή (τελευταία καταγραφή, βάρος)
   // «Πρόγραμμα» και «Συνομιλία» υπάρχουν μόνο όταν δίνονται.
   const wanted = view ?? ownTab;
@@ -116,7 +117,14 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
         />
       )}
 
-      {tab === 'archive' && (
+      {tab === 'archive' && checkins.length > 1 && !editing && (
+        <div className="seg progress-mode" role="group" aria-label="Προβολή">
+          <button type="button" aria-pressed={progressMode === 'timeline'} onClick={() => setProgressMode('timeline')}>Χρονολόγιο</button>
+          <button type="button" aria-pressed={progressMode === 'compare'} onClick={() => setProgressMode('compare')}>Σύγκριση</button>
+        </div>
+      )}
+      {tab === 'archive' && progressMode === 'compare' && checkins.length > 1 && !editing && <Compare key={checkins.length} checkins={checkins} />}
+      {tab === 'archive' && (progressMode === 'timeline' || checkins.length < 2 || editing) && (
         <>
           {dates.length > 0 && (
             // Μία λεπτή γραμμή σύνοψης (αντί για μεγάλα κουτιά).
@@ -150,7 +158,6 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
           )}
         </>
       )}
-      {tab === 'compare' && <Compare key={checkins.length} checkins={checkins} />}
       {tab === 'weight' && (
         <div className="weight">
           {onAthleteChange && <BodyInfo athlete={athlete} onChange={onAthleteChange} />}
@@ -160,7 +167,12 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
       )}
       {tab === 'chat' && chat}
       {tab === 'plan' && plans}
-      {tab === 'daily' && <DailyLog athleteId={athlete.id} entries={daily} onChange={() => refresh(['daily'])} />}
+      {tab === 'daily' && (
+        <Journal
+          athlete={athlete} entries={daily} onChange={() => refresh(['daily'])}
+          canConfigure={canConfigureJournal} onAthleteChange={onAthleteChange}
+        />
+      )}
     </>
   );
 }
