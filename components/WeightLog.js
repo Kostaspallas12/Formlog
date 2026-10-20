@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { confirmDialog } from '@/components/Confirm';
 import { deleteWeighIn, setWeighIn, updateWeighIn } from '@/lib/storage';
 import { fmtDate, fmtDelta, fmtKg, parseDecimal, todayISO } from '@/lib/utils';
 import EmptyState from './EmptyState';
@@ -33,7 +34,7 @@ export default function WeightLog({ athleteId, entries, onChange }) {
     const weight = parseKg(kg);
     if (weight == null) return flash('error', 'Γράψε ένα έγκυρο βάρος σε κιλά, π.χ. 78,5.');
     const existing = entries.find((x) => x.date === date);
-    if (existing && !confirm(`Υπάρχει ήδη βάρος για ${fmtDate(date)} (${fmtKg(existing.weight)} kg). Να αντικατασταθεί;`)) return;
+    if (existing && !(await confirmDialog(`Υπάρχει ήδη βάρος για ${fmtDate(date)} (${fmtKg(existing.weight)} kg). Να αντικατασταθεί;`))) return;
     setBusy(true);
     try {
       await setWeighIn({ athleteId, date, weight, note: note.trim() });
@@ -151,7 +152,7 @@ function Row({ entry, delta, onChange, flash }) {
   };
 
   const remove = async () => {
-    if (!confirm(`Διαγραφή του βάρους της ${fmtDate(entry.date)};`)) return;
+    if (!(await confirmDialog(`Διαγραφή του βάρους της ${fmtDate(entry.date)};`))) return;
     try {
       await deleteWeighIn(entry.id);
       await onChange();

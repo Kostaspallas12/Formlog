@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSignal } from '@/components/Live';
+import { confirmDialog } from '@/components/Confirm';
 import { useRequireUser } from '@/lib/useAuthRedirect';
 import { MIN_PASSWORD, useAuth } from '@/lib/AuthContext';
 import { buildExportZip, exportFileName } from '@/lib/exportZip';
@@ -311,11 +313,13 @@ function CoachSection() {
   const [msg, setMsg] = useState('');
 
   useEffect(() => { getMyCoach().then(setCoach).catch(() => setCoach(null)); }, []);
+  // Ζωντανά: ο προπονητής διέκοψε τη συνεργασία ή άλλαξε όνομα.
+  useSignal('athlete', null, () => getMyCoach().then(setCoach).catch(() => {}));
 
   if (coach === undefined) return null;
 
   const stop = async () => {
-    if (!confirm(`Διακοπή συνεργασίας με «${coach.name}»; Ο φάκελος και όλα τα δεδομένα μένουν σε σένα· ο προπονητής δεν θα έχει πια πρόσβαση.`)) return;
+    if (!(await confirmDialog(`Διακοπή συνεργασίας με «${coach.name}»; Ο φάκελος και όλα τα δεδομένα μένουν σε σένα· ο προπονητής δεν θα έχει πια πρόσβαση.`))) return;
     setBusy(true);
     try {
       await disconnectCoach(coach.athleteId);

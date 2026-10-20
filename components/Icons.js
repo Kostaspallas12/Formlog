@@ -26,6 +26,11 @@ export const UserIcon =icon(<><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 
 export const LogoutIcon = icon(<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11" />);
 export const UploadIcon = icon(<path d="M12 16V4M7 9l5-5 5 5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />);
 export const DownloadIcon = icon(<path d="M12 4v11M7 10l5 5 5-5M5 20h14" />);
+export const AlertIcon = icon(<><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" /><path d="M12 9v4M12 17h.01" /></>);
+export const QuestionIcon = icon(<><circle cx="12" cy="12" r="9" /><path d="M9.4 9.2a2.6 2.6 0 1 1 3.7 2.4c-.8.4-1.1.9-1.1 1.8M12 17h.01" /></>);
+export const MicIcon = icon(<><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></>);
+export const PlayIcon = icon(<path d="M7 5v14l11-7z" />, true);
+export const PauseIcon = icon(<><rect x="7.5" y="5" width="3.3" height="14" rx="1" /><rect x="13.2" y="5" width="3.3" height="14" rx="1" /></>, true);
 export const CloseIcon =icon(<path d="M6 6l12 12M18 6L6 18" />);
 export const PlusIcon =icon(<path d="M12 5v14M5 12h14" />);
 export const BackIcon = icon(<path d="M15 18l-6-6 6-6" />);

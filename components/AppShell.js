@@ -65,13 +65,13 @@ export default function AppShell({ children }) {
   if (!user) return body;
   return coach
     ? <CoachLive user={user}>{body}</CoachLive>
-    : <PersonalLive user={user} onOpenChat={() => setView('chat')}>{body}</PersonalLive>;
+    : <PersonalLive user={user} view={view} onOpenView={setView} onOpenChat={() => setView('chat')}>{body}</PersonalLive>;
 }
 
 function Shell({ coach, children }) {
   const { user, logout } = useAuth();
   const { view, setView } = useAppView();
-  const { unread, unreadMsgs, coach: myCoach, groups, hasPlans } = useLive();
+  const { unread, unreadMsgs, coach: myCoach, groups, hasPlans, updates } = useLive();
   const path = usePathname();
 
   const onAccount = path.startsWith('/account');
@@ -91,7 +91,7 @@ function Shell({ coach, children }) {
     : [
       ...[...VIEWS, ...(myCoach || hasPlans ? [PLAN_VIEW] : []), ...(myCoach ? [CHAT_VIEW] : [])].map((v) => ({
         ...v, active: !onAccount && !onGroups && view === v.id, onClick: () => setView(v.id),
-        badge: v.id === 'chat' ? total(unreadMsgs) : 0,
+        badge: v.id === 'chat' ? total(unreadMsgs) : (updates[v.id] || 0), // αλλαγές του προπονητή
       })),
       ...(groups?.length ? [groupsItem] : []),
     ];

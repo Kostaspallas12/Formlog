@@ -8,7 +8,7 @@ const securityHeaders = [
   // Σε εξωτερικά links δεν φεύγει η πλήρης διεύθυνση (π.χ. ο σύνδεσμος πρόσκλησης), μόνο το site.
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   // Χωρίς μικρόφωνο / τοποθεσία· κάμερα μόνο για το ίδιο το site.
-  { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' },
+  { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=()' },
 ];
 
 /** @type {import('next').NextConfig} */

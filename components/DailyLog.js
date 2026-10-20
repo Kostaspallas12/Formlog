@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useState } from 'react';
+import { confirmDialog } from '@/components/Confirm';
 import { deleteDailyLog, setDailyLog, updateDailyLog } from '@/lib/storage';
 import { fmtDate, todayISO } from '@/lib/utils';
 import EmptyState from './EmptyState';
@@ -236,7 +237,7 @@ function Row({ entry, listId, onChange, flash }) {
   };
 
   const remove = async () => {
-    if (!confirm(`Διαγραφή της καταγραφής της ${fmtDate(entry.date)};`)) return;
+    if (!(await confirmDialog(`Διαγραφή της καταγραφής της ${fmtDate(entry.date)};`))) return;
     try {
       await deleteDailyLog(entry.id);
       await onChange();

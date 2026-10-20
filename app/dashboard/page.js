@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useState } from 'react';
+import { confirmDialog } from '@/components/Confirm';
 import Link from 'next/link';
 import { useRequireUser } from '@/lib/useAuthRedirect';
 import { getSelfAthlete, revokeInvite } from '@/lib/storage';
@@ -11,9 +12,10 @@ import PaneHead from '@/components/PaneHead';
 import { CHAT_VIEW, PLAN_VIEW, useAppView, VIEWS } from '@/components/AppShell';
 import Chat from '@/components/Chat';
 import AthletePlans from '@/components/AthletePlans';
+import PendingInvites from '@/components/PendingInvites';
 import { ArchiveIcon, ChatIcon, CloseIcon, PlusIcon, UsersIcon } from '@/components/Icons';
 import { AthleteAvatar } from '@/components/AthleteSidebar';
-import { useLive } from '@/components/Live';
+import { useLive, useSignal } from '@/components/Live';
 import { ANGLES, daysBetween, fmtDate, todayISO } from '@/lib/utils';
 import Photo from '@/components/Photo';
 import { WorkspaceSkeleton } from '@/components/Skeletons';
@@ -75,7 +77,7 @@ function CoachHome() {
 
   // Ακύρωση πρόσκλησης (με επιβεβαίωση) από την κάρτα «Αναμένουν».
   const cancelInvite = async (a) => {
-    if (!confirm('Ακύρωση της πρόσκλησης για «' + a.name + '»; Ο σύνδεσμος που έχεις στείλει δεν θα ισχύει πια.')) return;
+    if (!(await confirmDialog('Ακύρωση της πρόσκλησης για «' + a.name + '»; Ο σύνδεσμος που έχεις στείλει δεν θα ισχύει πια.'))) return;
     try { await revokeInvite(a.id); } finally { reloadAthletes(); }
   };
 
@@ -183,11 +185,14 @@ function MyProgress({ user }) {
   useEffect(() => {
     getSelfAthlete(user).then(setMe);
   }, [user]);
+  // Ζωντανά: ο προπονητής άλλαξε ηλικία/ύψος/όνομα του φακέλου.
+  useSignal('athlete', me?.id, () => getSelfAthlete(user).then(setMe).catch(() => {}));
 
   if (!me) return <><PaneHead title={title} /><WorkspaceSkeleton body /></>;
   return (
     <Workspace
       athlete={me} title={title} subtitle={current === 'chat' ? 'Προπονητής' : <MyCoach />} view={current} onAthleteChange={setMe}
+      banner={<PendingInvites />}
       chat={coach ? <Chat athleteId={me.id} me={user.id} otherName={coach.name} solo /> : null}
       plans={coach || hasPlans ? <AthletePlans athleteId={me.id} /> : null}
     />

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { confirmDialog } from '@/components/Confirm';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { addGroupMember, deleteAthlete, disconnectCoach } from '@/lib/storage';
@@ -59,7 +60,7 @@ export default function AthleteRowMenu({ athlete, hasNew, at, onClose }) {
       ? {
         Icon: TrashIcon, label: 'Διακοπή συνεργασίας', danger: true,
         run: act(async () => {
-          if (!confirm(`Διακοπή συνεργασίας με «${athlete.name}»; Ο φάκελος μένει στον αθλούμενο και εσύ δεν θα έχεις πια πρόσβαση.`)) return;
+          if (!(await confirmDialog(`Διακοπή συνεργασίας με «${athlete.name}»; Ο φάκελος μένει στον αθλούμενο και εσύ δεν θα έχεις πια πρόσβαση.`))) return;
           await disconnectCoach(athlete.id);
           reloadAthletes(); reloadGroups();
           if (viewing()) router.push('/dashboard');
@@ -68,7 +69,7 @@ export default function AthleteRowMenu({ athlete, hasNew, at, onClose }) {
       : {
         Icon: TrashIcon, label: 'Διαγραφή αθλούμενου', danger: true,
         run: act(async () => {
-          if (!confirm(`Οριστική διαγραφή του φακέλου «${athlete.name}» με όλες τις καταγραφές, το βάρος, τα καθημερινά και τις φωτογραφίες;`)) return;
+          if (!(await confirmDialog(`Οριστική διαγραφή του φακέλου «${athlete.name}» με όλες τις καταγραφές, το βάρος, τα καθημερινά και τις φωτογραφίες;`))) return;
           await deleteAthlete(athlete.id);
           reloadAthletes();
           if (viewing()) router.push('/dashboard');

@@ -3,6 +3,7 @@ import { AuthProvider } from '@/lib/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SiteChrome from '@/components/SiteChrome';
+import ConfirmHost from '@/components/Confirm';
 
 const description = 'Κράτα όλες τις φωτογραφίες προόδου σου σε ένα ιδιωτικό αρχείο και δες πόσο έχεις αλλάξει.';
 
@@ -22,6 +23,7 @@ export default function RootLayout({ children }) {
       <body>
         <AuthProvider>
           <SiteChrome header={<Header />} footer={<Footer />}>{children}</SiteChrome>
+          <ConfirmHost />
         </AuthProvider>
       </body>
     </html>

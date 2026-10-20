@@ -213,9 +213,11 @@ function MoreFilters({ value, onChange }) {
 function AthleteRow({ athlete, active, online, unread, pref, message, date, toChat, onMenu }) {
   const sub = !athlete.linked && athlete.pending
     ? 'Δεν αποδέχτηκε ακόμα'
-    : athlete.lastDate
-      ? 'Τελευταία ' + fmtSince(athlete.lastDate)
-      : 'Καμία καταγραφή';
+    : !athlete.linked && athlete.declined
+      ? 'Απέρριψε την πρόσκληση'
+      : athlete.lastDate
+        ? 'Τελευταία ' + fmtSince(athlete.lastDate)
+        : 'Καμία καταγραφή';
   const isNew = unread > 0 || pref.markedUnread;
 
   // Παρατεταμένο πάτημα (κινητό) = μενού, χωρίς να ανοίξει ο αθλούμενος.

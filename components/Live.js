@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   announcePresence, getAthlete, getAthletePlans, getMyCoach, getSelfAthlete, listAllCheckins, listAllWeighIns, listAthletes, listInvites,
-  listAthletePrefs, listMyGroups, listUnreadMessages, markMessagesRead, setAthletePref, listUnreadNotifications, markAthleteRead, onGroupMessages, onMessages, onNotification,
+  listAthletePrefs, listMyGroups, listUnreadMessages, markMessagesRead, setAthletePref, listUnreadNotifications, markAthleteRead, onGroupMessages, onMessages, onNotification, onSignals, listCoachUpdates, clearCoachUpdate, onCoachUpdates,
   watchPresence,
 } from '@/lib/storage';
 
@@ -14,9 +14,53 @@ const EMPTY = {
   online: new Set(), unread: {}, unreadMsgs: {}, lastMsg: {}, lastEvent: null, athletes: null, self: null, coach: null,
   markRead: noop, clearMessages: noop, setOpenChat: noop, groups: null, clearGroup: noop, reloadGroups: noop,
   hasPlans: false, prefs: {}, setPref: noop, markAllRead: noop, markUnread: noop, reloadAthletes: noop,
+  subscribe: () => noop, updates: {},
 };
 const LiveContext = createContext(EMPTY);
 export const useLive = () => useContext(LiveContext);
+
+// Ζωντανά σήματα της βάσης (τι άλλαξε, για ποιον αθλούμενο/ομάδα), μία σύνδεση για όλη την εφαρμογή.
+function useSignalHub(user) {
+  const listeners = useRef(new Set());
+  const subscribe = useCallback((fn) => { listeners.current.add(fn); return () => { listeners.current.delete(fn); }; }, []);
+  useEffect(() => {
+    const emit = (s) => listeners.current.forEach((fn) => fn(s));
+    // «*» = ξαναδιάβασε τα πάντα: μετά από διακοπή σύνδεσης ή όταν ο χρήστης ξαναγυρίζει στην καρτέλα
+    // (για σιγουριά, αν κάτι χάθηκε όσο ήταν στο παρασκήνιο).
+    let last = 0;
+    const resync = () => { if (Date.now() - last < 2000) return; last = Date.now(); emit({ kind: '*' }); };
+    const back = () => { if (document.visibilityState === 'visible') resync(); };
+    const off = onSignals(user.id, emit, resync);
+    document.addEventListener('visibilitychange', back);
+    window.addEventListener('focus', back);
+    window.addEventListener('online', resync);
+    return () => {
+      off();
+      document.removeEventListener('visibilitychange', back);
+      window.removeEventListener('focus', back);
+      window.removeEventListener('online', resync);
+    };
+  }, [user.id]);
+  return subscribe;
+}
+
+// Για κάθε σελίδα/κομμάτι: ξαναδιαβάζει μόλις αλλάξει κάτι δικό του (από τον άλλον χρήστη), χωρίς refresh.
+// kinds: 'athlete' | 'data' | 'plan' | 'invite' | 'group' (ή πίνακας) · ref: ο αθλούμενος/η ομάδα (προαιρετικό)
+export function useSignal(kinds, ref, cb) {
+  const { subscribe } = useLive();
+  const cbRef = useRef(cb);
+  cbRef.current = cb;
+  const key = [].concat(kinds).join(',');
+  useEffect(() => {
+    let t;
+    const off = subscribe((s) => {
+      if (s.kind !== '*' && (!key.split(',').includes(s.kind) || (ref && s.ref && s.ref !== ref))) return;
+      clearTimeout(t);
+      t = setTimeout(() => cbRef.current(s), 200); // πολλές αλλαγές μαζί → μία ανάγνωση
+    });
+    return () => { clearTimeout(t); off(); };
+  }, [subscribe, key, ref]);
+}
 
 const countBy = (rows) => rows.reduce((m, r) => ({ ...m, [r.athleteId]: (m[r.athleteId] || 0) + 1 }), {});
 const without = (m, key) => {
@@ -64,11 +108,14 @@ function useMessages(user, onIncoming, onOpen) {
   const incoming = useRef(onIncoming);
   incoming.current = onIncoming;
 
-  useEffect(() => {
+  const reloadUnread = useCallback(() => {
     listUnreadMessages(user.id).then((rows) => {
       setUnreadMsgs(countBy(rows));
       setLastMsg(Object.fromEntries(rows.map((m) => [m.athleteId, m])));
     }).catch(() => {});
+  }, [user.id]);
+  useEffect(() => {
+    reloadUnread();
     return onMessages(null, (type, m) => {
       if (type !== 'INSERT') return;
       setLastMsg((l) => ({ ...l, [m.athleteId]: m }));
@@ -77,13 +124,13 @@ function useMessages(user, onIncoming, onOpen) {
       if (!open) setUnreadMsgs((u) => ({ ...u, [m.athleteId]: (u[m.athleteId] || 0) + 1 }));
       incoming.current?.(m, open);
     });
-  }, [user.id]);
+  }, [user.id, reloadUnread]);
 
   const clearMessages = useCallback((id) => setUnreadMsgs((u) => without(u, id)), []);
   const opened = useRef(onOpen);
   opened.current = onOpen;
   const setOpenChat = useCallback((id) => { openChat.current = id; if (id) opened.current?.(id); }, []);
-  return { unreadMsgs, lastMsg, clearMessages, setOpenChat, openChat };
+  return { unreadMsgs, lastMsg, clearMessages, setOpenChat, openChat, reloadUnread };
 }
 
 // Οι ομάδες μου (προπονητής ή μέλος) με αδιάβαστα + ζωντανή ενημέρωση.
@@ -160,7 +207,9 @@ export function CoachLive({ user, children }) {
         return {
           ...a, checkins: c, weighIns: w,
           lastDate: [...c, ...w].map((x) => x.date).sort().pop() ?? null, // τελευταία καταγραφή ή ζύγισμα
-          pending: invites.some((i) => i.athleteId === a.id && !i.usedAt && !i.revokedAt && new Date(i.expiresAt) > new Date()),
+          pending: invites.some((i) => i.athleteId === a.id && !i.usedAt && !i.revokedAt && !i.declinedAt && new Date(i.expiresAt) > new Date()),
+          // Ο χρήστης απέρριψε την πρόσκληση (και δεν έχει σταλεί νέα από τότε).
+          declined: invites.some((i) => i.athleteId === a.id && !i.usedAt && !i.revokedAt && i.declinedAt),
         };
       }));
   }, [user.id]);
@@ -183,6 +232,19 @@ export function CoachLive({ user, children }) {
   }, [path, refreshAthletes]);
 
   useEffect(() => watchPresence(user.id, setOnline), [user.id]);
+
+  // Ζωντανά: αποδοχή/απόρριψη προσκλήσεων, σύνδεση/διακοπή (και από τον αθλούμενο), όνομα, φωτογραφία,
+  // νέες καταγραφές/βάρος/καθημερινά από τον αθλούμενο.
+  const subscribe = useSignalHub(user);
+  useEffect(() => {
+    let t;
+    const off = subscribe((s) => {
+      if (s.kind === 'group' || s.kind === 'plan') return;
+      clearTimeout(t);
+      t = setTimeout(() => refreshAthletes(), 250);
+    });
+    return () => { clearTimeout(t); off(); };
+  }, [subscribe, refreshAthletes]);
 
   const nameOf = async (id) =>
     athletesRef.current?.find((a) => a.id === id)?.name || (await getAthlete(id).catch(() => null))?.name || 'αθλούμενο';
@@ -223,6 +285,13 @@ export function CoachLive({ user, children }) {
   });
   // Ανανέωση της λίστας ομάδων σε κάθε αλλαγή σελίδας (π.χ. μετά από νέα ομάδα ή διαγραφή).
   useEffect(() => { grp.reloadGroups(); }, [path, grp.reloadGroups]);
+  useEffect(() => subscribe((s) => { if (s.kind === 'group' || s.kind === '*') grp.reloadGroups(); }), [subscribe, grp.reloadGroups]);
+  // Μετά από διακοπή σύνδεσης/επιστροφή στην καρτέλα: αδιάβαστα μηνύματα και check-in από την αρχή.
+  useEffect(() => subscribe((s) => {
+    if (s.kind !== '*') return;
+    msgs.reloadUnread();
+    if (enabled) listUnreadNotifications().then((rows) => setUnread(countBy(rows))).catch(() => {});
+  }), [subscribe, msgs.reloadUnread, enabled]);
 
   // Ο προπονητής άνοιξε τον αθλούμενο: τα νέα check-in διαβάστηκαν και φεύγει το «μη αναγνωσμένο».
   const markRead = useCallback((athleteId) => {
@@ -241,7 +310,7 @@ export function CoachLive({ user, children }) {
   return (
     <LiveContext.Provider value={{
       ...EMPTY, ...msgs, ...grp, online, unread, lastEvent, markRead, athletes, reloadAthletes: refreshAthletes,
-      prefs, setPref, markAllRead, markUnread,
+      prefs, setPref, markAllRead, markUnread, subscribe,
     }}>
       {children}
       {toastNode}
@@ -250,17 +319,27 @@ export function CoachLive({ user, children }) {
 }
 
 // Για τον αθλούμενο: ο φάκελός του, ο προπονητής του, «online» για τον προπονητή και νέα μηνύματα.
-export function PersonalLive({ user, onOpenChat, children }) {
+// Τι άλλαξε ο προπονητής σε κάθε ενότητα (για το μικρό μήνυμα).
+const UPDATE_TEXT = {
+  archive: 'Ενημέρωσε το αρχείο σου', weight: 'Ενημέρωσε το βάρος σου',
+  daily: 'Ενημέρωσε τα καθημερινά σου', plan: 'Ενημέρωσε το πρόγραμμά σου',
+};
+
+export function PersonalLive({ user, view, onOpenView, onOpenChat, children }) {
   const [self, setSelf] = useState(null);
   const [coach, setCoach] = useState(null);
   const [toast, toastNode] = useToast();
   const path = usePathname();
 
   // Ξαναδιαβάζουμε σε κάθε αλλαγή σελίδας (π.χ. μόλις αποδεχτεί πρόσκληση ή διακόψει τη συνεργασία).
-  useEffect(() => {
+  const reloadSelf = useCallback(() => {
     getSelfAthlete(user).then(setSelf).catch(() => {});
     getMyCoach().then(setCoach).catch(() => {});
-  }, [user, path]);
+  }, [user]);
+  useEffect(() => { reloadSelf(); }, [reloadSelf, path]);
+  // Ζωντανά: σύνδεση/διακοπή προπονητή, όνομα/φωτογραφία του προπονητή, χωρίς ανανέωση.
+  const subscribe = useSignalHub(user);
+  useEffect(() => subscribe((s) => { if (s.kind === 'athlete' || s.kind === '*') reloadSelf(); }), [subscribe, reloadSelf]);
 
   // Όσο έχει ανοιχτή την εφαρμογή, ο προπονητής τον βλέπει online.
   const coachId = self?.linked ? self.coachId : null;
@@ -268,9 +347,12 @@ export function PersonalLive({ user, onOpenChat, children }) {
   // Πρόγραμμα από (πρώην) προπονητή: μένει ορατό και μετά τη διακοπή της συνεργασίας.
   const [hasPlans, setHasPlans] = useState(false);
   useEffect(() => {
-    if (!self || self.linked) return setHasPlans(!!self?.linked);
-    getAthletePlans(self.id).then((p) => setHasPlans(!!(p.training || p.nutrition))).catch(() => {});
-  }, [self]);
+    if (!self) return setHasPlans(false);
+    const check = () => getAthletePlans(self.id).then((p) => setHasPlans(!!(self.linked || p.training || p.nutrition))).catch(() => {});
+    check();
+    // Ζωντανά: μόλις ο προπονητής ορίσει/αλλάξει πρόγραμμα, εμφανίζεται χωρίς ανανέωση.
+    return subscribe((s) => { if (s.kind === 'plan' || s.kind === '*') check(); });
+  }, [self, subscribe]);
   useEffect(() => (coachId ? announcePresence(coachId, self.id) : undefined), [coachId, self?.id]);
 
   const msgs = useMessages(user, (m, open) => {
@@ -289,9 +371,42 @@ export function PersonalLive({ user, onOpenChat, children }) {
   });
   // Ανανέωση της λίστας ομάδων σε κάθε αλλαγή σελίδας (π.χ. μετά από νέα ομάδα ή διαγραφή).
   useEffect(() => { grp.reloadGroups(); }, [path, grp.reloadGroups]);
+  useEffect(() => subscribe((s) => { if (s.kind === 'group' || s.kind === '*') grp.reloadGroups(); }), [subscribe, grp.reloadGroups]);
+  useEffect(() => subscribe((s) => { if (s.kind === '*') msgs.reloadUnread(); }), [subscribe, msgs.reloadUnread]);
+
+  // Αλλαγές του προπονητή ανά ενότητα: αριθμός στο μενού (όπως τα μηνύματα) + μικρό μήνυμα.
+  const [updates, setUpdates] = useState({});
+  const seen = useRef({ view, path, coach });
+  seen.current = { view, path, coach };
+  const looking = (section) => seen.current.path === '/dashboard' && seen.current.view === section && document.visibilityState === 'visible';
+  const reloadUpdates = useCallback(() => listCoachUpdates().then(setUpdates).catch(() => {}), []);
+  useEffect(() => {
+    reloadUpdates();
+    return onCoachUpdates(user.id, ({ section, count }) => {
+      if (looking(section)) { clearCoachUpdate(section).catch(() => {}); return; } // το βλέπει ήδη, ενημερώνεται ζωντανά
+      setUpdates((u) => ({ ...u, [section]: count }));
+      const title = seen.current.coach?.name || 'Ο προπονητής σου';
+      toast({ title, text: UPDATE_TEXT[section], href: '/dashboard', onClick: () => onOpenView?.(section) });
+      systemNotify(title, UPDATE_TEXT[section], '/dashboard', 'update-' + section);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id, reloadUpdates]);
+  useEffect(() => subscribe((s) => { if (s.kind === '*') reloadUpdates(); }), [subscribe, reloadUpdates]);
+  // Άνοιξε την ενότητα (ή ξαναγύρισε στην καρτέλα με την ενότητα ανοιχτή): διαβάστηκε.
+  useEffect(() => {
+    const clear = () => {
+      if (!updates[view] || !looking(view)) return;
+      setUpdates((u) => without(u, view));
+      clearCoachUpdate(view).catch(() => {});
+    };
+    clear();
+    document.addEventListener('visibilitychange', clear);
+    return () => document.removeEventListener('visibilitychange', clear);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, path, updates]);
 
   return (
-    <LiveContext.Provider value={{ ...EMPTY, ...msgs, ...grp, self, coach: self?.linked ? coach : null, hasPlans }}>
+    <LiveContext.Provider value={{ ...EMPTY, ...msgs, ...grp, self, coach: self?.linked ? coach : null, hasPlans, subscribe, updates }}>
       {children}
       {toastNode}
     </LiveContext.Provider>

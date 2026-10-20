@@ -3,14 +3,15 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   addPhoto, listGroupMessages, listMessages, markGroupRead, markMessagesRead, onGroupMessages, onMessages,
-  sendGroupMessage, sendMessage,
+  sendGroupMessage, sendMessage, uploadVoice,
 } from '@/lib/storage';
 import { processImage } from '@/lib/images';
 import { fmtDate } from '@/lib/utils';
-import { useLive } from './Live';
+import { useLive, useSignal } from './Live';
 import Photo from './Photo';
+import VoiceNote from './VoiceNote';
 import { Lightbox } from './Timeline';
-import { ImageIcon, SendIcon, TicksIcon } from './Icons';
+import { ImageIcon, MicIcon, SendIcon, TicksIcon, TrashIcon } from './Icons';
 
 // Τοπική ημερομηνία (YYYY-MM-DD) για τα διαχωριστικά «Σήμερα», «Χθες», …
 const localDay = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
@@ -22,6 +23,7 @@ const dayLabel = (iso) => {
   return fmtDate(iso, { weekday: 'long', day: 'numeric', month: 'long' });
 };
 const time = (ts) => new Date(ts).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
+const fmtSecs = (n) => Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0');
 
 // Η συνομιλία (σαν εφαρμογή μηνυμάτων), με κείμενο και φωτογραφίες:
 //   ατομική: προπονητής ↔ αθλούμενος για έναν φάκελο (athleteId)
@@ -39,6 +41,70 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
   const [zoom, setZoom] = useState(null);
   const scroller = useRef(null);
   const input = useRef(null);
+  const [recording, setRecording] = useState(false);
+  const [recSecs, setRecSecs] = useState(0);
+  const rec = useRef(null);
+
+  const stopTracks = () => {
+    const r = rec.current;
+    if (!r) return;
+    clearInterval(r.timer);
+    r.stream.getTracks().forEach((t) => t.stop());
+  };
+  const stopAndSend = () => {
+    const r = rec.current;
+    if (!r) return;
+    const secs = Math.max(1, recSecs);
+    r.recorder.onstop = async () => {
+      const blob = new Blob(r.chunks, { type: r.recorder.mimeType || 'audio/webm' });
+      stopTracks();
+      rec.current = null;
+      setRecording(false);
+      setRecSecs(0);
+      if (!blob.size) return;
+      setSending(true);
+      try {
+        const path = await uploadVoice(chatId, blob, r.ext);
+        const m = await (isGroup ? sendGroupMessage : sendMessage)(chatId, '', { audio: path, audioSecs: secs });
+        setMsgs((list) => (list?.some((x) => x.id === m.id) ? list : [...(list || []), m]));
+      } catch (err) {
+        setError('Το φωνητικό δεν στάλθηκε. Δοκίμασε ξανά.');
+      }
+      setSending(false);
+    };
+    try { r.recorder.stop(); } catch (e) {}
+  };
+  const cancelRecording = () => {
+    const r = rec.current;
+    if (!r) return;
+    r.recorder.onstop = null;
+    try { r.recorder.stop(); } catch (e) {}
+    stopTracks();
+    rec.current = null;
+    setRecording(false);
+    setRecSecs(0);
+  };
+  const startRecording = async () => {
+    setError('');
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch (e) { setError('Δεν δόθηκε άδεια για το μικρόφωνο.'); return; }
+    const type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((t) => typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t)) || '';
+    const recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+    const chunks = [];
+    recorder.ondataavailable = (ev) => { if (ev.data && ev.data.size) chunks.push(ev.data); };
+    rec.current = { recorder, stream, chunks, ext: type.indexOf('mp4') >= 0 ? 'mp4' : 'webm', timer: null };
+    recorder.start();
+    setRecSecs(0);
+    setRecording(true);
+    rec.current.timer = setInterval(() => setRecSecs((s) => { if (s >= 600) stopAndSend(); return s + 1; }), 1000);
+  };
+  useEffect(() => () => stopTracks(), []);
+
+  // Μετά από διακοπή σύνδεσης ή επιστροφή στην καρτέλα: ό,τι ήρθε στο ενδιάμεσο.
+  useSignal('resync', null, () => {
+    (isGroup ? listGroupMessages : listMessages)(chatId).then(setMsgs).catch(() => {});
+  });
 
   useEffect(() => {
     let alive = true;
@@ -91,7 +157,7 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
         }
         path = await addPhoto(versions, chatId); // στον φάκελο του αθλούμενου ή της ομάδας
       }
-      const m = await (isGroup ? sendGroupMessage : sendMessage)(chatId, body, path);
+      const m = await (isGroup ? sendGroupMessage : sendMessage)(chatId, body, { photo: path });
       setMsgs((list) => (list?.some((x) => x.id === m.id) ? list : [...(list || []), m]));
       setText('');
       setPhoto(null);
@@ -132,6 +198,7 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
                 {m.photo && (
                   <Photo id={m.photo} alt="Φωτογραφία" className="msg-photo" onClick={() => setZoom({ id: m.photo, label: `Φωτογραφία · ${dayLabel(day)} ${time(m.createdAt)}` })} />
                 )}
+                {m.audio && <VoiceNote path={m.audio} secs={m.audioSecs} mine={mine} />}
                 {m.body && <p>{m.body}</p>}
                 <span className="msg-meta">
                   {time(m.createdAt)}
@@ -162,21 +229,40 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
         </div>
       )}
       {error && <p className="error chat-error" role="alert">{error}</p>}
-      <form className="chat-compose" onSubmit={send}>
-        <label className="icon-btn chat-pick" title="Φωτογραφία" aria-label="Αποστολή φωτογραφίας">
-          <ImageIcon />
-          <input type="file" accept="image/*" onChange={(e) => { pick(e.target.files[0]); e.target.value = ''; }} disabled={sending} />
-        </label>
-        <textarea
-          ref={input} rows={1} value={text} maxLength={4000} placeholder={photo ? 'Λεζάντα' : 'Μήνυμα'} aria-label="Μήνυμα"
-          onChange={(e) => setText(e.target.value)}
-          // Enter: αποστολή · Shift+Enter: νέα γραμμή
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}
-        />
-        <button type="submit" className="icon-btn round primary" disabled={(!text.trim() && !photo) || sending} aria-label="Αποστολή">
-          <SendIcon size={20} />
-        </button>
-      </form>
+      {recording ? (
+        <div className="chat-record">
+          <button type="button" className="icon-btn chat-rec-cancel" onClick={cancelRecording} aria-label="Ακύρωση ηχογράφησης">
+            <TrashIcon size={20} />
+          </button>
+          <span className="chat-rec-dot" aria-hidden="true" />
+          <span className="chat-rec-time">{fmtSecs(recSecs)}</span>
+          <span className="chat-rec-hint">Ηχογράφηση…</span>
+          <button type="button" className="icon-btn round primary" onClick={stopAndSend} disabled={sending} aria-label="Αποστολή φωνητικού">
+            <SendIcon size={20} />
+          </button>
+        </div>
+      ) : (
+        <form className="chat-compose" onSubmit={send}>
+          <label className="icon-btn chat-pick" title="Φωτογραφία" aria-label="Αποστολή φωτογραφίας">
+            <ImageIcon />
+            <input type="file" accept="image/*" onChange={(e) => { pick(e.target.files[0]); e.target.value = ''; }} disabled={sending} />
+          </label>
+          <textarea
+            ref={input} rows={1} value={text} maxLength={4000} placeholder={photo ? 'Λεζάντα' : 'Μήνυμα'} aria-label="Μήνυμα"
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}
+          />
+          {text.trim() || photo ? (
+            <button type="submit" className="icon-btn round primary" disabled={sending} aria-label="Αποστολή">
+              <SendIcon size={20} />
+            </button>
+          ) : (
+            <button type="button" className="icon-btn round primary" onClick={startRecording} disabled={sending} aria-label="Ηχογράφηση φωνητικού">
+              <MicIcon size={20} />
+            </button>
+          )}
+        </form>
+      )}
 
       {zoom && <Lightbox {...zoom} onClose={() => setZoom(null)} />}
     </div>

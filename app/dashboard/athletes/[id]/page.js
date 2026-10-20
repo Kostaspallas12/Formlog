@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { confirmDialog } from '@/components/Confirm';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useRequireUser } from '@/lib/useAuthRedirect';
@@ -10,7 +11,7 @@ import CoachLink from '@/components/CoachLink';
 import Menu from '@/components/Menu';
 import PaneHead from '@/components/PaneHead';
 import { WorkspaceSkeleton } from '@/components/Skeletons';
-import { useLive } from '@/components/Live';
+import { useLive, useSignal } from '@/components/Live';
 import EmptyState from '@/components/EmptyState';
 import Chat from '@/components/Chat';
 import AthletePlans from '@/components/AthletePlans';
@@ -28,16 +29,22 @@ export default function AthletePage() {
   // Ό,τι νέο είχε έρθει από αυτόν τον αθλούμενο θεωρείται πλέον διαβασμένο.
   useEffect(() => { if (isUuid(id)) markRead(id); }, [id, markRead]);
 
-  useEffect(() => {
+  // Ο προπονητής βλέπει μόνο όσους προπονεί. (Η βάση επιστρέφει μόνο αυτούς, χάρη στο RLS· ελέγχουμε και εδώ.)
+  const read = useCallback((skeleton) => {
     if (!user) return;
-    if (!isUuid(id)) return setAthlete(null); // χαλασμένη διεύθυνση: κατευθείαν «Δεν βρέθηκε»
-    setAthlete(undefined);
-    // Ο προπονητής βλέπει μόνο όσους προπονεί.
-    // (Η βάση επιστρέφει μόνο αυτούς, χάρη στο RLS· ελέγχουμε και εδώ.)
-    getAthlete(id)
-      .then((a) => setAthlete(a && a.coachId === user.id ? a : null))
-      .catch(() => setAthlete(null));
-  }, [id, user]);
+    if (!isUuid(id)) { setAthlete(null); return; } // χαλασμένη διεύθυνση: κατευθείαν «Δεν βρέθηκε»
+    if (skeleton) setAthlete(undefined);
+    getAthlete(id).then((a) => {
+      const mine = a && a.coachId === user.id ? a : null;
+      // Ζωντανά: ο αθλούμενος διέκοψε τη συνεργασία (ή σβήστηκε) → πίσω στη λίστα.
+      if (!mine && !skeleton) { router.replace('/dashboard'); return; }
+      setAthlete(mine);
+    }).catch(() => skeleton && setAthlete(null));
+  }, [id, user, router]);
+  useEffect(() => { read(true); }, [read]);
+  // Ζωντανά: μόλις ο αθλούμενος αποδεχτεί (ή αλλάξει στοιχεία), ξαναδιαβάζει χωρίς σκελετό —
+  // εμφανίζονται οι καρτέλες «Συνομιλία»/«Πρόγραμμα» και φεύγει το πλαίσιο πρόσκλησης, χωρίς refresh.
+  useSignal('athlete', id, () => read(false));
 
   if (!ready || !user || athlete === undefined) return <WorkspaceSkeleton back />;
 
@@ -79,7 +86,7 @@ export default function AthletePage() {
             athlete.linked && {
               label: 'Διακοπή συνεργασίας', danger: true,
               onClick: async () => {
-                if (!confirm(`Διακοπή συνεργασίας με «${athlete.name}»; Ο φάκελος μένει στον αθλούμενο και εσύ δεν θα έχεις πια πρόσβαση.`)) return;
+                if (!(await confirmDialog(`Διακοπή συνεργασίας με «${athlete.name}»; Ο φάκελος μένει στον αθλούμενο και εσύ δεν θα έχεις πια πρόσβαση.`))) return;
                 await disconnectCoach(athlete.id);
                 reloadAthletes();
                 router.push('/dashboard');
@@ -88,7 +95,7 @@ export default function AthletePage() {
             !athlete.linked && {
               label: 'Διαγραφή αθλούμενου', danger: true,
               onClick: async () => {
-                if (!confirm(`Οριστική διαγραφή του φακέλου «${athlete.name}» με όλες τις καταγραφές, το βάρος, τα καθημερινά και τις φωτογραφίες;`)) return;
+                if (!(await confirmDialog(`Οριστική διαγραφή του φακέλου «${athlete.name}» με όλες τις καταγραφές, το βάρος, τα καθημερινά και τις φωτογραφίες;`))) return;
                 await deleteAthlete(athlete.id);
                 reloadAthletes();
                 router.push('/dashboard');

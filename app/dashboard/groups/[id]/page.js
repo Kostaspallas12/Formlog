@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { confirmDialog } from '@/components/Confirm';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useRequireUser } from '@/lib/useAuthRedirect';
@@ -8,7 +9,7 @@ import { addGroupMember, deleteGroup, getGroup, groupPeople, removeGroupMember, 
 import Chat from '@/components/Chat';
 import Menu from '@/components/Menu';
 import PaneHead from '@/components/PaneHead';
-import { useLive } from '@/components/Live';
+import { useLive, useSignal } from '@/components/Live';
 import EmptyState from '@/components/EmptyState';
 import Select from '@/components/Select';
 import { GroupsIcon } from '@/components/Icons';
@@ -33,6 +34,8 @@ export default function GroupPage() {
     setGroup(g);
   }, [id]);
   useEffect(() => { if (user) load(); }, [user, load]);
+  // Ζωντανά: νέα μέλη, μετονομασία, αφαίρεση από την ομάδα ή διαγραφή της.
+  useSignal('group', id, load);
 
   if (!ready || !user || group === undefined) return <WorkspaceSkeleton body />;
   if (!group) {
@@ -67,7 +70,7 @@ export default function GroupPage() {
     {
       label: 'Διαγραφή ομάδας', danger: true,
       onClick: async () => {
-        if (!confirm(`Οριστική διαγραφή της ομάδας «${group.name}» με όλα τα μηνύματα και τις φωτογραφίες της;`)) return;
+        if (!(await confirmDialog(`Οριστική διαγραφή της ομάδας «${group.name}» με όλα τα μηνύματα και τις φωτογραφίες της;`))) return;
         await deleteGroup(id);
         router.push(home);
       },
@@ -76,7 +79,7 @@ export default function GroupPage() {
     {
       label: 'Αποχώρηση από την ομάδα', danger: true,
       onClick: async () => {
-        if (!confirm(`Αποχώρηση από την ομάδα «${group.name}»;`)) return;
+        if (!(await confirmDialog(`Αποχώρηση από την ομάδα «${group.name}»;`))) return;
         await removeGroupMember(id, user.id);
         router.push(home);
       },
@@ -131,7 +134,7 @@ function GroupMembers({ groupId, members, athletes, onChange, onClose }) {
               <span className="member-name">{m.name}</span>
               <button
                 type="button" className="x" disabled={busy} aria-label={`Αφαίρεση: ${m.name}`}
-                onClick={() => confirm(`Αφαίρεση του/της «${m.name}» από την ομάδα;`) && run(() => removeGroupMember(groupId, m.userId))}
+                onClick={async () => { if (await confirmDialog(`Αφαίρεση του/της «${m.name}» από την ομάδα;`)) run(() => removeGroupMember(groupId, m.userId)); }}
               >
                 ✕
               </button>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { confirmDialog } from '@/components/Confirm';
 import { ANGLES, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
 import Photo from './Photo';
 import Menu from './Menu';
@@ -36,7 +37,7 @@ export default function Timeline({ checkins, onEdit, onDelete }) {
                   { label: 'Επεξεργασία', onClick: () => onEdit(c) },
                   {
                     label: 'Διαγραφή', danger: true,
-                    onClick: () => confirm('Οριστική διαγραφή αυτής της καταγραφής και των φωτογραφιών της;') && onDelete(c),
+                    onClick: async () => { if (await confirmDialog('Οριστική διαγραφή αυτής της καταγραφής και των φωτογραφιών της;')) onDelete(c); },
                   },
                 ]}
               />

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { confirmDialog } from '@/components/Confirm';
 import {
   deleteAthletePlan, getAthletePlans, PLAN_FILE_TYPES, removePlanFiles, saveAthletePlan, uploadPlanFile,
 } from '@/lib/storage';
@@ -11,6 +12,7 @@ import EmptyState from './EmptyState';
 import Menu from './Menu';
 import PlanFiles from './PlanFiles';
 import { PlanIcon, UploadIcon } from './Icons';
+import { useSignal } from './Live';
 
 const MAX_FILES = 10;
 const ACCEPT = Object.keys(PLAN_FILE_TYPES).map((x) => `.${x}`).join(',');
@@ -42,17 +44,10 @@ export default function AthletePlans({ athleteId, coach = false }) {
     // Αν υπάρχει μόνο διατροφή, ανοίγει σε αυτή.
     load().then((p) => { if (p && !p.training && p.nutrition) setKind('nutrition'); });
   }, [load]);
-  // Ο αθλούμενος βλέπει τις αλλαγές του προπονητή μόλις ξαναγυρίσει στην εφαρμογή.
-  useEffect(() => {
-    if (coach) return undefined;
-    const back = () => { if (document.visibilityState === 'visible') load(); };
-    window.addEventListener('focus', back);
-    document.addEventListener('visibilitychange', back);
-    return () => {
-      window.removeEventListener('focus', back);
-      document.removeEventListener('visibilitychange', back);
-    };
-  }, [coach, load]);
+  // Ζωντανά: οι αλλαγές προγράμματος εμφανίζονται χωρίς ανανέωση (όχι ενώ ο coach γράφει τώρα).
+  const editingRef = useRef(false);
+  editingRef.current = editing;
+  useSignal('plan', athleteId, () => { if (!editingRef.current) load(); });
 
   if (loadError && !plans) return <EmptyState title="Δεν φόρτωσε το πρόγραμμα" text="Έλεγξε τη σύνδεσή σου και ανανέωσε τη σελίδα." />;
   if (!plans) return <div className="panel"><span className="sk" style={{ display: 'block', width: '40%', height: 18 }} /><span className="sk" style={{ display: 'block', width: '70%', height: 14, marginTop: 14 }} /></div>;
@@ -95,7 +90,7 @@ export default function AthletePlans({ athleteId, coach = false }) {
   };
 
   const removeFile = async (f) => {
-    if (!confirm(`Αφαίρεση του «${f.name}»;`)) return;
+    if (!(await confirmDialog(`Αφαίρεση του «${f.name}»;`))) return;
     setBusy(true);
     try {
       const rest = files.filter((x) => x.path !== f.path);
@@ -112,7 +107,7 @@ export default function AthletePlans({ athleteId, coach = false }) {
   };
 
   const removeAll = async () => {
-    if (!confirm(`Διαγραφή όλου του ${k.long}; Θα σβηστούν και τα αρχεία του.`)) return;
+    if (!(await confirmDialog(`Διαγραφή όλου του ${k.long}; Θα σβηστούν και τα αρχεία του.`))) return;
     setBusy(true);
     try {
       await deleteAthletePlan(athleteId, kind, files);

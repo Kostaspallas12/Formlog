@@ -15,7 +15,7 @@ import { CHAT_VIEW, PLAN_VIEW, VIEWS } from './AppShell';
 import { ArchiveIcon, PlusIcon } from './Icons';
 import EmptyState from './EmptyState';
 import { WorkspaceBodySkeleton } from './Skeletons';
-import { useLive } from './Live';
+import { useLive, useSignal } from './Live';
 
 // Τι φορτώνεται για έναν αθλούμενο (το καθένα ξεχωριστά, για να ανανεώνεται μόνο ό,τι άλλαξε).
 const LOADERS = { checkins: listCheckins, weighIns: listWeighIns, daily: listDailyLogs };
@@ -45,6 +45,8 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
   }, [athlete.id]);
   useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => { if (reloadSignal) refresh(['checkins']); }, [reloadSignal, refresh]);
+  // Ζωντανά: ό,τι καταχωρεί ο άλλος (προπονητής ή αθλούμενος) εμφανίζεται χωρίς refresh.
+  useSignal('data', athlete.id, () => refresh());
 
   // Το βάρος κάθε καταγραφής έρχεται από τον πίνακα βάρους (μία πηγή).
   const data = useMemo(
