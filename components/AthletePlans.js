@@ -11,7 +11,7 @@ import PlanEditor from './PlanEditor';
 import EmptyState from './EmptyState';
 import Menu from './Menu';
 import PlanFiles from './PlanFiles';
-import { PlanIcon, UploadIcon } from './Icons';
+import { DownloadIcon, PlanIcon, UploadIcon } from './Icons';
 import { useSignal } from './Live';
 
 const MAX_FILES = 10;
@@ -21,13 +21,15 @@ const ACCEPT = Object.keys(PLAN_FILE_TYPES).map((x) => `.${x}`).join(',');
 
 // Η καρτέλα «Πρόγραμμα» ενός αθλούμενου: προπόνηση / διατροφή, μόνο δικά του.
 // coach: ο προπονητής γράφει το πρόγραμμα ή ανεβάζει αρχεία από τον υπολογιστή · αλλιώς μόνο ανάγνωση.
-export default function AthletePlans({ athleteId, coach = false }) {
+// names: { athlete, coach } για την κεφαλίδα του PDF.
+export default function AthletePlans({ athleteId, coach = false, names = {} }) {
   const [plans, setPlans] = useState(null); // { training, nutrition }
   const [kind, setKind] = useState('training');
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [loadError, setLoadError] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
   const fileInput = useRef(null);
 
   const load = useCallback(async () => {
@@ -117,6 +119,25 @@ export default function AthletePlans({ athleteId, coach = false }) {
     }
   };
 
+  // Το γραμμένο πρόγραμμα ως PDF (για να το έχει στο κινητό του).
+  const pdf = async () => {
+    setPdfBusy(true);
+    setError('');
+    try {
+      const { downloadPlanPdf } = await import('@/lib/planPdf');
+      await downloadPlanPdf(current, names);
+    } catch {
+      setError('Δεν δημιουργήθηκε το PDF. Δοκίμασε ξανά.');
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+  const pdfBtn = written && (
+    <button type="button" className="btn" disabled={pdfBusy} onClick={pdf}>
+      <DownloadIcon size={18} /><span className="long">{pdfBusy ? 'Ετοιμάζεται…' : 'Λήψη PDF'}</span><span className="short">{pdfBusy ? 'Ετοιμάζεται…' : 'Λήψη PDF'}</span>
+    </button>
+  );
+
   const uploadBtn = coach && (
     <>
       <input ref={fileInput} type="file" accept={ACCEPT} multiple hidden onChange={(e) => upload(e.target.files)} />
@@ -140,9 +161,11 @@ export default function AthletePlans({ athleteId, coach = false }) {
           <div className="row plan-tools">
             <button type="button" className="btn" onClick={() => setEditing(true)}>{written ? 'Επεξεργασία' : 'Γράψε πρόγραμμα'}</button>
             {uploadBtn}
+            {pdfBtn}
             <Menu items={[{ label: 'Διαγραφή προγράμματος', danger: true, onClick: removeAll }]} />
           </div>
         )}
+        {!coach && pdfBtn && !editing && <div className="row plan-tools">{pdfBtn}</div>}
       </div>
 
       {error && <p className="error" role="alert">{error}</p>}

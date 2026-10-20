@@ -51,3 +51,11 @@ export const UnreadIcon = icon(<><rect x="3" y="5" width="18" height="14" rx="2"
 export const GroupAddIcon = icon(<><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0M19 8v6M16 11h6" /></>);
 export const TrashIcon = icon(<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />);
 export const MoreIcon = icon(<><circle cx="12" cy="5" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="12" cy="19" r="1.7" /></>, true);
+export const StarIcon = icon(<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" />);
+export const StarFilledIcon = icon(<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" />, true);
+export const SelectIcon = icon(<><rect x="3.5" y="3.5" width="17" height="17" rx="4" /><path d="M8 12.2l2.8 2.8L16.2 9.5" /></>);
+export const ReadAllIcon = icon(<path d="M2.5 12.5l4 4L14 9M10.5 15.5l1 1L21.5 7" />);
+export const LockIcon = icon(<><rect x="4.5" y="10.5" width="15" height="10" rx="2.5" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5" /></>);
+export const CopyIcon = icon(<><rect x="8.5" y="8.5" width="12" height="12" rx="2.5" /><path d="M15.5 8.5V6a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 6 15.5h2.5" /></>);
+export const CheckIcon = icon(<path d="M5 12.5l4.5 4.5L19 7.5" />);
+export const BackspaceIcon = icon(<><path d="M9 5h10.5a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6.5-7z" /><path d="M12 9.5l5 5M17 9.5l-5 5" /></>);

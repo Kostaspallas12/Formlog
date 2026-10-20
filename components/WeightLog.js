@@ -181,7 +181,7 @@ function Row({ entry, delta, onChange, flash }) {
       </td>
       <td>
         <input
-          className="cell" value={note} maxLength={300} placeholder="—" aria-label={`Σημείωση ${fmtDate(entry.date)}`}
+          className="cell" value={note} maxLength={300} placeholder="Σημείωση" aria-label={`Σημείωση ${fmtDate(entry.date)}`}
           onChange={(e) => setNote(e.target.value)} onBlur={saveNote}
           onKeyDown={keys(() => setNote(entry.note))}
         />

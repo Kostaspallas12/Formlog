@@ -3,6 +3,9 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { confirmDialog } from '@/components/Confirm';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import Menu from '@/components/Menu';
+import { useAppLock } from '@/components/AppLock';
 import { useRequireUser } from '@/lib/useAuthRedirect';
 import { getSelfAthlete, revokeInvite } from '@/lib/storage';
 import { getLastUser } from '@/lib/lastUser';
@@ -177,8 +180,10 @@ function Group({ title, items, sub, online, muted, onCancel, hrefOf = (a) => `/d
 // Προσωπικός λογαριασμός: ο χώρος του ίδιου του χρήστη, με την ενότητα από το πλαϊνό μενού.
 function MyProgress({ user }) {
   const { view } = useAppView();
-  const { coach, hasPlans } = useLive();
+  const { coach, hasPlans, groups } = useLive();
   const [me, setMe] = useState(null);
+  const router = useRouter();
+  const lock = useAppLock();
   const current = (view === 'chat' && !coach) || (view === 'plan' && !coach && !hasPlans) || view === 'groups' ? 'archive' : view;
   const title = current === 'chat' ? coach.name : [...VIEWS, PLAN_VIEW, CHAT_VIEW].find((v) => v.id === current)?.label;
 
@@ -193,8 +198,14 @@ function MyProgress({ user }) {
     <Workspace
       athlete={me} title={title} subtitle={current === 'chat' ? 'Προπονητής' : <MyCoach />} view={current} onAthleteChange={setMe}
       banner={<PendingInvites />}
+      menu={(
+        <Menu items={[
+          (coach || groups?.length > 0) && { label: 'Μηνύματα με αστέρι', onClick: () => router.push('/dashboard/starred') },
+          { label: 'Κλείδωμα εφαρμογής', onClick: () => (lock.enabled ? lock.lockNow() : router.push('/account#lock')) },
+        ]} />
+      )}
       chat={coach ? <Chat athleteId={me.id} me={user.id} otherName={coach.name} solo /> : null}
-      plans={coach || hasPlans ? <AthletePlans athleteId={me.id} /> : null}
+      plans={coach || hasPlans ? <AthletePlans athleteId={me.id} names={{ athlete: me.name, coach: coach?.name }} /> : null}
     />
   );
 }

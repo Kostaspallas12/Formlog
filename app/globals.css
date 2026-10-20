@@ -1339,3 +1339,197 @@ img.avatar { object-fit: cover; }
 .invite-body small { color: var(--muted); font-size: 14px; line-height: 1.4; }
 .invite-acts { display: flex; gap: 8px; flex: none; }
 .invites .error { flex-basis: 100%; }
+
+/* ---------- Πιο λεπτή, «καθαρή» λίστα και μπάρα (μικρότερα, πιο πυκνά μεγέθη) ---------- */
+.rail { gap: 2px; padding: 12px 4px; }
+.rail-logo { width: 40px; height: 40px; margin-bottom: 14px; }
+.rail-logo .logo-mark { width: 34px; height: 34px; }
+.rail-item { gap: 2px; padding: 5px 0; font-size: 11px; font-weight: 500; letter-spacing: 0.01em; }
+.rail-item[aria-current='page'] { font-weight: 600; }
+.rail-icon { width: 46px; height: 30px; }
+.rail-icon svg { width: 20px; height: 20px; }
+.rail-account .avatar { width: 26px; height: 26px; font-size: 12px; }
+
+.list { padding: 12px 6px; }
+.list-head { min-height: 38px; padding: 0 6px 0 10px; margin-bottom: 10px; }
+.list-head h2 { font-size: 17px; gap: 8px; letter-spacing: -0.005em; }
+.list-count { min-width: 20px; height: 20px; padding: 0 6px; font-size: 11.5px; font-weight: 600; }
+.list-head .icon-btn.round.primary {
+  width: 32px; height: 32px; background: var(--soft); color: var(--primary); border: 0;
+}
+.list-head .icon-btn.round.primary:hover { background: var(--primary); color: var(--primary-ink); }
+.list-head .icon-btn.round.primary svg { width: 18px; height: 18px; }
+.list-search { gap: 8px; padding: 0 12px; margin: 0 6px 8px; border-radius: 8px; }
+.list-search svg { width: 16px; height: 16px; }
+.list-search input { padding: 7px 0; font-size: 14px; }
+.list-filters { gap: 4px; padding: 0 6px 8px; }
+.list-filters .chip { padding: 2px 10px; font-size: 12.5px; font-weight: 500; }
+.chip-more .chip svg { width: 14px; height: 14px; }
+
+.chats { gap: 1px; }
+.chat { gap: 12px; padding: 8px 10px; border-radius: 8px; }
+.chat-avatar { width: 40px; height: 40px; }
+.chat-avatar.initial { font-size: 15px; font-weight: 600; }
+.chat-pic.online::after { width: 10px; height: 10px; bottom: 0; }
+.chat-body { gap: 1px; }
+.chat-top b { font-size: 14.5px; font-weight: 600; }
+.chat-top small { font-size: 11.5px; }
+.chat-sub { font-size: 13px; }
+.chat-tag { font-size: 12px; }
+.archived-icon { width: 40px; height: 28px; }
+
+/* ---------- Ίδια κλίμακα και στο κύριο κομμάτι (υπολογιστής/tablet· το κινητό έχει τα δικά του) ---------- */
+@media (min-width: 761px) {
+  .pane-head { min-height: 60px; padding-top: 10px; padding-bottom: 10px; }
+  .pane-title h1 { font-size: 17px; font-weight: 650; }
+  .pane-sub { font-size: 12.5px; margin-top: 0; }
+  .pane-sub .link-status { font-size: 12.5px; font-weight: 600; }
+  .pane-actions .btn { padding: 6px 14px; font-size: 14px; }
+  .pane-actions .btn svg { width: 16px; height: 16px; }
+
+  .tabs { gap: 20px; margin-bottom: 16px; }
+  .tab { padding: 8px 1px; font-size: 14.5px; font-weight: 500; }
+  .tab[aria-selected='true'] { font-weight: 600; }
+
+  .summary { gap: 4px 18px; margin-bottom: 14px; font-size: 13.5px; }
+  .summary b { font-size: 14.5px; font-weight: 650; }
+
+  .entry { padding: 12px 14px 14px; }
+  .entry-head { margin-bottom: 10px; }
+  .entry-head h3 { font-size: 15px; }
+  .entry-head .meta { font-size: 13px; }
+  .thumbs figcaption { font-size: 12px; }
+  .entry-note { font-size: 14px; }
+
+  /* η συνομιλία γεμίζει σωστά το ύψος με τη χαμηλότερη κεφαλίδα */
+  .chatbox { height: calc(100vh - 156px); height: calc(100dvh - 156px); }
+  .chatbox.solo { height: calc(100vh - 96px); height: calc(100dvh - 96px); }
+}
+.pane-head .avatar-img.initial { font-size: 15px; } /* γράμμα στον μικρό κύκλο της κεφαλίδας */
+
+/* ---------- Μενού ⋮ λίστας, επιλογή πολλών ---------- */
+.list-head-acts { display: flex; align-items: center; gap: 4px; }
+.list-head-acts > .icon-btn:not(.round) { width: 32px; height: 32px; }
+.select-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 0 6px 8px; }
+.select-bar button {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border: 0; border-radius: 8px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent); color: var(--ink); font: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer;
+}
+.select-bar button:hover:not(:disabled) { background: var(--soft); color: var(--primary); }
+.select-bar button:disabled { opacity: 0.45; cursor: default; }
+.select-bar svg { width: 18px; height: 18px; }
+.chat-pick-wrap { position: relative; flex: none; display: block; }
+.chat-check {
+  position: absolute; right: -3px; bottom: -3px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--muted); color: var(--primary-ink);
+}
+.chat-check.on { background: var(--primary); border-color: var(--primary); }
+.chat[aria-pressed='true'] { background: color-mix(in srgb, var(--primary) 10%, transparent); }
+
+/* ---------- Μήνυμα: βελάκι επιλογών + αστέρι ---------- */
+.msg { position: relative; }
+.msg-more {
+  position: absolute; top: 3px; right: 3px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0;
+  border: 0; border-radius: 50%; cursor: pointer; color: var(--muted); opacity: 0; transition: opacity 0.15s;
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+}
+.msg.me .msg-more { background: color-mix(in srgb, var(--soft) 85%, transparent); }
+.msg:hover .msg-more, .msg-more:focus-visible { opacity: 1; }
+@media (hover: none) { .msg-more { display: none; } }
+.msg-star { color: var(--amber); }
+
+/* ---------- Μηνύματα με αστέρι ---------- */
+.starred { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.starred-item { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px 12px; }
+.starred-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.starred-where {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 13.5px; color: var(--muted); text-align: left; white-space: nowrap; overflow: hidden;
+}
+.starred-where b { color: var(--ink); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.starred-where svg { flex: none; color: var(--primary); }
+.starred-where:hover b { color: var(--primary); }
+.starred-head small { flex: none; font-size: 12px; color: var(--muted); }
+.starred-off { width: 32px; height: 32px; color: var(--amber); }
+.starred-off:hover { background: color-mix(in srgb, var(--amber) 14%, transparent); }
+.starred-body {
+  display: block; width: 100%; padding: 8px 10px; border: 0; border-radius: 10px; cursor: pointer; text-align: left; font: inherit; color: var(--ink);
+  background: var(--bg);
+}
+.starred-body.me { background: var(--soft); }
+.starred-body p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; line-height: 1.45; }
+.starred-photo { display: block; max-width: 220px; max-height: 220px; border-radius: 8px; object-fit: cover; margin-bottom: 6px; }
+.starred-item .voice { margin-top: 6px; }
+
+/* ---------- Κλείδωμα εφαρμογής ---------- */
+.lock {
+  position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 24px;
+  background: var(--bg);
+  background-image: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 60%);
+}
+.lock-box { width: min(340px, 100%); display: flex; flex-direction: column; align-items: center; text-align: center; }
+.lock-box h2 { margin-top: 18px; font-size: 20px; font-weight: 700; }
+.lock-hint { margin: 2px 0 22px; color: var(--muted); font-size: 15px; }
+.lock-msg { min-height: 22px; margin: 10px 0 0; font-size: 14px; color: var(--danger); }
+.lock-forgot { margin-top: 14px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer; }
+.lock-forgot:hover { color: var(--primary); }
+.pin { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+.pin-dots { display: flex; gap: 16px; }
+.pin-dots span { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); transition: background 0.12s, border-color 0.12s; }
+.pin-dots span.on { background: var(--primary); border-color: var(--primary); }
+.pin-dots.shake { animation: pin-shake 0.35s; }
+@keyframes pin-shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+.pin-pad { display: grid; grid-template-columns: repeat(3, 64px); gap: 12px 22px; }
+.pin-key {
+  width: 64px; height: 64px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  font: inherit; font-size: 24px; font-weight: 500; cursor: pointer; transition: background 0.12s, transform 0.08s;
+}
+.pin-key:hover { background: var(--soft); color: var(--primary); }
+.pin-key:active { transform: scale(0.94); }
+.pin-key.back { border-color: transparent; background: none; color: var(--muted); display: grid; place-items: center; }
+.pin-dialog .pin { margin: 4px 0 2px; }
+.pin-dialog .lock-msg { margin-bottom: 12px; }
+@media (prefers-reduced-motion: reduce) { .pin-dots.shake { animation: none; } }
+.select-bar span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Το βελάκι «σβήνει» απαλά πάνω στο κείμενο (δεν κόβει γράμματα απότομα). */
+.msg-more { top: 1px; right: 1px; width: 34px; height: 26px; border-radius: 0 11px 0 12px; justify-items: end; padding-right: 5px; background: linear-gradient(to left, var(--surface) 62%, transparent); }
+.msg.me .msg-more { background: linear-gradient(to left, color-mix(in srgb, var(--primary) 24%, var(--surface)) 62%, transparent); }
+
+/* ---------- Πίνακες βάρους/καθημερινών στο κινητό: κάρτες αντί για πίνακα (χωρίς οριζόντια κύλιση) ---------- */
+.pane-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 560px) {
+  .sheet thead { display: none; }
+  .sheet, .sheet tbody { display: block; }
+  .sheet, .daily-sheet { min-width: 0; }
+  .table-wrap { overflow-x: visible; }
+  .sheet tr { display: grid; align-items: center; gap: 4px 8px; padding: 10px 10px; border-bottom: 1px solid var(--line); }
+  .sheet tr:last-child { border-bottom: 0; }
+  .sheet td, .sheet th:first-child, .sheet td:first-child { display: block; width: auto; padding: 0; border: 0; }
+  .sheet td.actions { width: 32px; }
+  .sheet td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 2px; font-size: 12px; font-weight: 500; color: var(--muted); text-align: left; }
+  /* Βάρος: ημερομηνία · κιλά · αλλαγή · ✕ — και από κάτω η σημείωση */
+  .weightlog .sheet tr { grid-template-columns: minmax(0, 1fr) auto auto 32px; }
+  .weightlog .sheet td:nth-child(4) { grid-column: 1 / -1; }
+  .weightlog .sheet td.actions { grid-column: 4; grid-row: 1; }
+  .weightlog .sheet .cell.num { max-width: 76px; }
+  /* Καθημερινά: ημερομηνία + ✕ πάνω, τα πεδία σε δύο στήλες με τίτλο */
+  .daily-sheet tr { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px; }
+  .daily-sheet td.daily-date { grid-column: 1 / 3; padding-left: 0; width: auto; }
+  .daily-sheet td.actions { grid-column: 3; grid-row: 1; }
+  .daily-sheet td.num, .daily-sheet td.num .cell { text-align: left; }
+  .daily-sheet td .cell { padding-left: 0; }
+}
+@media (max-width: 560px) {
+  /* τα πεδία δεν «σπρώχνουν» την κάρτα με το φυσικό τους πλάτος */
+  .sheet tr > td { min-width: 0; }
+  .sheet .cell { min-width: 0; width: 100%; }
+  .weightlog .sheet td.num .cell { width: 72px; }
+  .sheet td:first-child .datefield { width: 100%; min-width: 0; }
+  .weightlog, .weightlog .table-wrap, .daily-log, .daily-log .table-wrap { min-width: 0; max-width: 100%; }
+}
+@media (max-width: 560px) {
+  .daily-sheet tr { position: relative; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding-right: 44px; }
+  .daily-sheet td.daily-date { grid-column: 1 / -1; }
+  .daily-sheet td.actions { position: absolute; top: 6px; right: 6px; }
+  .daily-sheet .cell, .daily-sheet .cell.num { margin-left: 0; max-width: none; text-align: left; padding-left: 0; }
+}

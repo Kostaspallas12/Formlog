@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { getLastUser } from '@/lib/lastUser';
 import AthleteSidebar from './AthleteSidebar';
 import LogoMark from './Logo';
+import { AppLockProvider } from './AppLock';
 import Photo from './Photo';
 import GroupSidebar from './GroupSidebar';
 import { CoachLive, PersonalLive, useLive } from './Live';
@@ -63,9 +64,13 @@ export default function AppShell({ children }) {
     </ViewContext.Provider>
   );
   if (!user) return body;
-  return coach
-    ? <CoachLive user={user}>{body}</CoachLive>
-    : <PersonalLive user={user} view={view} onOpenView={setView} onOpenChat={() => setView('chat')}>{body}</PersonalLive>;
+  return (
+    <AppLockProvider user={user}>
+      {coach
+        ? <CoachLive user={user}>{body}</CoachLive>
+        : <PersonalLive user={user} view={view} onOpenView={setView} onOpenChat={() => setView('chat')}>{body}</PersonalLive>}
+    </AppLockProvider>
+  );
 }
 
 function Shell({ coach, children }) {
@@ -77,7 +82,7 @@ function Shell({ coach, children }) {
   const onAccount = path.startsWith('/account');
   const withList = coach && !onAccount;
   const onGroups = path.startsWith('/dashboard/groups'); // ενότητα «Ομάδες» (ενότητα ομάδων)
-  const paneOpen = path.startsWith('/dashboard/athletes/') || path.startsWith('/dashboard/groups/');
+  const paneOpen = path.startsWith('/dashboard/athletes/') || path.startsWith('/dashboard/groups/') || path.startsWith('/dashboard/starred');
   const total = (m) => Object.values(m).reduce((a, b) => a + b, 0);
   const groupUnread = (groups || []).reduce((a, g) => a + g.unread, 0);
   const [listW, setListW] = useListWidth();

@@ -70,12 +70,12 @@ export default function AthletePage() {
       title={athlete.name}
       subtitle={subtitle.length ? subtitle : null}
       backHref="/dashboard"
-      avatar={<AvatarPicker avatar={athlete.avatar} name={athlete.name} size={44} editable={false} />}
+      avatar={<AvatarPicker avatar={athlete.avatar} name={athlete.name} size={36} editable={false} />}
       banner={athlete.linked ? null : <CoachLink athlete={athlete} />}
       onAthleteChange={setAthlete}
       chat={athlete.linked ? <Chat athleteId={athlete.id} me={user.id} otherName={athlete.name} /> : null}
       chatBadge={unreadMsgs[athlete.id] || 0}
-      plans={<AthletePlans athleteId={athlete.id} coach />}
+      plans={<AthletePlans athleteId={athlete.id} coach names={{ athlete: athlete.name, coach: user.name }} />}
       initialTab={tabParam}
       // Μόλις ο αθλούμενος ανεβάσει check-in, εμφανίζεται εδώ χωρίς ανανέωση σελίδας.
       reloadSignal={lastEvent?.athleteId === athlete.id ? lastEvent.id : null}

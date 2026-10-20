@@ -250,7 +250,7 @@ function Row({ entry, listId, onChange, flash }) {
     <tr className={saving ? 'saving' : ''}>
       <td className="daily-date">{fmtDate(entry.date)}</td>
       {FIELDS.map((f) => (
-        <td key={f.key} className={f.type === 'text' ? '' : 'num'}>
+        <td key={f.key} className={f.type === 'text' ? '' : 'num'} data-label={f.label + (f.unit ? ` (${f.unit})` : '')}>
           <Cell field={f} value={entry[f.key]} date={entry.date} listId={listId} onSave={(v) => save(f.key, v)} flash={flash} />
         </td>
       ))}

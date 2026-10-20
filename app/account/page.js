@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useSignal } from '@/components/Live';
+import { LOCK_AFTER, PinDialog, useAppLock } from '@/components/AppLock';
+import Select from '@/components/Select';
 import { confirmDialog } from '@/components/Confirm';
 import { useRequireUser } from '@/lib/useAuthRedirect';
 import { MIN_PASSWORD, useAuth } from '@/lib/AuthContext';
@@ -84,6 +86,7 @@ export default function AccountPage() {
 
       {user.type === 'personal' && <CoachSection />}
       <NotifySection />
+      <LockSection />
 
       <section className="panel account-block">
         <h2>Λήψη των δεδομένων μου</h2>
@@ -301,6 +304,60 @@ function NotifySection() {
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+/* ---------- Κλείδωμα εφαρμογής (PIN σε αυτή τη συσκευή) ---------- */
+
+function LockSection() {
+  const lock = useAppLock();
+  const [dialog, setDialog] = useState(null); // 'set' | 'change' | 'disable'
+  // Από το μενού «Κλείδωμα εφαρμογής» χωρίς PIN: ανοίγει κατευθείαν η ρύθμιση.
+  useEffect(() => {
+    if (window.location.hash !== '#lock') return;
+    document.getElementById('lock')?.scrollIntoView({ block: 'center' });
+    if (!lock.enabled) setDialog('set');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <section className="panel account-block" id="lock">
+      <h2>Κλείδωμα εφαρμογής</h2>
+      <div className="settings">
+        <div className="setting">
+          <div className="setting-head">
+            <div>
+              <b>Κλείδωμα με PIN</b>
+              <span className="setting-label">{lock.enabled ? 'Ενεργό σε αυτή τη συσκευή' : 'Ανενεργό σε αυτή τη συσκευή'}</span>
+            </div>
+            <button
+              type="button" role="switch" aria-checked={lock.enabled} className="switch" aria-label="Κλείδωμα με PIN"
+              onClick={() => setDialog(lock.enabled ? 'disable' : 'set')}
+            />
+          </div>
+        </div>
+        {lock.enabled && (
+          <>
+            <div className="setting">
+              <div className="setting-head">
+                <div><b>Κλείδωμα όταν φεύγεις</b></div>
+                <Select
+                  label="Κλείδωμα όταν φεύγεις" value={lock.after} onChange={lock.setAfter}
+                  options={LOCK_AFTER.map((o) => ({ value: o.min, label: o.label }))}
+                />
+              </div>
+            </div>
+            <div className="setting">
+              <div className="setting-head">
+                <div><b>PIN</b><span className="setting-label">••••</span></div>
+                <button type="button" className="btn small" onClick={() => setDialog('change')}>Αλλαγή</button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      {dialog && <PinDialog mode={dialog} onClose={() => setDialog(null)} />}
     </section>
   );
 }

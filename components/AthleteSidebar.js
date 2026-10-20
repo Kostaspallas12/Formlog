@@ -2,11 +2,19 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { fmtDate, fmtSince } from '@/lib/utils';
 import Photo from './Photo';
-import { ArchiveBoxIcon, BackIcon, BellOffIcon, ChevronIcon, GroupsIcon, PinIcon, PlusIcon, SearchIcon } from './Icons';
+import {
+  ArchiveBoxIcon, BackIcon, BellOffIcon, CheckIcon, ChevronIcon, CloseIcon, GroupsIcon, LockIcon, LogoutIcon, MoreIcon, PinIcon, PlusIcon,
+  ReadAllIcon, SearchIcon, SelectIcon, StarIcon,
+} from './Icons';
+import { markGroupRead } from '@/lib/storage';
+import { useAuth } from '@/lib/AuthContext';
+import { confirmDialog } from './Confirm';
+import PopMenu from './PopMenu';
+import { useAppLock } from './AppLock';
 import AthleteRowMenu from './AthleteRowMenu';
 import { useLive } from './Live';
 
@@ -41,7 +49,23 @@ export default function AthleteSidebar() {
   const [filter, setFilter] = useState('all');
   const [showArchived, setShowArchived] = useState(false);
   const [menu, setMenu] = useState(null); // { athlete, at, hasNew }
-  const { online, unread, unreadMsgs, lastMsg, athletes, prefs, groups } = useLive();
+  const { online, unread, unreadMsgs, lastMsg, athletes, prefs, groups, setPref, markAllRead, clearGroup } = useLive();
+  const router = useRouter();
+  const { logout } = useAuth();
+  const lock = useAppLock();
+  const [headMenu, setHeadMenu] = useState(null); // { x, y }
+  const closeHeadMenu = useCallback(() => setHeadMenu(null), []);
+  // Επιλογή πολλών αθλούμενων μαζί (για ενέργειες σε όλους).
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState(() => new Set());
+  const stopSelect = useCallback(() => { setSelecting(false); setSelected(new Set()); }, []);
+  const toggle = (id) => setSelected((cur) => { const n = new Set(cur); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  useEffect(() => {
+    if (!selecting) return undefined;
+    const esc = (e) => { if (e.key === 'Escape') stopSelect(); };
+    document.addEventListener('keydown', esc);
+    return () => document.removeEventListener('keydown', esc);
+  }, [selecting, stopSelect]);
   const news = (id) => (unread[id] || 0) + (unreadMsgs[id] || 0);
   const pref = (id) => prefs[id] || {};
   // Τελευταία κίνηση: καταγραφή, ζύγισμα ή μήνυμα.
@@ -64,10 +88,26 @@ export default function AthleteSidebar() {
       activity(b).localeCompare(activity(a)) ||
       (b.createdAt || '').localeCompare(a.createdAt || ''));
 
+  // Όλα ως αναγνωσμένα: αθλούμενοι (check-in, μηνύματα, «μη αναγνωσμένο») και ομάδες.
+  const readEverything = () => {
+    (athletes || []).filter((a) => news(a.id) > 0 || pref(a.id).markedUnread).forEach((a) => markAllRead(a.id));
+    (groups || []).filter((g) => g.unread > 0).forEach((g) => markGroupRead(g.id).then(() => clearGroup(g.id)).catch(() => {}));
+  };
+  const signOut = async () => {
+    if (!(await confirmDialog({ text: 'Αποσύνδεση από το FormLog;', confirmLabel: 'Αποσύνδεση' }))) return;
+    await logout();
+    window.location.assign('/');
+  };
+
   return (
     <aside className="list">
       <div className="list-head">
-        {showArchived ? (
+        {selecting ? (
+          <h2 className="list-back">
+            <button type="button" className="icon-btn" onClick={stopSelect} aria-label="Τέλος επιλογής"><CloseIcon /></button>
+            {selected.size ? `${selected.size} ${selected.size === 1 ? 'επιλεγμένος' : 'επιλεγμένοι'}` : 'Επιλογή'}
+          </h2>
+        ) : showArchived ? (
           <h2 className="list-back">
             <button type="button" className="icon-btn" onClick={() => setShowArchived(false)} aria-label="Πίσω"><BackIcon /></button>
             Αρχειοθετημένοι
@@ -75,16 +115,28 @@ export default function AthleteSidebar() {
         ) : (
           <h2>Αθλούμενοι{athletes?.length > 0 && <span className="list-count">{athletes.length}</span>}</h2>
         )}
-        <Link href="/dashboard/athletes/new" className="icon-btn round primary" aria-label="Προσθήκη αθλούμενου" title="Προσθήκη αθλούμενου">
-          <PlusIcon />
-        </Link>
+        {!selecting && (
+          <div className="list-head-acts">
+            <button
+              type="button" className="icon-btn" aria-label="Περισσότερα" title="Περισσότερα" aria-expanded={!!headMenu}
+              onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setHeadMenu(headMenu ? null : { x: r.right, y: r.bottom + 6 }); }}
+            >
+              <MoreIcon />
+            </button>
+            <Link href="/dashboard/athletes/new" className="icon-btn round primary" aria-label="Προσθήκη αθλούμενου" title="Προσθήκη αθλούμενου">
+              <PlusIcon />
+            </Link>
+          </div>
+        )}
       </div>
 
       <label className="list-search">
         <SearchIcon size={18} />
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Αναζήτηση" aria-label="Αναζήτηση αθλούμενου" />
       </label>
-      {!showArchived && (
+      {selecting ? (
+        <SelectBar ids={[...selected]} prefs={prefs} setPref={setPref} markAllRead={markAllRead} onDone={stopSelect} />
+      ) : !showArchived && (
         <div className="list-filters">
           {FILTERS.map((f) => (
             <button key={f.id} type="button" className="chip" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>{f.label}</button>
@@ -139,12 +191,27 @@ export default function AthleteSidebar() {
               message={unreadMsgs[a.id] ? lastMsg[a.id] : null} date={activity(a).slice(0, 10)}
               toChat={!!unreadMsgs[a.id] && !unread[a.id]}
               onMenu={(at) => setMenu({ athlete: a, at, hasNew: news(a.id) > 0 })}
+              selecting={selecting} checked={selected.has(a.id)} onToggle={() => toggle(a.id)}
             />
           ))}
         </nav>
       )}
 
       {menu && <AthleteRowMenu key={menu.athlete.id} {...menu} onClose={closeMenu} />}
+      {headMenu && (
+        <PopMenu
+          at={headMenu} align="right" onClose={closeHeadMenu} label="Περισσότερα"
+          items={[
+            { Icon: GroupsIcon, label: 'Νέα ομάδα', run: () => router.push('/dashboard/groups/new') },
+            { Icon: StarIcon, label: 'Μηνύματα με αστέρι', run: () => router.push('/dashboard/starred') },
+            { Icon: SelectIcon, label: 'Επιλογή αθλούμενων', run: () => { setShowArchived(false); setSelecting(true); } },
+            { Icon: ReadAllIcon, label: 'Όλα ως αναγνωσμένα', run: readEverything },
+            'sep',
+            { Icon: LockIcon, label: 'Κλείδωμα εφαρμογής', run: () => (lock.enabled ? lock.lockNow() : router.push('/account#lock')) },
+            { Icon: LogoutIcon, label: 'Αποσύνδεση', run: signOut },
+          ]}
+        />
+      )}
     </aside>
   );
 }
@@ -210,7 +277,7 @@ function MoreFilters({ value, onChange }) {
   );
 }
 
-function AthleteRow({ athlete, active, online, unread, pref, message, date, toChat, onMenu }) {
+function AthleteRow({ athlete, active, online, unread, pref, message, date, toChat, onMenu, selecting, checked, onToggle }) {
   const sub = !athlete.linked && athlete.pending
     ? 'Δεν αποδέχτηκε ακόμα'
     : !athlete.linked && athlete.declined
@@ -235,9 +302,16 @@ function AthleteRow({ athlete, active, online, unread, pref, message, date, toCh
         href={`/dashboard/athletes/${athlete.id}${toChat ? '?tab=chat' : ''}`} className="chat" aria-current={active ? 'page' : undefined}
         onContextMenu={(e) => { e.preventDefault(); onMenu({ x: e.clientX, y: e.clientY }); }}
         onTouchStart={touchStart} onTouchEnd={touchEnd} onTouchMove={touchEnd}
-        onClick={(e) => { if (press.current.opened) { e.preventDefault(); press.current.opened = false; } }}
+        onClick={(e) => {
+          if (selecting) { e.preventDefault(); onToggle(); return; } // σε επιλογή: το πάτημα επιλέγει
+          if (press.current.opened) { e.preventDefault(); press.current.opened = false; }
+        }}
+        aria-pressed={selecting ? checked : undefined}
       >
-        <AthleteAvatar athlete={athlete} online={online} />
+        <span className="chat-pick-wrap">
+          <AthleteAvatar athlete={athlete} online={online} />
+          {selecting && <span className={`chat-check${checked ? ' on' : ''}`} aria-hidden="true">{checked && <CheckIcon size={14} strokeWidth="3" />}</span>}
+        </span>
         <span className="chat-body">
           <span className="chat-top">
             <b>{athlete.name}</b>
@@ -254,12 +328,33 @@ function AthleteRow({ athlete, active, online, unread, pref, message, date, toCh
           </span>
         </span>
       </Link>
-      <button
+      {!selecting && <button
         type="button" className="chat-chev" aria-label={`Επιλογές: ${athlete.name}`} title="Επιλογές"
         onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); onMenu({ x: r.left, y: r.bottom + 4 }); }}
       >
         <ChevronIcon size={20} />
-      </button>
+      </button>}
+    </div>
+  );
+}
+
+// Ενέργειες για όλους τους επιλεγμένους μαζί.
+function SelectBar({ ids, prefs, setPref, markAllRead, onDone }) {
+  const all = (k) => ids.length > 0 && ids.every((id) => prefs[id]?.[k]);
+  const flip = (k) => { const v = !all(k); ids.forEach((id) => setPref(id, { [k]: v })); onDone(); };
+  const actions = [
+    { Icon: ReadAllIcon, label: 'Αναγνωσμένα', run: () => { ids.forEach(markAllRead); onDone(); } },
+    { Icon: PinIcon, label: all('pinned') ? 'Ξεκαρφίτσωμα' : 'Καρφίτσωμα', run: () => flip('pinned') },
+    { Icon: BellOffIcon, label: all('muted') ? 'Χωρίς σίγαση' : 'Σίγαση', run: () => flip('muted') },
+    { Icon: ArchiveBoxIcon, label: all('archived') ? 'Επαναφορά' : 'Αρχειοθέτηση', run: () => flip('archived') },
+  ];
+  return (
+    <div className="select-bar" role="toolbar" aria-label="Ενέργειες για τους επιλεγμένους">
+      {actions.map((a) => (
+        <button key={a.label} type="button" disabled={!ids.length} onClick={a.run}>
+          <a.Icon size={20} /><span>{a.label}</span>
+        </button>
+      ))}
     </div>
   );
 }

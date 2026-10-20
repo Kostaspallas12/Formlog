@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   addPhoto, listGroupMessages, listMessages, markGroupRead, markMessagesRead, onGroupMessages, onMessages,
-  sendGroupMessage, sendMessage, uploadVoice,
+  sendGroupMessage, sendMessage, uploadVoice, listStarIds, setStar,
 } from '@/lib/storage';
 import { processImage } from '@/lib/images';
 import { fmtDate } from '@/lib/utils';
@@ -11,7 +11,8 @@ import { useLive, useSignal } from './Live';
 import Photo from './Photo';
 import VoiceNote from './VoiceNote';
 import { Lightbox } from './Timeline';
-import { ImageIcon, MicIcon, SendIcon, TicksIcon, TrashIcon } from './Icons';
+import { ChevronIcon, CopyIcon, ImageIcon, MicIcon, SendIcon, StarFilledIcon, StarIcon, TicksIcon, TrashIcon } from './Icons';
+import PopMenu from './PopMenu';
 
 // Τοπική ημερομηνία (YYYY-MM-DD) για τα διαχωριστικά «Σήμερα», «Χθες», …
 const localDay = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
@@ -39,6 +40,23 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [zoom, setZoom] = useState(null);
+  // Μηνύματα με αστέρι (δικά μου) + μενού μηνύματος { m, at }.
+  const [stars, setStars] = useState(() => new Set());
+  const [msgMenu, setMsgMenu] = useState(null);
+  const closeMsgMenu = useCallback(() => setMsgMenu(null), []);
+  useEffect(() => { listStarIds().then(setStars).catch(() => {}); }, []);
+  const toggleStar = async (m) => {
+    const on = !stars.has(m.id);
+    setStars((cur) => { const n = new Set(cur); if (on) n.add(m.id); else n.delete(m.id); return n; });
+    try { await setStar(m.id, isGroup, on); } catch { listStarIds().then(setStars).catch(() => {}); }
+  };
+  // Παρατεταμένο πάτημα σε μήνυμα (κινητό) = μενού.
+  const press = useRef(null);
+  const holdStart = (m) => (e) => {
+    const t = e.touches[0];
+    press.current = setTimeout(() => setMsgMenu({ m, at: { x: t.clientX, y: t.clientY } }), 500);
+  };
+  const holdEnd = () => clearTimeout(press.current);
   const scroller = useRef(null);
   const input = useRef(null);
   const [recording, setRecording] = useState(false);
@@ -188,7 +206,17 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
             prevSender = m.sender;
             const who = people[m.sender];
             const bubble = (
-              <div key={m.id} className={`msg${mine ? ' me' : ''}${m.photo ? ' has-photo' : ''}`}>
+              <div
+                key={m.id} className={`msg${mine ? ' me' : ''}${m.photo ? ' has-photo' : ''}`}
+                onContextMenu={(e) => { e.preventDefault(); setMsgMenu({ m, at: { x: e.clientX, y: e.clientY } }); }}
+                onTouchStart={holdStart(m)} onTouchEnd={holdEnd} onTouchMove={holdEnd}
+              >
+                <button
+                  type="button" className="msg-more" aria-label="Επιλογές μηνύματος"
+                  onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setMsgMenu({ m, at: { x: r.left, y: r.bottom + 4 } }); }}
+                >
+                  <ChevronIcon size={18} />
+                </button>
                 {first && (
                   <span className="msg-from">
                     {who?.name || 'Πρώην μέλος'}
@@ -201,6 +229,7 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
                 {m.audio && <VoiceNote path={m.audio} secs={m.audioSecs} mine={mine} />}
                 {m.body && <p>{m.body}</p>}
                 <span className="msg-meta">
+                  {stars.has(m.id) && <StarFilledIcon size={12} className="msg-star" aria-label="Με αστέρι" />}
                   {time(m.createdAt)}
                   {mine && !isGroup && <TicksIcon size={16} className={m.readAt ? 'read' : ''} aria-label={m.readAt ? 'Διαβάστηκε' : 'Στάλθηκε'} />}
                 </span>
@@ -265,6 +294,17 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
       )}
 
       {zoom && <Lightbox {...zoom} onClose={() => setZoom(null)} />}
+      {msgMenu && (
+        <PopMenu
+          at={msgMenu.at} onClose={closeMsgMenu} label="Επιλογές μηνύματος"
+          items={[
+            stars.has(msgMenu.m.id)
+              ? { Icon: StarIcon, label: 'Αφαίρεση αστεριού', run: () => toggleStar(msgMenu.m) }
+              : { Icon: StarIcon, label: 'Αστέρι', run: () => toggleStar(msgMenu.m) },
+            msgMenu.m.body && { Icon: CopyIcon, label: 'Αντιγραφή', run: () => navigator.clipboard?.writeText(msgMenu.m.body).catch(() => {}) },
+          ]}
+        />
+      )}
     </div>
   );
 }
