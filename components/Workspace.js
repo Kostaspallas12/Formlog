@@ -113,6 +113,7 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
           initial={editing === 'new' ? null : editing}
           onDone={done}
           onCancel={() => setEditing(null)}
+          lastWeight={weighIns.length ? weighIns[weighIns.length - 1].weight : null}
         />
       )}
 

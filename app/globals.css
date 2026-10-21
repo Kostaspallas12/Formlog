@@ -1693,3 +1693,16 @@ img.avatar { object-fit: cover; }
 /* πεδίο κειμένου μέσα στο παράθυρο του site (π.χ. μετονομασία) */
 .confirm-input { width: 100%; height: 44px; box-sizing: border-box; margin: -8px 0 18px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: 16px; text-align: left; }
 .confirm-input:focus { outline: none; border-color: var(--primary); }
+
+/* ---------- Γρήγορη καταγραφή: πολλές φωτογραφίες μαζί / σύρσιμο ---------- */
+.checkin-form { position: relative; }
+.checkin-form.dropping { outline: 2px dashed var(--primary); outline-offset: -6px; }
+.drop-hint {
+  position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 10px;
+  border-radius: var(--radius); background: color-mix(in srgb, var(--surface) 88%, transparent); color: var(--primary);
+  font-weight: 700; font-size: 17px; pointer-events: none;
+}
+.slots-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.slots-pick { position: relative; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.slots-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.slot[draggable="true"] { cursor: grab; }

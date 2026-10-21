@@ -4,12 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useGuard } from '@/lib/useGuard';
 import { addPhoto, deleteWeighInOn, putCheckin, removePhotos, setWeighIn, uuid } from '@/lib/storage';
 import { processImage } from '@/lib/images';
-import { ANGLES, parseDecimal, todayISO } from '@/lib/utils';
+import { ANGLES, fmtKg, parseDecimal, todayISO } from '@/lib/utils';
+import { ImageIcon } from './Icons';
 import Photo from './Photo';
 import DateField from './DateField';
 
 // Νέα καταγραφή ή επεξεργασία υπάρχουσας: ημερομηνία, βάρος, έως 3 φωτογραφίες, σημείωση.
-export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
+// Γρήγορα: «Διάλεξε φωτογραφίες» (και τις 3 μαζί) ή σύρσιμο από τον υπολογιστή πάνω στη φόρμα·
+// μπαίνουν με τη σειρά που τραβήχτηκαν (Μπροστά → Πλάγια → Πίσω). Σύρσιμο ανάμεσα στις θέσεις = αλλαγή θέσης.
+// lastWeight: το τελευταίο βάρος (φαίνεται ως υπόδειξη).
+export default function CheckinForm({ athleteId, initial, onDone, onCancel, lastWeight = null }) {
   const [date, setDate] = useState(initial?.date ?? todayISO());
   const [weight, setWeight] = useState(initial?.weight != null ? String(initial.weight) : '');
   const [note, setNote] = useState(initial?.note ?? '');
@@ -37,6 +41,31 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
   };
 
   const clear = (angle) => setSlot(angle, { id: null, file: null, preview: null });
+
+  // Πολλές φωτογραφίες μαζί: με τη σειρά λήψης. Αν είναι 3 (ή όλες οι θέσεις άδειες), γεμίζουν από την αρχή·
+  // αλλιώς μπαίνουν στις άδειες θέσεις.
+  const pickMany = (list) => {
+    const files = [...(list || [])].filter((f) => f.type.startsWith('image/') || /\.(jpe?g|png|heic|heif|webp)$/i.test(f.name))
+      .sort((a, b) => (a.lastModified || 0) - (b.lastModified || 0));
+    if (!files.length) return setError('Διάλεξε αρχεία εικόνας (JPG ή PNG).');
+    setError('');
+    const cur = slotsRef.current;
+    const empty = ANGLES.filter((a) => !cur[a.id].id && !cur[a.id].file).map((a) => a.id);
+    const targets = files.length >= ANGLES.length || empty.length === ANGLES.length ? ANGLES.map((a) => a.id) : empty;
+    targets.slice(0, files.length).forEach((angle, i) => pick(angle, files[i]));
+  };
+  // Δύο θέσεις αλλάζουν μεταξύ τους (σύρσιμο φωτογραφίας πάνω σε άλλη θέση).
+  const swap = (a, b) => { if (a !== b) setSlots((prev) => ({ ...prev, [a]: prev[b], [b]: prev[a] })); };
+
+  const [dragging, setDragging] = useState(false);
+  const dragDepth = useRef(0);
+  const hasFiles = (e) => [...(e.dataTransfer?.types || [])].includes('Files');
+  const dropProps = {
+    onDragEnter: (e) => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth.current += 1; setDragging(true); },
+    onDragOver: (e) => { if (hasFiles(e) || e.dataTransfer.types.includes('text/x-formlog-slot')) e.preventDefault(); },
+    onDragLeave: () => { dragDepth.current = Math.max(0, dragDepth.current - 1); if (!dragDepth.current) setDragging(false); },
+    onDrop: (e) => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth.current = 0; setDragging(false); pickMany(e.dataTransfer.files); },
+  };
 
   const guard = useGuard();
   const submit = async (e) => {
@@ -98,7 +127,8 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
   };
 
   return (
-    <form className="panel checkin-form" onSubmit={guard(submit)}>
+    <form className={`panel checkin-form${dragging ? ' dropping' : ''}`} onSubmit={guard(submit)} {...dropProps}>
+      {dragging && <div className="drop-hint" aria-hidden="true"><ImageIcon size={28} /> Άφησε τις φωτογραφίες εδώ</div>}
       <div className="panel-head">
         <h2>{initial ? 'Επεξεργασία καταγραφής' : 'Νέα καταγραφή'}</h2>
         <button type="button" className="x" onClick={onCancel} aria-label="Κλείσιμο">✕</button>
@@ -112,7 +142,7 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
         <label className="f">
           Βάρος (kg)
           <input
-            type="text" inputMode="decimal" placeholder="π.χ. 78,5"
+            type="text" inputMode="decimal" placeholder={!initial && lastWeight ? `τελευταίο: ${fmtKg(lastWeight)}` : 'π.χ. 78,5'}
             value={weight} onChange={(e) => setWeight(e.target.value)}
           />
         </label>
@@ -121,17 +151,34 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
         <p className="hint">Για παλιές φωτογραφίες, βάλε την ημερομηνία που τραβήχτηκαν. Μπαίνουν αυτόματα στη σωστή θέση.</p>
       )}
 
+      <div className="slots-bar">
+        <label className="btn small slots-pick">
+          <ImageIcon size={16} /> Διάλεξε φωτογραφίες
+          <input type="file" accept="image/*" multiple onChange={(e) => { pickMany(e.target.files); e.target.value = ''; }} />
+        </label>
+      </div>
       <div className="slots">
         {ANGLES.map((a) => {
           const s = slots[a.id];
           const filled = s.preview || s.id;
           return (
-            <div className="slot" key={a.id}>
+            <div
+              className="slot" key={a.id}
+              draggable={!!filled} onDragStart={(e) => { e.dataTransfer.setData('text/x-formlog-slot', a.id); e.dataTransfer.effectAllowed = 'move'; }}
+              onDragOver={(e) => { if (e.dataTransfer.types.includes('text/x-formlog-slot') || hasFiles(e)) e.preventDefault(); }}
+              onDrop={(e) => {
+                const from = e.dataTransfer.getData('text/x-formlog-slot');
+                if (from) { e.preventDefault(); e.stopPropagation(); swap(from, a.id); return; }
+                if (hasFiles(e) && e.dataTransfer.files.length === 1) { // μία φωτογραφία πάνω σε θέση: μπαίνει εκεί
+                  e.preventDefault(); e.stopPropagation(); dragDepth.current = 0; setDragging(false); pick(a.id, e.dataTransfer.files[0]);
+                }
+              }}
+            >
               {filled ? (
                 <>
                   {s.preview ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={s.preview} alt={a.label} />
+                    <img src={s.preview} alt={a.label} title={s.file?.name} />
                   ) : (
                     <Photo id={s.id} alt={a.label} />
                   )}
