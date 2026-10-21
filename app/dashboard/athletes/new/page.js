@@ -24,7 +24,7 @@ export default function NewAthletePage() {
       {user?.type === 'coach' && (
         <AthleteForm
           onCancel={() => router.push('/dashboard')}
-          onDone={(athlete) => { reloadAthletes(); router.push(`/dashboard/athletes/${athlete.id}`); }}
+          onDone={(athlete, inviteProblem) => { reloadAthletes(); router.push(`/dashboard/athletes/${athlete.id}${inviteProblem ? `?invite=${inviteProblem}` : ''}`); }}
         />
       )}
     </>

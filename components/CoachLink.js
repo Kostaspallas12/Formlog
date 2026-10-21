@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createInvite, listInvites, revokeInvite } from '@/lib/storage';
+import { createInvite, INVITE_ERROR_TEXT, inviteErrorCode, listInvites, revokeInvite } from '@/lib/storage';
 import { fmtDate } from '@/lib/utils';
 import Menu from './Menu';
 import { LinkIcon, UsersIcon } from './Icons';
@@ -10,12 +10,12 @@ import { useLive, useSignal } from './Live';
 // Για τον προπονητή, σε αθλούμενο που δεν έχει συνδεθεί ακόμα:
 //   με email  → η πρόσκληση φτάνει μέσα στην εφαρμογή («στάλθηκε»)
 //   χωρίς email → σύνδεσμος να τον στείλει μόνος του (για νέο χρήστη)
-export default function CoachLink({ athlete }) {
+export default function CoachLink({ athlete, problem = null }) {
   const { reloadAthletes } = useLive();
   const [invites, setInvites] = useState(null);
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState(null);
+  const [msg, setMsg] = useState(problem && INVITE_ERROR_TEXT[problem] ? { type: 'error', text: INVITE_ERROR_TEXT[problem] } : null);
 
   const reload = useCallback(async () => {
     const all = await listInvites();
@@ -43,8 +43,8 @@ export default function CoachLink({ athlete }) {
       await reload();
       reloadAthletes();
       if (ok) setMsg({ type: 'ok', text: ok });
-    } catch {
-      setMsg({ type: 'error', text: 'Κάτι πήγε στραβά. Δοκίμασε ξανά.' });
+    } catch (e) {
+      setMsg({ type: 'error', text: INVITE_ERROR_TEXT[inviteErrorCode(e)] || 'Κάτι πήγε στραβά. Δοκίμασε ξανά.' });
     }
     running.current = false;
     setBusy(false);

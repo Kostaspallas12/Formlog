@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useGuard } from '@/lib/useGuard';
-import { addAthlete, addPhoto, createInvite, deleteAthlete, putCheckin, setWeighIn, uuid } from '@/lib/storage';
+import { addAthlete, addPhoto, createInvite, deleteAthlete, inviteErrorCode, putCheckin, setWeighIn, uuid } from '@/lib/storage';
 import { processImage } from '@/lib/images';
 import { ANGLES, parseDecimal, todayISO } from '@/lib/utils';
 
@@ -78,9 +78,10 @@ export default function AthleteForm({ onDone, onCancel }) {
           createdAt: new Date().toISOString(),
         });
       }
-      // Ο σύνδεσμος πρόσκλησης· αν αποτύχει, ο προπονητής τον βγάζει από τη σελίδα του αθλούμενου.
-      await createInvite(athlete.id, email.trim()).catch(() => {});
-      onDone(athlete);
+      // Η πρόσκληση· αν δεν σταλεί (π.χ. έχει ήδη άλλον προπονητή), ο προπονητής βλέπει τον λόγο στη σελίδα του αθλούμενου.
+      let inviteProblem = null;
+      await createInvite(athlete.id, email.trim()).catch((e) => { inviteProblem = inviteErrorCode(e); });
+      onDone(athlete, inviteProblem);
     } catch (err) {
       // Αν κόπηκε στη μέση, δεν αφήνουμε μισό αθλούμενο.
       if (athlete) await deleteAthlete(athlete.id).catch(() => {});

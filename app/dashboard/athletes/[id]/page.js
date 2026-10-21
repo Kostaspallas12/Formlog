@@ -23,8 +23,10 @@ export default function AthletePage() {
   const router = useRouter();
   const { user, ready } = useRequireUser();
   const [athlete, setAthlete] = useState(undefined); // undefined: φορτώνει, null: δεν βρέθηκε
-  const { online, markRead, unreadMsgs, reloadAthletes } = useLive();
-  const tabParam = useSearchParams().get('tab'); // π.χ. ?tab=chat από ειδοποίηση μηνύματος
+  const { markRead, unreadMsgs, reloadAthletes } = useLive();
+  const params = useSearchParams();
+  const tabParam = params.get('tab'); // π.χ. ?tab=chat από ειδοποίηση μηνύματος
+  const inviteProblem = params.get('invite'); // η πρόσκληση της φόρμας «Νέος αθλούμενος» δεν στάλθηκε (λόγος)
 
   // Ό,τι νέο είχε έρθει από αυτόν τον αθλούμενο θεωρείται πλέον διαβασμένο.
   useEffect(() => { if (isUuid(id)) markRead(id); }, [id, markRead]);
@@ -60,7 +62,7 @@ export default function AthletePage() {
   const subtitle = [
     athlete.age != null && `${athlete.age} ετών`,
     athlete.height != null && `${athlete.height} cm`,
-    athlete.linked && online.has(athlete.id) && <span className="link-status on" key="on">Online</span>,
+    // (Όχι «Online» εδώ: το πράσινο στην κεφαλίδα έμοιαζε με ειδοποίηση. Φαίνεται μόνο ως τελεία στη λίστα.)
   ].filter(Boolean).flatMap((x, i) => (i ? [' · ', x] : [x]));
 
   return (
@@ -71,7 +73,7 @@ export default function AthletePage() {
       subtitle={subtitle.length ? subtitle : null}
       backHref="/dashboard"
       avatar={<AvatarPicker avatar={athlete.avatar} name={athlete.name} size={36} editable={false} />}
-      banner={athlete.linked ? null : <CoachLink athlete={athlete} />}
+      banner={athlete.linked ? null : <CoachLink athlete={athlete} problem={inviteProblem} />}
       onAthleteChange={setAthlete}
       chat={athlete.linked ? <Chat athleteId={athlete.id} me={user.id} otherName={athlete.name} /> : null}
       chatBadge={unreadMsgs[athlete.id] || 0}
