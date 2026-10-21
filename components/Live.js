@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { wroteAnythingRecently, wroteRecently } from '@/lib/supabase';
@@ -323,9 +323,16 @@ export function CoachLive({ user, children }) {
   }, [markRead, clearMessages, user.id]);
   const markUnread = useCallback((athleteId) => setPref(athleteId, { markedUnread: true }), [setPref]);
 
+  // Μετρούν μόνο όσοι είναι στη λίστα: ειδοποιήσεις από φάκελο που δεν προπονεί πια
+  // (διακοπή, συγχώνευση, διαγραφή) δεν ανοίγουν πουθενά, άρα δεν φαίνονται.
+  const mine = useMemo(() => new Set((athletes || []).map((a) => a.id)), [athletes]);
+  const onlyMine = useCallback((m) => Object.fromEntries(Object.entries(m).filter(([id]) => mine.has(id))), [mine]);
+  const shownUnread = useMemo(() => onlyMine(unread), [onlyMine, unread]);
+  const shownMsgs = useMemo(() => onlyMine(msgs.unreadMsgs), [onlyMine, msgs.unreadMsgs]);
+
   return (
     <LiveContext.Provider value={{
-      ...EMPTY, ...msgs, ...grp, online, unread, lastEvent, markRead, athletes, reloadAthletes: refreshAthletes,
+      ...EMPTY, ...msgs, unreadMsgs: shownMsgs, ...grp, online, unread: shownUnread, lastEvent, markRead, athletes, reloadAthletes: refreshAthletes,
       prefs, setPref, markAllRead, markUnread, subscribe,
     }}>
       {children}
