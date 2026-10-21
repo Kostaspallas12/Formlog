@@ -9,8 +9,11 @@ import { NextResponse } from 'next/server';
 
 const COOKIE = 'formlog_preview';
 
+// Προσωρινά ανοιχτό για όλους (χωρίς να αλλάξει η ρύθμιση στο Vercel). false → ξανά «Υπό κατασκευή».
+const OPEN_FOR_ALL = true;
+
 export function proxy(request) {
-  if (process.env.UNDER_CONSTRUCTION !== 'true') return NextResponse.next();
+  if (OPEN_FOR_ALL || process.env.UNDER_CONSTRUCTION !== 'true') return NextResponse.next();
 
   const secret = process.env.UNDER_CONSTRUCTION_BYPASS;
   const { searchParams } = request.nextUrl;
