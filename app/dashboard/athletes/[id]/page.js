@@ -23,7 +23,7 @@ export default function AthletePage() {
   const router = useRouter();
   const { user, ready } = useRequireUser();
   const [athlete, setAthlete] = useState(undefined); // undefined: φορτώνει, null: δεν βρέθηκε
-  const { online, lastEvent, markRead, unreadMsgs, reloadAthletes } = useLive();
+  const { online, markRead, unreadMsgs, reloadAthletes } = useLive();
   const tabParam = useSearchParams().get('tab'); // π.χ. ?tab=chat από ειδοποίηση μηνύματος
 
   // Ό,τι νέο είχε έρθει από αυτόν τον αθλούμενο θεωρείται πλέον διαβασμένο.
@@ -78,8 +78,6 @@ export default function AthletePage() {
       canConfigureJournal // ο προπονητής ορίζει πεδία και στόχους του Ημερολογίου
       plans={<AthletePlans athleteId={athlete.id} coach names={{ athlete: athlete.name, coach: user.name }} />}
       initialTab={tabParam}
-      // Μόλις ο αθλούμενος ανεβάσει check-in, εμφανίζεται εδώ χωρίς ανανέωση σελίδας.
-      reloadSignal={lastEvent?.athleteId === athlete.id ? lastEvent.id : null}
       menu={
         <Menu
           items={[

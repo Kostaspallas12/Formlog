@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSignal } from '@/components/Live';
+import { useLive, useSignal } from '@/components/Live';
 import { LOCK_AFTER, PinDialog, useAppLock } from '@/components/AppLock';
 import Select from '@/components/Select';
 import { confirmDialog } from '@/components/Confirm';
@@ -365,6 +365,7 @@ function LockSection() {
 /* ---------- Προπονητής (για τον αθλούμενο) ---------- */
 
 function CoachSection() {
+  const { reloadSelf } = useLive();
   const [coach, setCoach] = useState(undefined);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -380,6 +381,7 @@ function CoachSection() {
     setBusy(true);
     try {
       await disconnectCoach(coach.athleteId);
+      reloadSelf(); // η εφαρμογή κρύβει αμέσως Συνομιλία/προπονητή
       setCoach(null);
       setMsg('Η συνεργασία διακόπηκε. Τα δεδομένα σου είναι όλα εδώ.');
     } catch {

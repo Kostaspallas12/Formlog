@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useGuard } from '@/lib/useGuard';
 import { addPhoto, deleteWeighInOn, putCheckin, removePhotos, setWeighIn, uuid } from '@/lib/storage';
 import { processImage } from '@/lib/images';
 import { ANGLES, parseDecimal, todayISO } from '@/lib/utils';
@@ -37,6 +38,7 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
 
   const clear = (angle) => setSlot(angle, { id: null, file: null, preview: null });
 
+  const guard = useGuard();
   const submit = async (e) => {
     e.preventDefault();
     const kg = weight.trim() ? parseDecimal(weight) : null;
@@ -47,25 +49,25 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
     setBusy(true);
     setError('');
     try {
-      // Πρώτα μικραίνουμε όλες τις νέες φωτογραφίες, ώστε αν μία αποτύχει να μη σωθεί τίποτα μισό.
+      // Πρώτα μικραίνουμε όλες τις νέες φωτογραφίες (ταυτόχρονα), ώστε αν μία αποτύχει να μη σωθεί τίποτα μισό.
       const shrunk = {};
-      for (const a of ANGLES) {
-        const s = slots[a.id];
-        if (!s.file) continue;
+      await Promise.all(ANGLES.filter((a) => slots[a.id].file).map(async (a) => {
         try {
-          shrunk[a.id] = await processImage(s.file);
+          shrunk[a.id] = await processImage(slots[a.id].file);
         } catch {
           throw new Error(`Δεν διαβάστηκε η φωτογραφία «${a.label}». Δοκίμασε αρχείο JPG ή PNG.`);
         }
-      }
+      }));
 
+      // Ανέβασμα όλων μαζί (όχι μία-μία): πολύ πιο γρήγορα, ειδικά στο κινητό.
       const photos = {};
       const obsolete = [];
-      for (const a of ANGLES) {
-        const s = slots[a.id];
-        const old = initial?.photos?.[a.id] ?? null;
+      await Promise.all(ANGLES.map(async (a) => {
         if (shrunk[a.id]) photos[a.id] = await addPhoto(shrunk[a.id], athleteId);
-        else if (s.id) photos[a.id] = s.id;
+        else if (slots[a.id].id) photos[a.id] = slots[a.id].id;
+      }));
+      for (const a of ANGLES) {
+        const old = initial?.photos?.[a.id] ?? null;
         if (old && photos[a.id] !== old) obsolete.push(old);
       }
 
@@ -96,7 +98,7 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel }) {
   };
 
   return (
-    <form className="panel checkin-form" onSubmit={submit}>
+    <form className="panel checkin-form" onSubmit={guard(submit)}>
       <div className="panel-head">
         <h2>{initial ? 'Επεξεργασία καταγραφής' : 'Νέα καταγραφή'}</h2>
         <button type="button" className="x" onClick={onCancel} aria-label="Κλείσιμο">✕</button>

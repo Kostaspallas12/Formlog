@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useGuard } from '@/lib/useGuard';
 import { useRouter } from 'next/navigation';
 import { useRequireUser } from '@/lib/useAuthRedirect';
 import { createGroup } from '@/lib/storage';
@@ -25,6 +26,7 @@ export default function NewGroupPage() {
   const linked = (athletes || []).filter((a) => a.linked);
   const toggle = (id) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
+  const guard = useGuard();
   const submit = async (e) => {
     e.preventDefault();
     if (!name.trim()) return setError('Γράψε ένα όνομα για την ομάδα.');
@@ -43,7 +45,7 @@ export default function NewGroupPage() {
     <>
       <PaneHead title="Νέα ομάδα" backHref="/dashboard/groups" />
       {user?.type === 'coach' && (
-        <form className="panel group-form" onSubmit={submit}>
+        <form className="panel group-form" onSubmit={guard(submit)}>
           <label className="f">
             Όνομα ομάδας
             <input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="π.χ. Ομάδα Κυριακής" required autoFocus />

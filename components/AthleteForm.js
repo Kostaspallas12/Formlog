@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useGuard } from '@/lib/useGuard';
 import { addAthlete, addPhoto, createInvite, deleteAthlete, putCheckin, setWeighIn, uuid } from '@/lib/storage';
 import { processImage } from '@/lib/images';
 import { ANGLES, parseDecimal, todayISO } from '@/lib/utils';
@@ -39,6 +40,7 @@ export default function AthleteForm({ onDone, onCancel }) {
       return rest;
     });
 
+  const guard = useGuard();
   const submit = async (e) => {
     e.preventDefault();
     if (!name.trim()) return setError('Γράψε το όνομα του αθλούμενου.');
@@ -88,7 +90,7 @@ export default function AthleteForm({ onDone, onCancel }) {
   };
 
   return (
-    <form className="panel athlete-form" onSubmit={submit}>
+    <form className="panel athlete-form" onSubmit={guard(submit)}>
       <div className="athlete-fields">
         <label className="f">
           Όνομα

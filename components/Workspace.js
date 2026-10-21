@@ -22,7 +22,7 @@ const LOADERS = { checkins: listCheckins, weighIns: listWeighIns, daily: listDai
 
 // Ο χώρος ενός αθλούμενου: κεφαλίδα, (καρτέλες), αρχείο, σύγκριση, βάρος, καθημερινά.
 // view: η ενότητα από το πλαϊνό μενού (προσωπικός χρήστης). Χωρίς view δείχνει δικές του καρτέλες (προπονητής).
-export default function Workspace({ athlete, title, subtitle, avatar, backHref, view, banner, menu, onAthleteChange, reloadSignal, chat, chatBadge = 0, plans, initialTab, canConfigureJournal = false }) {
+export default function Workspace({ athlete, title, subtitle, avatar, backHref, view, banner, menu, onAthleteChange, chat, chatBadge = 0, plans, initialTab, canConfigureJournal = false }) {
   const [raw, setRaw] = useState(null); // { checkins, weighIns, daily }
   const [loadError, setLoadError] = useState(false);
   const [ownTab, setOwnTab] = useState('archive');
@@ -45,7 +45,6 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
     }
   }, [athlete.id]);
   useEffect(() => { refresh(); }, [refresh]);
-  useEffect(() => { if (reloadSignal) refresh(['checkins']); }, [reloadSignal, refresh]);
   // Ζωντανά: ό,τι καταχωρεί ο άλλος (προπονητής ή αθλούμενος) εμφανίζεται χωρίς refresh.
   useSignal('data', athlete.id, () => refresh());
 

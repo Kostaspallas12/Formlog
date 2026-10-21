@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import Menu from '@/components/Menu';
 import { useAppLock } from '@/components/AppLock';
 import { useRequireUser } from '@/lib/useAuthRedirect';
-import { getSelfAthlete, revokeInvite } from '@/lib/storage';
+import { revokeInvite } from '@/lib/storage';
 import { getLastUser } from '@/lib/lastUser';
 import Workspace from '@/components/Workspace';
 import MyCoach from '@/components/MyCoach';
@@ -18,7 +18,7 @@ import AthletePlans from '@/components/AthletePlans';
 import PendingInvites from '@/components/PendingInvites';
 import { ArchiveIcon, ChatIcon, CloseIcon, UsersIcon } from '@/components/Icons';
 import { AthleteAvatar } from '@/components/AthleteSidebar';
-import { useLive, useSignal } from '@/components/Live';
+import { useLive } from '@/components/Live';
 import { ANGLES, daysBetween, fmtDate, todayISO } from '@/lib/utils';
 import Photo from '@/components/Photo';
 import { WorkspaceSkeleton } from '@/components/Skeletons';
@@ -176,18 +176,16 @@ function Group({ title, items, sub, online, muted, onCancel, hrefOf = (a) => `/d
 // Προσωπικός λογαριασμός: ο χώρος του ίδιου του χρήστη, με την ενότητα από το πλαϊνό μενού.
 function MyProgress({ user }) {
   const { view } = useAppView();
-  const { coach, hasPlans, groups } = useLive();
+  const { coach, hasPlans, groups, self } = useLive();
   const [me, setMe] = useState(null);
   const router = useRouter();
   const lock = useAppLock();
   const current = (view === 'chat' && !coach) || (view === 'plan' && !coach && !hasPlans) || view === 'groups' ? 'archive' : view;
   const title = current === 'chat' ? coach.name : [...VIEWS, PLAN_VIEW, CHAT_VIEW].find((v) => v.id === current)?.label;
 
-  useEffect(() => {
-    getSelfAthlete(user).then(setMe);
-  }, [user]);
-  // Ζωντανά: ο προπονητής άλλαξε ηλικία/ύψος/όνομα του φακέλου.
-  useSignal('athlete', me?.id, () => getSelfAthlete(user).then(setMe).catch(() => {}));
+  // Ο φάκελος έρχεται από τις ζωντανές ενημερώσεις (μία φόρτωση για όλη την εφαρμογή, ενημερώνεται
+  // μόνος του όταν ο προπονητής αλλάζει ηλικία/ύψος/όνομα).
+  useEffect(() => { if (self) setMe(self); }, [self]);
 
   if (!me) return <><PaneHead title={title} /><WorkspaceSkeleton body /></>;
   return (

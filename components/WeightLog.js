@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useGuard } from '@/lib/useGuard';
 import { confirmDialog } from '@/components/Confirm';
 import { deleteWeighIn, setWeighIn, updateWeighIn } from '@/lib/storage';
 import { fmtDate, fmtDelta, fmtKg, parseDecimal, todayISO } from '@/lib/utils';
@@ -29,6 +30,7 @@ export default function WeightLog({ athleteId, entries, onChange }) {
     if (type === 'ok') setTimeout(() => setMsg((m) => (m?.text === text ? null : m)), 2500);
   };
 
+  const guard = useGuard();
   const add = async (e) => {
     e.preventDefault();
     const weight = parseKg(kg);
@@ -54,7 +56,7 @@ export default function WeightLog({ athleteId, entries, onChange }) {
 
   return (
     <div className="weightlog">
-      <form className="wl-add" onSubmit={add}>
+      <form className="wl-add" onSubmit={guard(add)}>
         <div className="field">
           <span>Ημερομηνία</span>
           <DateField value={date} onChange={setDate} />

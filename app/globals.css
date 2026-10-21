@@ -1669,3 +1669,27 @@ img.avatar { object-fit: cover; }
 }
 .jr-set-target input:focus { outline: none; border-color: var(--primary); }
 .jr-settings .confirm-actions { justify-content: flex-end; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Πρόγραμμα ως κείμενο (επικόλληση από σημειώσεις) ---------- */
+.seg.plan-mode { display: inline-flex; align-self: flex-start; margin-bottom: 12px; }
+.seg.plan-mode button { padding: 5px 14px; font-size: 13.5px; }
+.plan-paste {
+  width: 100%; min-height: 320px; resize: vertical; line-height: 1.55; font-size: 15px;
+  font-family: inherit; tab-size: 4; white-space: pre-wrap;
+}
+.plan-text { display: grid; gap: 2px; }
+.plan-text h4 {
+  justify-self: start; margin: 10px 0 4px; padding: 3px 12px; border-radius: 99px;
+  background: var(--soft); color: var(--primary); font-size: 14px; font-weight: 700;
+}
+.plan-text h4:first-child { margin-top: 0; }
+.plan-text p { margin: 0; font-size: 15px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.plan-text-gap { height: 8px; }
+
+/* μήνυμα που στέλνεται τώρα (φαίνεται αμέσως, επιβεβαιώνεται σε λίγο) */
+.msg-pending { color: var(--muted); }
+
+/* πεδίο κειμένου μέσα στο παράθυρο του site (π.χ. μετονομασία) */
+.confirm-input { width: 100%; height: 44px; box-sizing: border-box; margin: -8px 0 18px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: 16px; text-align: left; }
+.confirm-input:focus { outline: none; border-color: var(--primary); }

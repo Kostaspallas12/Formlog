@@ -1,15 +1,16 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useGuard } from '@/lib/useGuard';
 import { uuid } from '@/lib/storage';
-import { MACROS } from './PlanView';
+import { MACROS, isText } from './PlanView';
 import { PlusIcon, TrashIcon } from './Icons';
 
 const blankExercise = () => ({ id: uuid(), name: '', sets: '', reps: '', rest: '', note: '' });
 const blankDay = (n) => ({ id: uuid(), name: `Ημέρα ${n}`, exercises: [blankExercise()] });
 const blankMeal = (name = '') => ({ id: uuid(), name, text: '' });
 
-// Το περιεχόμενο ενός καινούριου προγράμματος.
+// Το περιεχόμενο ενός καινούριου προγράμματος (ημέρες/γεύματα — το κείμενο είναι στο text).
 export const emptyContent = (kind) => (kind === 'training'
   ? { notes: '', days: [blankDay(1)] }
   : { notes: '', kcal: '', protein: '', carbs: '', fat: '', meals: ['Πρωινό', 'Μεσημεριανό', 'Βραδινό'].map(blankMeal) });
@@ -19,8 +20,10 @@ const withIds = (kind, c) => (kind === 'training'
   ? { ...c, days: (c.days || []).map((d) => ({ ...d, id: d.id || uuid(), exercises: (d.exercises || []).map((e) => ({ ...e, id: e.id || uuid() })) })) }
   : { ...c, meals: (c.meals || []).map((m) => ({ ...m, id: m.id || uuid() })) });
 
-// Χωρίς τις κενές ασκήσεις/γεύματα, πριν την αποθήκευση.
-const cleaned = (kind, c) => (kind === 'training'
+// Χωρίς τις κενές ασκήσεις/γεύματα, πριν την αποθήκευση. (Κείμενο: μόνο το κείμενο.)
+const cleaned = (kind, c) => (c.mode === 'text'
+  ? { mode: 'text', text: (c.text || '').replace(/\s+$/, '') }
+  : kind === 'training'
   ? { ...c, days: c.days.map((d) => ({ ...d, exercises: d.exercises.filter((e) => e.name.trim()) })) }
   : { ...c, meals: c.meals.filter((m) => m.name.trim() || m.text.trim()) });
 
@@ -28,13 +31,22 @@ const cleaned = (kind, c) => (kind === 'training'
 export default function PlanEditor({ kind, initial, busy, onSave, onCancel, saveLabel = 'Αποθήκευση' }) {
   // Πρόγραμμα που έχει μόνο αρχεία: ξεκινά με κενή φόρμα.
   const hasContent = initial && Object.keys(initial.content || {}).length > 0;
-  const start = useMemo(() => ({ title: initial?.title ?? '', content: withIds(kind, hasContent ? initial.content : emptyContent(kind)) }), [kind, initial, hasContent]);
+  // Νέο πρόγραμμα: ξεκινά ως κείμενο (επικόλληση από σημειώσεις) · υπάρχον: όπως ήταν γραμμένο.
+  const start = useMemo(() => {
+    const c = hasContent ? initial.content : null;
+    const content = c && isText(c)
+      ? { ...emptyContent(kind), ...c }
+      : { ...withIds(kind, c || emptyContent(kind)), mode: c ? 'structured' : 'text', text: '' };
+    return { title: initial?.title ?? '', content: withIds(kind, content) };
+  }, [kind, initial, hasContent]);
   const [title, setTitle] = useState(start.title);
   const [content, setContent] = useState(start.content);
   const [error, setError] = useState('');
   const dirty = title !== start.title || JSON.stringify(content) !== JSON.stringify(start.content);
+  const textMode = content.mode === 'text';
   const set = (patch) => setContent((c) => ({ ...c, ...patch }));
 
+  const guard = useGuard();
   const submit = async (e) => {
     e.preventDefault();
     setError('');
@@ -46,7 +58,7 @@ export default function PlanEditor({ kind, initial, busy, onSave, onCancel, save
   };
 
   return (
-    <form className="plan-editor" onSubmit={submit}>
+    <form className="plan-editor" onSubmit={guard(submit)}>
       <label className="f">
         Τίτλος
         <input
@@ -55,15 +67,34 @@ export default function PlanEditor({ kind, initial, busy, onSave, onCancel, save
         />
       </label>
 
-      {kind === 'training'
-        ? <TrainingEditor days={content.days} onChange={(days) => set({ days })} />
-        : <NutritionEditor c={content} set={set} />}
+      <div className="seg plan-mode" role="group" aria-label="Πώς γράφεται">
+        <button type="button" aria-pressed={textMode} onClick={() => set({ mode: 'text' })}>Κείμενο</button>
+        <button type="button" aria-pressed={!textMode} onClick={() => set({ mode: 'structured' })}>Φόρμα</button>
+      </div>
 
-      <label className="f">
-        Σημειώσεις
-        <textarea rows={3} value={content.notes} onChange={(e) => set({ notes: e.target.value })} maxLength={4000}
-          placeholder={kind === 'training' ? 'π.χ. Ζέσταμα 10 λεπτά πριν από κάθε προπόνηση' : 'π.χ. 2,5 λίτρα νερό την ημέρα'} />
-      </label>
+      {textMode ? (
+        <label className="f">
+          <span className="sr-only">Πρόγραμμα</span>
+          <textarea
+            className="plan-paste" rows={16} value={content.text || ''} maxLength={20000} autoFocus={!content.text}
+            onChange={(e) => set({ text: e.target.value })} aria-label="Πρόγραμμα"
+            placeholder={kind === 'training'
+              ? 'Επικόλλησε εδώ το πρόγραμμα, όπως το έχεις στις σημειώσεις σου. π.χ.\n\nΗμέρα 1 – Πόδια\nLeg extension 3 x 12\nLeg press 4 x 10\n\nΗμέρα 2 – Πάνω σώμα\nΠιέσεις στήθους 4 x 8'
+              : 'Επικόλλησε εδώ τη διατροφή, όπως την έχεις στις σημειώσεις σου. π.χ.\n\nΠρωινό:\nΒρώμη 80 g με γάλα, 1 μπανάνα\n\nΜεσημεριανό:\nΚοτόπουλο 200 g, ρύζι 150 g'}
+          />
+        </label>
+      ) : (
+        <>
+          {kind === 'training'
+            ? <TrainingEditor days={content.days} onChange={(days) => set({ days })} />
+            : <NutritionEditor c={content} set={set} />}
+          <label className="f">
+            Σημειώσεις
+            <textarea rows={3} value={content.notes} onChange={(e) => set({ notes: e.target.value })} maxLength={4000}
+              placeholder={kind === 'training' ? 'π.χ. Ζέσταμα 10 λεπτά πριν από κάθε προπόνηση' : 'π.χ. 2,5 λίτρα νερό την ημέρα'} />
+          </label>
+        </>
+      )}
 
       {error && <p className="error" role="alert">{error}</p>}
       <div className="row end plan-actions">

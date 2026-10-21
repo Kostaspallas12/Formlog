@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { wroteAnythingRecently, wroteRecently } from '@/lib/supabase';
 import {
   announcePresence, getAthlete, getAthletePlans, getMyCoach, getSelfAthlete, listAllCheckins, listAllWeighIns, listAthletes, listInvites,
   listAthletePrefs, listMyGroups, listUnreadMessages, markMessagesRead, setAthletePref, listUnreadNotifications, markAthleteRead, onGroupMessages, onMessages, onNotification, onSignals, listCoachUpdates, clearCoachUpdate, onCoachUpdates,
@@ -14,7 +15,7 @@ const EMPTY = {
   online: new Set(), unread: {}, unreadMsgs: {}, lastMsg: {}, lastEvent: null, athletes: null, self: null, coach: null,
   markRead: noop, clearMessages: noop, setOpenChat: noop, groups: null, clearGroup: noop, reloadGroups: noop,
   hasPlans: false, prefs: {}, setPref: noop, markAllRead: noop, markUnread: noop, reloadAthletes: noop,
-  subscribe: () => noop, updates: {},
+  subscribe: () => noop, updates: {}, reloadSelf: noop,
 };
 const LiveContext = createContext(EMPTY);
 export const useLive = () => useContext(LiveContext);
@@ -24,7 +25,13 @@ function useSignalHub(user) {
   const listeners = useRef(new Set());
   const subscribe = useCallback((fn) => { listeners.current.add(fn); return () => { listeners.current.delete(fn); }; }, []);
   useEffect(() => {
-    const emit = (s) => listeners.current.forEach((fn) => fn(s));
+    const emit = (s) => {
+      // «Ηχώ» δικής μας αλλαγής (καταγραφές/ημερολόγιο/πρόγραμμα): η σελίδα την έχει ήδη — όχι επαναφόρτωση.
+      if ((s.kind === 'data' || s.kind === 'plan') && s.actor === user.id && s.ref && wroteRecently(s.ref)) return;
+      // Αθλούμενοι/προσκλήσεις/ομάδες: η ενέργεια αυτής της καρτέλας ήδη ανανέωσε ό,τι χρειάζεται.
+      if ((s.kind === 'athlete' || s.kind === 'invite' || s.kind === 'group') && s.actor === user.id && wroteAnythingRecently()) return;
+      listeners.current.forEach((fn) => fn(s));
+    };
     // «*» = ξαναδιάβασε τα πάντα: μετά από διακοπή σύνδεσης ή όταν ο χρήστης ξαναγυρίζει στην καρτέλα
     // (για σιγουριά, αν κάτι χάθηκε όσο ήταν στο παρασκήνιο).
     let last = 0;
@@ -218,11 +225,19 @@ export function CoachLive({ user, children }) {
   //   αμέσως: στην αρχή, σε κάθε νέο check-in και όταν η εφαρμογή αλλάζει κάτι (refreshAthletes)
   //   αλλιώς: σε αλλαγή σελίδας ή επιστροφή στην εφαρμογή, μόνο αν πέρασε πάνω από 1 λεπτό
   const loadedAt = useRef(0);
+  // Μία φόρτωση τη φορά: ό,τι ζητηθεί όσο φορτώνει (σήματα, ενέργειες, νέο check-in) μαζεύεται σε ΜΙΑ επόμενη.
+  const loading = useRef(null);
+  const again = useRef(false);
   const refreshAthletes = useCallback(() => {
+    if (loading.current) { again.current = true; return loading.current; }
     loadedAt.current = Date.now();
-    return reloadAthletes().catch(() => setAthletes((a) => a ?? []));
+    loading.current = reloadAthletes().catch(() => setAthletes((a) => a ?? [])).finally(() => {
+      loading.current = null;
+      if (again.current) { again.current = false; refreshAthletes(); }
+    });
+    return loading.current;
   }, [reloadAthletes]);
-  useEffect(() => { refreshAthletes(); }, [refreshAthletes, lastEvent]);
+  useEffect(() => { refreshAthletes(); }, [refreshAthletes]);
   useEffect(() => {
     const stale = () => Date.now() - loadedAt.current > 60000;
     if (stale()) refreshAthletes();
@@ -241,7 +256,7 @@ export function CoachLive({ user, children }) {
     const off = subscribe((s) => {
       if (s.kind === 'group' || s.kind === 'plan') return;
       clearTimeout(t);
-      t = setTimeout(() => refreshAthletes(), 250);
+      t = setTimeout(() => refreshAthletes(), 400);
     });
     return () => { clearTimeout(t); off(); };
   }, [subscribe, refreshAthletes]);
@@ -284,7 +299,8 @@ export function CoachLive({ user, children }) {
     systemNotify(g.name, preview(m), href, m.id);
   });
   // Ανανέωση της λίστας ομάδων σε κάθε αλλαγή σελίδας (π.χ. μετά από νέα ομάδα ή διαγραφή).
-  useEffect(() => { grp.reloadGroups(); }, [path, grp.reloadGroups]);
+  const inGroups = path.startsWith('/dashboard/groups');
+  useEffect(() => { grp.reloadGroups(); }, [inGroups ? path : 'out', grp.reloadGroups]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => subscribe((s) => { if (s.kind === 'group' || s.kind === '*') grp.reloadGroups(); }), [subscribe, grp.reloadGroups]);
   // Μετά από διακοπή σύνδεσης/επιστροφή στην καρτέλα: αδιάβαστα μηνύματα και check-in από την αρχή.
   useEffect(() => subscribe((s) => {
@@ -346,13 +362,15 @@ export function PersonalLive({ user, view, onOpenView, onOpenChat, children }) {
 
   // Πρόγραμμα από (πρώην) προπονητή: μένει ορατό και μετά τη διακοπή της συνεργασίας.
   const [hasPlans, setHasPlans] = useState(false);
+  const selfId = self?.id;
+  const selfLinked = !!self?.linked;
   useEffect(() => {
-    if (!self) return setHasPlans(false);
-    const check = () => getAthletePlans(self.id).then((p) => setHasPlans(!!(self.linked || p.training || p.nutrition))).catch(() => {});
+    if (!selfId) return setHasPlans(false);
+    const check = () => getAthletePlans(selfId).then((p) => setHasPlans(!!(selfLinked || p.training || p.nutrition))).catch(() => {});
     check();
     // Ζωντανά: μόλις ο προπονητής ορίσει/αλλάξει πρόγραμμα, εμφανίζεται χωρίς ανανέωση.
     return subscribe((s) => { if (s.kind === 'plan' || s.kind === '*') check(); });
-  }, [self, subscribe]);
+  }, [selfId, selfLinked, subscribe]);
   useEffect(() => (coachId ? announcePresence(coachId, self.id) : undefined), [coachId, self?.id]);
 
   const msgs = useMessages(user, (m, open) => {
@@ -370,7 +388,8 @@ export function PersonalLive({ user, view, onOpenView, onOpenChat, children }) {
     systemNotify(g.name, preview(m), href, m.id);
   });
   // Ανανέωση της λίστας ομάδων σε κάθε αλλαγή σελίδας (π.χ. μετά από νέα ομάδα ή διαγραφή).
-  useEffect(() => { grp.reloadGroups(); }, [path, grp.reloadGroups]);
+  const inGroups = path.startsWith('/dashboard/groups');
+  useEffect(() => { grp.reloadGroups(); }, [inGroups ? path : 'out', grp.reloadGroups]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => subscribe((s) => { if (s.kind === 'group' || s.kind === '*') grp.reloadGroups(); }), [subscribe, grp.reloadGroups]);
   useEffect(() => subscribe((s) => { if (s.kind === '*') msgs.reloadUnread(); }), [subscribe, msgs.reloadUnread]);
 
@@ -406,7 +425,7 @@ export function PersonalLive({ user, view, onOpenView, onOpenChat, children }) {
   }, [view, path, updates]);
 
   return (
-    <LiveContext.Provider value={{ ...EMPTY, ...msgs, ...grp, self, coach: self?.linked ? coach : null, hasPlans, subscribe, updates }}>
+    <LiveContext.Provider value={{ ...EMPTY, ...msgs, ...grp, self, coach: self?.linked ? coach : null, hasPlans, subscribe, updates, reloadSelf }}>
       {children}
       {toastNode}
     </LiveContext.Provider>

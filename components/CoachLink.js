@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createInvite, listInvites, revokeInvite } from '@/lib/storage';
 import { fmtDate } from '@/lib/utils';
 import Menu from './Menu';
@@ -25,6 +25,8 @@ export default function CoachLink({ athlete }) {
   // Ζωντανά: ο χρήστης αποδέχτηκε/απέρριψε την πρόσκληση.
   useSignal('invite', athlete.id, () => reload().catch(() => {}));
 
+  const running = useRef(false); // διπλό πάτημα = μία πρόσκληση
+
   if (!invites) return null;
 
   const active = invites.find((i) => !i.usedAt && !i.revokedAt && !i.declinedAt && new Date(i.expiresAt) > new Date());
@@ -32,6 +34,8 @@ export default function CoachLink({ athlete }) {
   const link = active && `${window.location.origin}/join/${active.token}`;
 
   const run = async (fn, ok) => {
+    if (running.current) return;
+    running.current = true;
     setBusy(true);
     setMsg(null);
     try {
@@ -42,6 +46,7 @@ export default function CoachLink({ athlete }) {
     } catch {
       setMsg({ type: 'error', text: 'Κάτι πήγε στραβά. Δοκίμασε ξανά.' });
     }
+    running.current = false;
     setBusy(false);
   };
 

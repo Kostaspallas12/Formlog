@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { confirmDialog } from '@/components/Confirm';
+import { confirmDialog, promptDialog } from '@/components/Confirm';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useRequireUser } from '@/lib/useAuthRedirect';
@@ -63,7 +63,7 @@ export default function GroupPage() {
     {
       label: 'Μετονομασία',
       onClick: async () => {
-        const name = prompt('Νέο όνομα ομάδας', group.name)?.trim();
+        const name = await promptDialog({ text: 'Νέο όνομα ομάδας', value: group.name, maxLength: 80 });
         if (name && name !== group.name) { await updateGroup(id, { name }); changed(); }
       },
     },

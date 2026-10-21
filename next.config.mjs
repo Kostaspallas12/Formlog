@@ -13,6 +13,7 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  poweredByHeader: false, // ο server δεν ανακοινώνει τι τεχνολογία τρέχει
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }];
   },

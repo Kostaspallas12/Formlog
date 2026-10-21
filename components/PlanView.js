@@ -22,11 +22,36 @@ const days = (c) => (c.days || []).filter((d) => d.exercises?.some((e) => filled
 const meals = (c) => (c.meals || []).filter((m) => filled(m.text));
 const macros = (c) => MACROS.filter((m) => filled(c[m.id]));
 
+// Πρόγραμμα γραμμένο ως ελεύθερο κείμενο (επικόλληση από σημειώσεις) αντί για ημέρες/γεύματα.
+export const isText = (c) => c?.mode === 'text';
+
+// Μια γραμμή κειμένου που μοιάζει με επικεφαλίδα: «Ημέρα 1 – Πόδια», «Πρωινό:», «ΕΒΔΟΜΑΔΑ 2».
+const HEADING = /^(ημέρα|ημερα|μέρα|μερα|day|εβδομάδα|εβδομαδα|week|γεύμα|γευμα|πρωινό|πρωινο|δεκατιανό|μεσημεριανό|μεσημεριανο|απογευματινό|βραδινό|βραδινο|σνακ|snack|upper|lower|push|pull|legs|πόδια|ποδια)(?=[\s\d:.,–—-]|$)/i; // (όχι \b: δεν «βλέπει» ελληνικά γράμματα)
+export function textLines(text) {
+  return String(text || '').replace(/\r\n?/g, '\n').replace(/\t/g, '    ').split('\n').map((raw) => {
+    const t = raw.trim();
+    if (!t) return { kind: 'gap' };
+    const letters = t.replace(/[^A-Za-zΑ-Ωα-ωΆ-Ώά-ώ]/g, '');
+    const heading = t.length <= 60 && (HEADING.test(t) || /:$/.test(t) || (letters.length >= 3 && letters === letters.toUpperCase()));
+    return { kind: heading ? 'h' : 'p', text: t.replace(/:$/, heading ? '' : ':') };
+  });
+}
+
 // Έχει γραμμένο περιεχόμενο (όχι μόνο αρχεία);
 export const hasWritten = (plan) => {
   const c = plan?.content || {};
+  if (isText(c)) return filled(c.text);
   return filled(c.notes) || (plan?.kind === 'training' ? days(c).length > 0 : meals(c).length + macros(c).length > 0);
 };
+
+// Το κείμενο όπως το επικόλλησε ο προπονητής, με τις γραμμές του (και επικεφαλίδες όπου ταιριάζει).
+function TextView({ text }) {
+  return (
+    <div className="plan-text">
+      {textLines(text).map((l, i) => (l.kind === 'gap' ? <div key={i} className="plan-text-gap" /> : l.kind === 'h' ? <h4 key={i}>{l.text}</h4> : <p key={i}>{l.text}</p>))}
+    </div>
+  );
+}
 
 // Ένα πρόγραμμα όπως το βλέπει ο αθλούμενος (μόνο ανάγνωση).
 export default function PlanView({ plan }) {
@@ -34,8 +59,8 @@ export default function PlanView({ plan }) {
   return (
     <div className="plan-view">
       {filled(plan.title) && <h3 className="plan-title">{plan.title}</h3>}
-      {plan.kind === 'training' ? <TrainingView c={c} /> : <NutritionView c={c} />}
-      {filled(c.notes) && (
+      {isText(c) ? <TextView text={c.text} /> : plan.kind === 'training' ? <TrainingView c={c} /> : <NutritionView c={c} />}
+      {!isText(c) && filled(c.notes) && (
         <div className="plan-notes">
           <b>Σημειώσεις</b>
           <p>{c.notes}</p>

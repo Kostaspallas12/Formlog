@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   addPhoto, listGroupMessages, listMessages, markGroupRead, markMessagesRead, onGroupMessages, onMessages,
-  sendGroupMessage, sendMessage, uploadVoice, listStarIds, setStar,
+  sendGroupMessage, sendMessage, uploadVoice, listStarIds, setStar, uuid,
 } from '@/lib/storage';
 import { processImage } from '@/lib/images';
 import { fmtDate } from '@/lib/utils';
@@ -11,8 +11,19 @@ import { useLive, useSignal } from './Live';
 import Photo from './Photo';
 import VoiceNote from './VoiceNote';
 import { Lightbox } from './Timeline';
-import { ChevronIcon, CopyIcon, ImageIcon, MicIcon, SendIcon, StarFilledIcon, StarIcon, TicksIcon, TrashIcon } from './Icons';
+import { ChevronIcon, ClockIcon, CopyIcon, ImageIcon, MicIcon, SendIcon, StarFilledIcon, StarIcon, TicksIcon, TrashIcon } from './Icons';
 import PopMenu from './PopMenu';
+
+// Το μήνυμα που ήρθε από τη βάση: παίρνει τη θέση του προσωρινού του (αν υπάρχει), αλλιώς μπαίνει στο τέλος.
+function settle(list, m, tempId) {
+  if (!list) return list;
+  if (list.some((x) => x.id === m.id)) return tempId ? list.filter((x) => x.id !== tempId) : list;
+  const i = list.findIndex((x) => x.pending && (x.id === tempId || (x.sender === m.sender && x.body === m.body && !m.photo && !m.audio)));
+  if (i < 0) return [...list, m];
+  const next = list.slice();
+  next[i] = m;
+  return next;
+}
 
 // Τοπική ημερομηνία (YYYY-MM-DD) για τα διαχωριστικά «Σήμερα», «Χθες», …
 const localDay = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
@@ -46,6 +57,7 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
   const closeMsgMenu = useCallback(() => setMsgMenu(null), []);
   useEffect(() => { listStarIds().then(setStars).catch(() => {}); }, []);
   const toggleStar = async (m) => {
+    if (m.pending) return; // (δεν έχει σταλεί ακόμα)
     const on = !stars.has(m.id);
     setStars((cur) => { const n = new Set(cur); if (on) n.add(m.id); else n.delete(m.id); return n; });
     try { await setStar(m.id, isGroup, on); } catch { listStarIds().then(setStars).catch(() => {}); }
@@ -135,7 +147,7 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
     const stop = (isGroup ? onGroupMessages : onMessages)(chatId, (type, m) => {
       setMsgs((list) => {
         if (!list) return list;
-        if (type === 'INSERT') return list.some((x) => x.id === m.id) ? list : [...list, m];
+        if (type === 'INSERT') return settle(list, m);
         return list.map((x) => (x.id === m.id ? m : x)); // π.χ. «διαβάστηκε»
       });
       if (type === 'INSERT' && m.sender !== me) read();
@@ -162,6 +174,23 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
     e?.preventDefault();
     const body = text.trim();
     if ((!body && !photo) || sending) return;
+    // Σκέτο κείμενο: φαίνεται ΑΜΕΣΩΣ (με ρολόι) και επιβεβαιώνεται όταν απαντήσει η βάση.
+    if (!photo) {
+      const temp = { id: `tmp-${uuid()}`, pending: true, sender: me, body, photo: null, audio: null, createdAt: new Date().toISOString(), readAt: null };
+      setMsgs((list) => [...(list || []), temp]);
+      setText('');
+      setError('');
+      input.current?.focus();
+      try {
+        const m = await (isGroup ? sendGroupMessage : sendMessage)(chatId, body);
+        setMsgs((list) => settle(list, m, temp.id));
+      } catch {
+        setMsgs((list) => list?.filter((x) => x.id !== temp.id));
+        setText((t) => t || body); // δεν χάνεται αυτό που έγραψε
+        setError('Το μήνυμα δεν στάλθηκε. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.');
+      }
+      return;
+    }
     setSending(true);
     setError('');
     try {
@@ -231,7 +260,8 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
                 <span className="msg-meta">
                   {stars.has(m.id) && <StarFilledIcon size={12} className="msg-star" aria-label="Με αστέρι" />}
                   {time(m.createdAt)}
-                  {mine && !isGroup && <TicksIcon size={16} className={m.readAt ? 'read' : ''} aria-label={m.readAt ? 'Διαβάστηκε' : 'Στάλθηκε'} />}
+                  {m.pending && <ClockIcon size={13} className="msg-pending" aria-label="Αποστέλλεται" />}
+                  {mine && !isGroup && !m.pending && <TicksIcon size={16} className={m.readAt ? 'read' : ''} aria-label={m.readAt ? 'Διαβάστηκε' : 'Στάλθηκε'} />}
                 </span>
               </div>
             );
