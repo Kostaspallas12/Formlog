@@ -945,6 +945,30 @@ tr:last-child td { border-bottom: 0; }
 .switch[aria-checked='true']::after { transform: translateX(20px); }
 .switch:disabled { opacity: 0.6; }
 
+/* Φόντο συνομιλίας: μικρές προεπισκοπήσεις (τα μοτίβα στο walls.css) */
+.walls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 4px; }
+@media (max-width: 520px) { .walls { grid-template-columns: repeat(2, 1fr); } }
+.wall-pick {
+  display: flex; flex-direction: column; gap: 6px; padding: 0; border: 0; background: none; color: inherit;
+  font: inherit; cursor: pointer; text-align: center;
+}
+.wall-swatch {
+  display: flex; flex-direction: column; justify-content: center; gap: 6px; height: 110px; padding: 10px;
+  border-radius: var(--radius); border: 2px solid var(--line); background: var(--bg); background-size: 220px !important;
+  transition: border-color 0.15s;
+}
+.wall-pick:hover .wall-swatch { border-color: color-mix(in srgb, var(--primary) 45%, var(--line)); }
+.wall-pick.on .wall-swatch { border-color: var(--primary); }
+.wall-pick:focus-visible { outline: none; }
+.wall-pick:focus-visible .wall-swatch { outline: 2px solid var(--primary); outline-offset: 2px; }
+.wall-bubble { display: block; width: 62%; height: 16px; border-radius: 8px 8px 8px 3px; background: var(--surface); border: 1px solid var(--line); }
+.wall-bubble.mine {
+  align-self: flex-end; width: 48%; border-color: transparent; border-radius: 8px 8px 3px 8px;
+  background: color-mix(in srgb, var(--primary) 24%, var(--surface));
+}
+.wall-name { font-size: 14px; color: var(--muted); }
+.wall-pick.on .wall-name { color: var(--ink); font-weight: 600; }
+
 /* Ηλικία · ύψος (στην ενότητα «Βάρος») */
 .body-info {
   display: flex; align-items: center; gap: 28px; flex-wrap: wrap; padding: 12px 16px;

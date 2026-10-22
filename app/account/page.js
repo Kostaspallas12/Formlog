@@ -14,6 +14,7 @@ import AvatarPicker from '@/components/AvatarPicker';
 import { LogoutIcon } from '@/components/Icons';
 import { disconnectCoach, getMyCoach } from '@/lib/storage';
 import { fmtDate } from '@/lib/utils';
+import { useWallpaper, WALLPAPERS } from '@/lib/wallpaper';
 
 export default function AccountPage() {
   const { user, ready, deleteAccount, logout, updateAvatar, removeAvatar } = useRequireUser();
@@ -87,6 +88,7 @@ export default function AccountPage() {
       {user.type === 'personal' && <CoachSection />}
       <NotifySection />
       <LockSection />
+      <WallpaperSection />
 
       <section className="panel account-block">
         <h2>Λήψη των δεδομένων μου</h2>
@@ -358,6 +360,30 @@ function LockSection() {
         )}
       </div>
       {dialog && <PinDialog mode={dialog} onClose={() => setDialog(null)} />}
+    </section>
+  );
+}
+
+/* ---------- Φόντο συνομιλίας (σε αυτή τη συσκευή) ---------- */
+
+function WallpaperSection() {
+  const [wall, setWall] = useWallpaper();
+  return (
+    <section className="panel account-block">
+      <h2>Φόντο συνομιλίας</h2>
+      <div className="walls" role="radiogroup" aria-label="Φόντο συνομιλίας">
+        {WALLPAPERS.map((w) => (
+          <button
+            key={w.id} type="button" role="radio" aria-checked={wall === w.id}
+            className={`wall-pick${wall === w.id ? ' on' : ''}`} onClick={() => setWall(w.id)}
+          >
+            <span className={`wall-swatch wall-${w.id}`} aria-hidden="true">
+              <i className="wall-bubble" /><i className="wall-bubble mine" />
+            </span>
+            <span className="wall-name">{w.label}</span>
+          </button>
+        ))}
+      </div>
     </section>
   );
 }

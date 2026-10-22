@@ -13,6 +13,7 @@ import VoiceNote from './VoiceNote';
 import { Lightbox } from './Timeline';
 import { ChevronIcon, ClockIcon, CopyIcon, ImageIcon, MicIcon, SendIcon, StarFilledIcon, StarIcon, TicksIcon, TrashIcon } from './Icons';
 import PopMenu from './PopMenu';
+import { useWallpaper } from '@/lib/wallpaper';
 
 // Το μήνυμα που ήρθε από τη βάση: παίρνει τη θέση του προσωρινού του (αν υπάρχει), αλλιώς μπαίνει στο τέλος.
 function settle(list, m, tempId) {
@@ -49,6 +50,7 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
   const [text, setText] = useState('');
   const [photo, setPhoto] = useState(null); // { file, preview } πριν σταλεί
   const [sending, setSending] = useState(false);
+  const [wall] = useWallpaper();
   const [error, setError] = useState('');
   const [zoom, setZoom] = useState(null);
   // Μηνύματα με αστέρι (δικά μου) + μενού μηνύματος { m, at }.
@@ -218,7 +220,7 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
   let lastDay = null;
   let prevSender = null;
   return (
-    <div className={`chatbox${solo ? ' solo' : ''}`}>
+    <div className={`chatbox wall-${wall}${solo ? ' solo' : ''}`}>
       <div className="chat-scroll" ref={scroller}>
         {!msgs ? (
           <p className="chat-note">Φόρτωση…</p>
