@@ -1,7 +1,9 @@
-// Παράγει το formlog/app/walls.css: μοτίβα (SVG, inline) για το φόντο της συνομιλίας.
+// Παράγει το app/walls.css: μοτίβα (SVG, inline) για το φόντο της συνομιλίας.
+// Χρήση: node scripts/walls.js app/walls.css
 const fs = require('fs');
-const out = process.argv[2];
+const out = process.argv[2] || 'app/walls.css';
 
+// «A:» μπροστά = σχέδιο με το κεχριμπαρί του λογότυπου· τα υπόλοιπα με το πράσινο του site.
 const GYM = [
   // αλτήρας
   '<path d="M7 7v10M17 7v10M4.5 9.5v5M19.5 9.5v5M7 12h10"/>',
@@ -16,7 +18,7 @@ const GYM = [
   // δίσκος βαρών
   '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.2"/><path d="M12 5.5v1.5"/>',
   // κεραυνός (ενέργεια)
-  '<path d="M13 2.5 5.5 13h6l-1 8.5L18 11h-6z"/>',
+  'A:<path d="M13 2.5 5.5 13h6l-1 8.5L18 11h-6z"/>',
   // φωτογραφική μηχανή (φωτογραφίες προόδου)
   '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/>',
   // ζυγαριά
@@ -26,14 +28,14 @@ const GYM = [
   // μπάρα
   '<path d="M2.5 12h19M6 8v8M8.5 9v6M18 8v8M15.5 9v6"/>',
   // μετάλλιο
-  '<path d="m8 3 4 6 4-6"/><circle cx="12" cy="15" r="5.5"/><path d="m12 12.5.9 1.8 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3z"/>',
+  'A:<path d="m8 3 4 6 4-6"/><circle cx="12" cy="15" r="5.5"/>',
 ];
 
 const FOOD = [
   // μήλο
   '<path d="M12 7.5c-2-1.5-6.5-1-6.5 4 0 4.5 3 9.5 6.5 8 3.5 1.5 6.5-3.5 6.5-8 0-5-4.5-5.5-6.5-4z"/><path d="M12 7.5c0-2 1-3.5 3-4.5"/>',
   // καρότο
-  '<path d="M14.5 9.5 4 20l2-6.5 5-5.5a3 3 0 0 1 3.5 1.5zM14.5 9.5 18 6M15 8l1-4M16 9l4-1"/>',
+  'A:<path d="M14.5 9.5 4 20l2-6.5 5-5.5a3 3 0 0 1 3.5 1.5zM14.5 9.5 18 6M15 8l1-4M16 9l4-1"/>',
   // αβοκάντο
   '<path d="M12 3c3 0 5 5 6 9a6 6 0 0 1-12 0c1-4 3-9 6-9z"/><circle cx="12" cy="14.5" r="2.5"/>',
   // αυγό
@@ -41,7 +43,7 @@ const FOOD = [
   // φύλλο
   '<path d="M5 19C5 10 10 5 19 5c0 9-5 14-14 14zM5 19l8-8"/>',
   // μπανάνα
-  '<path d="M4 12.5c3 5.5 11 6.5 16-3l-1.2-2c-3 6-9 7-13.3 3.2zM18.8 7.5l.7-2"/>',
+  'A:<path d="M4 12.5c3 5.5 11 6.5 16-3l-1.2-2c-3 6-9 7-13.3 3.2zM18.8 7.5l.7-2"/>',
   // ποτήρι νερό
   '<path d="M6 4h12l-1.5 16h-9zM7 9h10"/>',
   // μπρόκολο
@@ -51,20 +53,23 @@ const FOOD = [
   // μπολ
   '<path d="M3 12h18a9 9 0 0 1-18 0zM8 12c0-2 1-4 3-4M13 12c0-3 2-4 4-3"/>',
   // ψάρι
-  '<path d="M3 12c3-4.5 9-6 14 0-5 6-11 4.5-14 0zM17 12l4-3.5v7z"/><circle cx="8" cy="11" r=".6"/>',
+  '<path d="M3 12c3-4.5 9-6 14 0-5 6-11 4.5-14 0zM17 12l4-3.5v7z"/>',
   // λεμόνι
-  '<path d="M5 12a7 5.5 0 0 0 14 0 7 5.5 0 0 0-14 0zM5 12H3.5M19 12h1.5"/><path d="M9 10.5c1-1 3-1.5 4.5-1"/>',
+  'A:<path d="M5 12a7 5.5 0 0 0 14 0 7 5.5 0 0 0-14 0zM5 12H3.5M19 12h1.5"/>',
 ];
 
-const WAVES = [
-  '<path d="M2 12c2.5-3 5-3 7.5 0s5 3 7.5 0 4-2.5 5 0"/>',
-  '<circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2.5"/>',
-  '<path d="M12 6v12M6 12h12"/>',
-  '<circle cx="7" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="17" cy="12" r="1.6"/>',
-  '<path d="M4 16 12 6l8 10z"/>',
-  '<path d="M3 9c3 2 6 2 9 0s6-2 9 0M3 15c3 2 6 2 9 0s6-2 9 0"/>',
-  '<rect x="6" y="6" width="12" height="12" rx="3"/>',
-  '<path d="M5 19 19 5M9 19 19 9M5 15 15 5"/>',
+// Τα σημάδια του FormLog: γωνίες κάδρου (όπως στο λογότυπο), σύγκριση, άνοδος, πρόοδος.
+const BRAND = [
+  '<path d="M4 9V6a2 2 0 0 1 2-2h3M15 4h3a2 2 0 0 1 2 2v3M20 15v3a2 2 0 0 1-2 2h-3M9 20H6a2 2 0 0 1-2-2v-3"/>',
+  'A:<rect x="10" y="6.5" width="4" height="11" rx="2"/>',
+  '<path d="M4 17.5l5-5 4 3 7-8M15 7.5h5v5"/>',
+  '<rect x="3" y="5.5" width="8" height="13" rx="2"/><rect x="13" y="5.5" width="8" height="13" rx="2"/>',
+  '<path d="M12 4a8 8 0 1 1-8 8"/>',
+  '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  '<path d="M7 10V7.5a.5.5 0 0 1 .5-.5H10M14 7h2.5a.5.5 0 0 1 .5.5V10M17 14v2.5a.5.5 0 0 1-.5.5H14M10 17H7.5a.5.5 0 0 1-.5-.5V14"/>',
+  'A:<circle cx="12" cy="12" r="2.2"/>',
+  '<path d="M4 12h3l2-4 3 8 2-4h6"/>',
+  '<path d="M6 18v-6M10 18V9M14 18v-4M18 18V6"/>',
 ];
 
 // Ψευδοτυχαίο αλλά σταθερό: κάθε build βγάζει το ίδιο μοτίβο.
@@ -73,38 +78,42 @@ function rng(seed) { let s = seed; return () => ((s = (s * 16807) % 2147483647) 
 function tile(icons, { size = 360, cols = 7, seed = 7, scale = 1.3 } = {}) {
   const r = rng(seed);
   const cell = size / cols;
-  let g = '';
-  let k = 0;
+  let main = '';
+  let accent = '';
   for (let y = 0; y < cols; y++) {
     for (let x = 0; x < cols; x++) {
-      const icon = icons[(x * 5 + y * 3 + k++ * 0) % icons.length];
+      const icon = icons[(x * 7 + y * 3) % icons.length];
       const cx = x * cell + cell / 2 + (r() - 0.5) * cell * 0.35 + (y % 2 ? cell / 4 : 0);
       const cy = y * cell + cell / 2 + (r() - 0.5) * cell * 0.35;
       const rot = Math.round((r() - 0.5) * 70);
       const s = scale * (0.85 + r() * 0.3);
-      g += `<g transform="translate(${cx.toFixed(1)} ${cy.toFixed(1)}) rotate(${rot}) scale(${s.toFixed(2)}) translate(-12 -12)">${icon}</g>`;
+      const g = `<g transform="translate(${cx.toFixed(1)} ${cy.toFixed(1)}) rotate(${rot}) scale(${s.toFixed(2)}) translate(-12 -12)">${icon.replace(/^A:/, '')}</g>`;
+      if (icon.startsWith('A:')) accent += g; else main += g;
     }
   }
-  return (color, opacity) =>
+  const group = (color, opacity, body) =>
+    `<g fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${body}</g>`;
+  return ({ ink, op, amber, aop }) =>
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
-    `<g fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${g}</g></svg>`;
+    group(ink, op, main) + group(amber, aop, accent) + '</svg>';
 }
 
 const uri = (svg) => `url("data:image/svg+xml,${encodeURIComponent(svg).replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29')}")`;
 
+// Τα χρώματα του site (app/globals.css): φόντο --bg, σχέδια --primary, πινελιές --amber.
+const LIGHT = { ink: '#0e8a6b', op: 0.11, amber: '#e8a33d', aop: 0.24 };
+const DARK = { ink: '#3ccb9f', op: 0.075, amber: '#f0b45a', aop: 0.14 };
 const THEMES = {
-  gym: { draw: tile(GYM, { seed: 11 }), light: ['#eaf3ef', '#0e5c48', 0.13], dark: ['#0d1916', '#9fe8cf', 0.075] },
-  food: { draw: tile(FOOD, { seed: 23 }), light: ['#f5f0e6', '#7a5a1e', 0.13], dark: ['#17140e', '#f0d9a8', 0.07] },
-  waves: { draw: tile(WAVES, { seed: 5, cols: 6, scale: 1.35 }), light: ['#ebeff6', '#2c4a7a', 0.12], dark: ['#0d121b', '#b8cdf0', 0.07] },
+  gym: tile(GYM, { seed: 11 }),
+  food: tile(FOOD, { seed: 23 }),
+  brand: tile(BRAND, { seed: 5, cols: 6, scale: 1.4 }),
 };
 
-let css = '/* Παράγεται αυτόματα: φόντο της συνομιλίας (Λογαριασμός → Φόντο συνομιλίας). */\n';
+let css = '/* Παράγεται από το scripts/walls.js: φόντο της συνομιλίας (Λογαριασμός → Φόντο συνομιλίας). */\n';
 let dark = '';
-for (const [id, t] of Object.entries(THEMES)) {
-  const [bg, ink, op] = t.light;
-  const [dbg, dink, dop] = t.dark;
-  css += `.wall-${id} .chat-scroll, .wall-swatch.wall-${id} { background: ${bg} ${uri(t.draw(ink, op))} 0 0 / 360px; }\n`;
-  dark += `  .wall-${id} .chat-scroll, .wall-swatch.wall-${id} { background: ${dbg} ${uri(t.draw(dink, dop))} 0 0 / 360px; }\n`;
+for (const [id, draw] of Object.entries(THEMES)) {
+  css += `.wall-${id} .chat-scroll, .wall-swatch.wall-${id} { background: var(--bg) ${uri(draw(LIGHT))} 0 0 / 360px; }\n`;
+  dark += `  .wall-${id} .chat-scroll, .wall-swatch.wall-${id} { background: var(--bg) ${uri(draw(DARK))} 0 0 / 360px; }\n`;
 }
 css += `@media (prefers-color-scheme: dark) {\n${dark}}\n`;
 fs.writeFileSync(out, css);
