@@ -100,20 +100,35 @@ function tile(icons, { size = 360, cols = 7, seed = 7, scale = 1.3 } = {}) {
 
 const uri = (svg) => `url("data:image/svg+xml,${encodeURIComponent(svg).replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29')}")`;
 
-// Τα χρώματα του site (app/globals.css): φόντο --bg, σχέδια --primary, πινελιές --amber.
-const LIGHT = { ink: '#0e8a6b', op: 0.11, amber: '#e8a33d', aop: 0.24 };
-const DARK = { ink: '#3ccb9f', op: 0.075, amber: '#f0b45a', aop: 0.14 };
+// Κάθε θέμα έχει δικό του τόνο, όλοι από τα χρώματα του site (app/globals.css):
+//   πράσινο (--primary/--soft), γραφίτης (--ink), κεχριμπαρί (--amber του λογότυπου).
+const GREEN = '#0e8a6b', GREEN_D = '#3ccb9f', INK = '#16202a', INK_D = '#e8eef2', AMBER = '#e8a33d', AMBER_D = '#f0b45a';
 const THEMES = {
-  gym: tile(GYM, { seed: 11 }),
-  food: tile(FOOD, { seed: 23 }),
-  brand: tile(BRAND, { seed: 5, cols: 6, scale: 1.4 }),
+  // Ορίζοντας: απαλό πράσινο, μεγάλα αραιά σχέδια
+  brand: {
+    draw: tile(BRAND, { seed: 5, cols: 5, scale: 1.7 }),
+    light: { bg: '#e3f2ec', ink: GREEN, op: 0.17, amber: AMBER, aop: 0.38 },
+    dark: { bg: '#0f1f1a', ink: GREEN_D, op: 0.12, amber: AMBER_D, aop: 0.2 },
+  },
+  // Ατσάλι: γραφίτης, πυκνά σχέδια
+  gym: {
+    draw: tile(GYM, { seed: 11, cols: 8, scale: 1.15 }),
+    light: { bg: '#e6eaee', ink: INK, op: 0.13, amber: AMBER, aop: 0.4 },
+    dark: { bg: '#161c22', ink: INK_D, op: 0.08, amber: AMBER_D, aop: 0.2 },
+  },
+  // Περιβόλι: απαλό κεχριμπαρί, πράσινα φρούτα/λαχανικά
+  food: {
+    draw: tile(FOOD, { seed: 23, cols: 7, scale: 1.35 }),
+    light: { bg: '#f8f0e1', ink: GREEN, op: 0.16, amber: AMBER, aop: 0.42 },
+    dark: { bg: '#1c1810', ink: GREEN_D, op: 0.1, amber: AMBER_D, aop: 0.22 },
+  },
 };
 
 let css = '/* Παράγεται από το scripts/walls.js: φόντο της συνομιλίας (Λογαριασμός → Φόντο συνομιλίας). */\n';
 let dark = '';
-for (const [id, draw] of Object.entries(THEMES)) {
-  css += `.wall-${id} .chat-scroll, .wall-swatch.wall-${id} { background: var(--bg) ${uri(draw(LIGHT))} 0 0 / 360px; }\n`;
-  dark += `  .wall-${id} .chat-scroll, .wall-swatch.wall-${id} { background: var(--bg) ${uri(draw(DARK))} 0 0 / 360px; }\n`;
+for (const [id, t] of Object.entries(THEMES)) {
+  css += `.wall-${id} .chat-scroll, .wall-swatch.wall-${id} { background: ${t.light.bg} ${uri(t.draw(t.light))} 0 0 / 360px; }\n`;
+  dark += `  .wall-${id} .chat-scroll, .wall-swatch.wall-${id} { background: ${t.dark.bg} ${uri(t.draw(t.dark))} 0 0 / 360px; }\n`;
 }
 css += `@media (prefers-color-scheme: dark) {\n${dark}}\n`;
 fs.writeFileSync(out, css);
