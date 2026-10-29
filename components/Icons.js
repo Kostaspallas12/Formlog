@@ -1,4 +1,4 @@
-// Τα εικονίδια της εφαρμογής: Material Symbols, η οικογένεια εικονιδίων της Google (Gmail, Drive),
+// Τα εικονίδια της εφαρμογής: μία οικογένεια γραμμικών εικονιδίων (Material Symbols),
 // από τη γραμματοσειρά που φορτώνει το app/layout.js (μόνο τα ονόματα της ICON_NAMES).
 // Παίρνουν το χρώμα του κειμένου· size = μέγεθος σε px.
 const icon = (name, filled = false) => {
@@ -81,7 +81,7 @@ export const ScreenIcon = icon('present_to_all');
 export const FlipIcon = icon('cameraswitch');
 export const MinimizeIcon = icon('close_fullscreen');
 
-// Τα ονόματα που χρειάζεται η γραμματοσειρά (αλφαβητικά, όπως τα θέλει η Google Fonts).
+// Τα ονόματα που χρειάζεται η γραμματοσειρά (αλφαβητικά, όπως τα θέλει η υπηρεσία γραμματοσειρών).
 export const ICON_NAMES = [
   'add', 'archive', 'arrow_forward', 'assignment', 'backspace', 'call', 'call_end', 'cameraswitch', 'chat', 'check', 'check_box',
   'chevron_left', 'close', 'close_fullscreen', 'compare', 'content_copy', 'dark_mode', 'delete', 'done_all', 'download', 'drafts',

@@ -5,7 +5,7 @@ import { downloadPlanFile } from '@/lib/storage';
 import { CloseIcon, DownloadIcon } from './Icons';
 
 // Προβολή αρχείου μέσα στη σελίδα: εικόνα, PDF και κείμενο προβάλλονται·
-// Word/Excel δεν προβάλλονται από τον browser, οπότε δίνουμε Λήψη.
+// Έγγραφα και πίνακες (doc/xls) δεν προβάλλονται από τον browser, οπότε δίνουμε Λήψη.
 export default function FileViewer({ file, onClose }) {
   const [url, setUrl] = useState(null);
   const [text, setText] = useState(null);

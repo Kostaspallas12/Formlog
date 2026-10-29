@@ -12,7 +12,7 @@ import Select from './Select';
 import { Lightbox } from './Timeline';
 import { ArrowForwardIcon, BackIcon, ReadAllIcon, SendIcon } from './Icons';
 
-// Τα check-in σε πίνακα (σαν Google Sheets) και η οθόνη ελέγχου ενός check-in.
+// Τα check-in σε πίνακα (σαν υπολογιστικό φύλλο) και η οθόνη ελέγχου ενός check-in.
 // viewer: 'coach' (ο προπονητής) ή 'self' (ο ίδιος) · coached: ο φάκελος έχει προπονητή (τότε υπάρχει «Ελέγχθηκε»).
 
 const shortDate = (iso) => fmtDate(iso, { weekday: 'short', day: 'numeric', month: 'short' });

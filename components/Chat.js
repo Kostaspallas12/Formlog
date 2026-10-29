@@ -262,7 +262,7 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
                 )}
                 {m.audio && <VoiceNote path={m.audio} secs={m.audioSecs} mine={mine} />}
                 {m.call && (
-                  // Η γραμμή μιας κλήσης· κλικ = ξανά κλήση (όπως στο WhatsApp).
+                  // Η γραμμή μιας κλήσης· κλικ = ξανά κλήση.
                   <button
                     type="button" className={`msg-call${m.call.status !== 'ended' ? ' missed' : ''}`} disabled={!!inCall || isGroup}
                     onClick={() => startCall(athleteId, m.call.video)} title={m.call.video ? 'Νέα βιντεοκλήση' : 'Νέα κλήση'}

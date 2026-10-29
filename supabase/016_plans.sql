@@ -85,7 +85,7 @@ grant update (athlete_id, kind, title, content, files) on public.athlete_plans t
 
 -- ============================================================
 -- 3. Αρχεία προγράμματος: ιδιωτικός χώρος "plans", φάκελος <athlete id>/
---    PDF, Word, Excel, κείμενο, φωτογραφίες · έως 10 MB το καθένα
+--    PDF, έγγραφα, πίνακες, κείμενο, φωτογραφίες · έως 10 MB το καθένα
 -- ============================================================
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('plans', 'plans', false, 10485760, array[

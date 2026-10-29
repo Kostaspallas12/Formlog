@@ -541,11 +541,11 @@ function JournalSettings({ journal = {}, onClose, onSave }) {
   );
 }
 
-// Λήψη όλου του Ημερολογίου ως αρχείο για Excel (ελληνικά σωστά, «;» όπως το ελληνικό Excel).
+// Λήψη όλου του Ημερολογίου ως αρχείο πίνακα CSV (ελληνικά σωστά, «;» για τα ελληνικά προγράμματα πινάκων).
 function exportCsv(athlete, entries, fields) {
   const safe = (v) => {
     const s = String(v ?? '');
-    const t = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s; // όχι τύποι Excel από κείμενο χρήστη
+    const t = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s; // όχι τύποι πίνακα από κείμενο χρήστη
     return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
   };
   const cols = [['Ημερομηνία', (e) => e.date.split('-').reverse().join('/')]];

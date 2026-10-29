@@ -9,7 +9,7 @@ import EmptyState from './EmptyState';
 import DateField from './DateField';
 import { CloseIcon, PlusIcon, WeightIcon } from './Icons';
 
-// Πίνακας βάρους τύπου Excel: γρήγορη προσθήκη πάνω, και κάθε κελί αλλάζει με κλικ.
+// Πίνακας βάρους σαν υπολογιστικό φύλλο: γρήγορη προσθήκη πάνω, και κάθε κελί αλλάζει με κλικ.
 // Enter ή κλικ έξω = αποθήκευση, Esc = ακύρωση.
 
 const parseKg = (s) => {

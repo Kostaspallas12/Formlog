@@ -9,7 +9,7 @@ import {
   FlipIcon, MicIcon, MicOffIcon, MinimizeIcon, PhoneIcon, PhoneOffIcon, ScreenIcon, VideoIcon, VideoOffIcon,
 } from './Icons';
 
-// Κλήσεις και βιντεοκλήσεις προπονητή ↔ αθλούμενου, όπως στο WhatsApp:
+// Κλήσεις και βιντεοκλήσεις προπονητή ↔ αθλούμενου, όπως στις εφαρμογές μηνυμάτων:
 // κουδούνισμα σε όποια σελίδα κι αν είσαι, οθόνη κλήσης, σίγαση, κάμερα, κοινή χρήση οθόνης,
 // σμίκρυνση (για να βλέπεις τα δεδομένα του αθλούμενου όσο μιλάτε).
 
@@ -465,7 +465,7 @@ export function CallProvider({ user, children }) {
   }, []);
 
   // Κινητό με κλειδωμένη περιστροφή οθόνης: αν το γυρίσεις οριζόντια, η κάμερα στέλνει «ξαπλωμένη» εικόνα.
-  // Ο αισθητήρας κλίσης λέει πώς κρατάς το κινητό, και ο άλλος γυρίζει την εικόνα σωστά (όπως στο WhatsApp).
+  // Ο αισθητήρας κλίσης λέει πώς κρατάς το κινητό, και ο άλλος γυρίζει την εικόνα σωστά.
   const inCall = !!call && ['connecting', 'active', 'reconnecting'].includes(call.phase);
   useEffect(() => {
     if (!inCall || !isMobile() || typeof DeviceMotionEvent === 'undefined') return;
@@ -525,7 +525,7 @@ export function CallProvider({ user, children }) {
   );
 }
 
-/* ---------- Κουμπιά στην κεφαλίδα (όπως στη συνομιλία του WhatsApp) ---------- */
+/* ---------- Κουμπιά στην κεφαλίδα της συνομιλίας ---------- */
 export function CallButtons({ athleteId }) {
   const { call, start } = useCalls();
   if (!athleteId || typeof window === 'undefined' || !navigator.mediaDevices) return null;
@@ -628,7 +628,7 @@ function CallScreen({ call, streams, media, myRot = 0, since, mini, setMini, onA
     ended: call.note || 'Η κλήση τελείωσε',
   }[call.phase];
 
-  // Εισερχόμενη: μικρό παράθυρο πάνω στη σελίδα (σαν το WhatsApp στον υπολογιστή).
+  // Εισερχόμενη: μικρό παράθυρο πάνω στη σελίδα.
   if (call.phase === 'incoming') {
     return createPortal(
       <div className="call-incoming" role="alertdialog" aria-label={`Εισερχόμενη ${kind} από ${call.peer.name}`}>
@@ -646,7 +646,7 @@ function CallScreen({ call, streams, media, myRot = 0, since, mini, setMini, onA
   const showRemote = media.remoteCam && streams.remote && call.phase !== 'ended';
   const showLocal = (media.cam || media.screen) && streams.local && call.phase !== 'ended';
   const live = call.phase !== 'ended' && call.phase !== 'outgoing';
-  // Όπως στο WhatsApp: αν το σχήμα της εικόνας ταιριάζει με την οθόνη, τη γεμίζει· αλλιώς φαίνεται ολόκληρη
+  // Αν το σχήμα της εικόνας ταιριάζει με την οθόνη, τη γεμίζει· αλλιώς φαίνεται ολόκληρη
   // (π.χ. κάθετο βίντεο από κινητό σε οριζόντια οθόνη υπολογιστή), με θολό φόντο στα πλάγια — χωρίς «ζουμ».
   // Ο άλλος κρατά το κινητό οριζόντια με κλειδωμένη οθόνη: γυρίζουμε την εικόνα του (και το σχήμα της).
   // (και αν εγώ κρατώ το κινητό μου οριζόντια, με κλειδωμένη οθόνη, τη γυρίζουμε ανάλογα)

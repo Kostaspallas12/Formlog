@@ -9,9 +9,9 @@ import { ICON_NAMES } from '@/components/Icons';
 import { THEME_BOOT } from '@/lib/themeBoot';
 import { Roboto } from 'next/font/google';
 
-// Η γραμματοσειρά της εφαρμογής (όπως στα εργαλεία της Google), με ελληνικά· φιλοξενείται από εμάς.
+// Η γραμματοσειρά της εφαρμογής, με ελληνικά· φιλοξενείται από εμάς.
 const roboto = Roboto({ subsets: ['latin', 'greek'], weight: ['400', '500', '700'], display: 'swap', variable: '--font-app' });
-// Τα εικονίδια (Material Symbols): μόνο όσα χρησιμοποιούμε, ώστε το αρχείο να είναι μικρό.
+// Τα εικονίδια (γραμματοσειρά εικονιδίων): μόνο όσα χρησιμοποιούμε, ώστε το αρχείο να είναι μικρό.
 const ICONS_CSS = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,400,0..1,0'
   + '&icon_names=' + [...ICON_NAMES].sort().join(',') + '&display=block';
 
