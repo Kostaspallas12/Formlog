@@ -489,12 +489,27 @@ export function CallButtons({ athleteId }) {
 
 /* ---------- Η οθόνη της κλήσης ---------- */
 
-function Video({ stream, muted, className }) {
+// onShape(πλάτος, ύψος): το σχήμα της εικόνας (κάθετη από κινητό, οριζόντια από υπολογιστή).
+function Video({ stream, muted, className, style, onShape }) {
   const ref = useRef(null);
   useEffect(() => {
     if (ref.current && ref.current.srcObject !== stream) ref.current.srcObject = stream || null;
   }, [stream]);
-  return <video ref={ref} className={className} autoPlay playsInline muted={muted} />;
+  const shape = (e) => { const v = e.currentTarget; if (v.videoWidth) onShape?.(v.videoWidth, v.videoHeight); };
+  return <video ref={ref} className={className} style={style} autoPlay playsInline muted={muted} onLoadedMetadata={shape} onResize={shape} />;
+}
+
+// Το μέγεθος ενός στοιχείου (ζωντανά, όταν αλλάζει το παράθυρο ή η σμίκρυνση).
+function useSize() {
+  const [el, setEl] = useState(null);
+  const [size, setSize] = useState(null);
+  useEffect(() => {
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setSize({ w: e.contentRect.width, h: e.contentRect.height }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [el]);
+  return [setEl, size];
 }
 
 function Audio({ stream }) {
@@ -525,6 +540,9 @@ function Timer({ since }) {
 function CallScreen({ call, streams, media, since, mini, setMini, onAccept, onDecline, onHangup, onMic, onCam, onScreen, onFlip }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const [stageRef, stage] = useSize();
+  const [remoteShape, setRemoteShape] = useState(null);
+  const [localShape, setLocalShape] = useState(null);
   if (!mounted) return null;
 
   const kind = call.video ? 'βιντεοκλήση' : 'κλήση';
@@ -555,12 +573,21 @@ function CallScreen({ call, streams, media, since, mini, setMini, onAccept, onDe
   const showRemote = media.remoteCam && streams.remote && call.phase !== 'ended';
   const showLocal = (media.cam || media.screen) && streams.local && call.phase !== 'ended';
   const live = call.phase !== 'ended' && call.phase !== 'outgoing';
+  // Όπως στο WhatsApp: αν το σχήμα της εικόνας ταιριάζει με την οθόνη, τη γεμίζει· αλλιώς φαίνεται ολόκληρη
+  // (π.χ. κάθετο βίντεο από κινητό σε οριζόντια οθόνη υπολογιστή), με θολό φόντο στα πλάγια — χωρίς «ζουμ».
+  const ratio = remoteShape && stage?.h ? (remoteShape.w / remoteShape.h) / (stage.w / stage.h) : 1;
+  const whole = media.remoteScreen || ratio < 0.8 || ratio > 1.25;
+  const localPortrait = localShape && localShape.h > localShape.w;
 
   return createPortal(
     <div className={`call${mini ? ' mini' : ''}${showRemote ? ' has-video' : ''}`} role="dialog" aria-label={`${call.video ? 'Βιντεοκλήση' : 'Κλήση'} με ${call.peer.name}`}>
       <Audio stream={streams.remote} />
-      <div className="call-stage" onClick={mini ? () => setMini(false) : undefined}>
-        <Video stream={streams.remote} muted className={`call-remote${showRemote ? '' : ' hidden'}${media.remoteScreen ? ' screen' : ''}`} />
+      <div className="call-stage" ref={stageRef} onClick={mini ? () => setMini(false) : undefined}>
+        {showRemote && whole && !media.remoteScreen && <Video stream={streams.remote} muted className="call-remote-bg" />}
+        <Video
+          stream={streams.remote} muted onShape={(w, h) => setRemoteShape({ w, h })}
+          className={`call-remote${showRemote ? '' : ' hidden'}${whole ? ' whole' : ''}${media.remoteScreen ? ' screen' : ''}`}
+        />
         {!showRemote && (
           <div className="call-who">
             <Avatar peer={call.peer} />
@@ -572,7 +599,11 @@ function CallScreen({ call, streams, media, since, mini, setMini, onAccept, onDe
           <div className="call-top"><b>{call.peer.name}</b><span>{status}</span></div>
         )}
         {showLocal && (
-          <Video stream={media.screen ? null : streams.local} muted className={`call-local${media.screen ? ' hidden' : ''}`} />
+          <Video
+            stream={media.screen ? null : streams.local} muted onShape={(w, h) => setLocalShape({ w, h })}
+            className={`call-local${media.screen ? ' hidden' : ''}${localPortrait ? ' portrait' : ''}`}
+            style={localShape ? { aspectRatio: `${localShape.w} / ${localShape.h}` } : undefined}
+          />
         )}
         {media.screen && <span className="call-sharing"><ScreenIcon size={16} /> Κοινή χρήση οθόνης</span>}
       </div>
