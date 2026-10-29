@@ -2022,3 +2022,134 @@ h1, h2, h3 { font-weight: 500; letter-spacing: 0; }
 .pane .stat { flex: none; }
 .theme-seg { flex: none; }
 .theme-seg button { padding: 6px 14px; font-size: 13px; }
+
+/* ---------- Check-in: ερωτηματολόγιο, πίνακας, οθόνη ελέγχου ---------- */
+.icon-btn.flip .ms { transform: rotate(180deg); }
+.summary-tools { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.summary-tools .btn { display: inline-flex; align-items: center; gap: 6px; }
+.summary-tools .seg { display: inline-flex; }
+.summary-tools .seg button { padding: 6px 14px; font-size: 13px; flex: none; }
+
+/* Ερωτηματολόγιο μέσα στη «Νέα καταγραφή» */
+.questions { border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px 6px; margin: 4px 0 16px; display: grid; gap: 2px; }
+.questions legend { padding: 0 6px; margin-left: -6px; font-weight: 500; font-size: 15px; }
+.questions legend small { color: var(--muted); font-weight: 400; font-size: 13px; }
+.question { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.question:last-child { border-bottom: 0; }
+.question-label { flex: 1 1 180px; min-width: 0; }
+.question input { flex: 1 1 220px; padding: 8px 12px; border: 1px solid var(--outline); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; }
+.scale { display: flex; gap: 4px; flex-wrap: wrap; }
+.scale button {
+  width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--outline); background: transparent; color: var(--muted);
+  font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; padding: 0; transition: background 0.1s, border-color 0.1s;
+}
+.scale button:hover { border-color: var(--primary); color: var(--ink); }
+.scale button.filled { background: color-mix(in srgb, var(--primary) 22%, transparent); border-color: transparent; color: var(--primary-text); }
+.scale button[aria-pressed="true"] { background: var(--primary); color: var(--primary-ink); }
+.seg.yesno { flex: none; }
+.seg.yesno button { padding: 6px 18px; flex: none; }
+
+/* Πίνακας check-in (σαν Google Sheets) */
+.ci-table-box { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.ci-scroll { overflow-x: auto; }
+.ci-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.ci-table th { background: var(--rail); color: var(--muted); font-size: 12px; font-weight: 500; text-align: left; padding: 10px 8px; white-space: nowrap; }
+.ci-table th:first-child, .ci-table td:first-child { padding-left: 16px; }
+.ci-table th:last-child, .ci-table td:last-child { padding-right: 16px; }
+.ci-table td { padding: 8px; border-top: 1px solid var(--line); vertical-align: middle; }
+.ci-table tbody tr { cursor: pointer; }
+.ci-table tbody tr:hover { background: var(--hover); }
+.ci-table .num { text-align: right; white-space: nowrap; }
+.ci-table .mid { text-align: center; }
+.ci-table td.down { color: var(--primary-text); font-weight: 500; }
+.ci-table td.up, .ci-table td.worse { color: var(--danger); }
+.ci-table td small { display: block; color: var(--muted); font-size: 12px; }
+.ci-date { border: 0; background: none; padding: 0; font: inherit; font-weight: 500; color: var(--ink); cursor: pointer; text-align: left; }
+.ci-date:hover { text-decoration: underline; }
+.ci-thumbs { display: inline-flex; gap: 4px; }
+.ci-thumbs img, .ci-thumb-empty { width: 30px; height: 40px; border-radius: 4px; object-fit: cover; background: var(--field); display: block; }
+.ci-status { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); white-space: nowrap; }
+.ci-status.done .ms { color: var(--primary-text); }
+.ci-review-btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px 0 14px; border: 0; border-radius: 15px;
+  background: var(--primary); color: var(--primary-ink); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+.ci-review-btn:hover { background: var(--primary-hover); }
+
+/* Οθόνη ελέγχου */
+.ci-bar { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin: -4px 0 16px; }
+.ci-bar-title { flex: 1 1 auto; min-width: 0; margin-left: 4px; }
+.ci-bar-title h2 { font-size: 17px; font-weight: 500; }
+.ci-bar-title small { color: var(--muted); font-size: 13px; }
+.ci-bar .btn { display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; }
+.ci-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; align-items: start; }
+.ci-col { display: grid; gap: 14px; min-width: 0; }
+.ci-col-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ci-col-head h3 { flex: 1 1 auto; font-size: 15px; font-weight: 500; }
+.ci-col-head .seg { flex: none; }
+.ci-col-head .seg button { padding: 5px 12px; font-size: 13px; flex: none; }
+.ci-photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ci-photos.side { grid-template-columns: minmax(0, 1fr); }
+.ci-photos figure { margin: 0; display: grid; gap: 6px; }
+.ci-photos figcaption { font-size: 12px; color: var(--muted); }
+.ci-pair { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
+.ci-pair img, .ci-photo-empty { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 8px; background: var(--field); display: block; cursor: zoom-in; }
+.ci-photos.side .ci-pair img, .ci-photos.side .ci-photo-empty { aspect-ratio: 3 / 3.6; }
+.ci-facts { display: flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.ci-facts > div { flex: 1 1 0; padding: 10px 16px; display: grid; }
+.ci-facts > div + div { border-left: 1px solid var(--line); }
+.ci-facts small { color: var(--muted); font-size: 12px; }
+.ci-facts b { font-size: 19px; font-weight: 500; }
+.ci-facts b.down { color: var(--primary-text); }
+.ci-facts b.up { color: var(--danger); }
+.ci-answers { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.ci-answers-head, .ci-answer { display: flex; align-items: center; gap: 8px; padding: 10px 16px; }
+.ci-answers-head { background: var(--rail); color: var(--muted); font-size: 12px; font-weight: 500; border-bottom: 1px solid var(--line); }
+.ci-answers-head h3 { flex: 1 1 auto; color: var(--ink); font-size: 14px; font-weight: 500; }
+.ci-answer + .ci-answer { border-top: 1px solid var(--line); }
+.ci-answer:hover { background: var(--hover); }
+.ci-q { flex: 1 1 auto; min-width: 0; }
+.ci-prev-col { width: 64px; flex: none; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ci-now-col { width: 168px; flex: none; display: flex; justify-content: center; }
+.ci-now-col b { font-weight: 500; }
+.ci-trend-col { width: 24px; flex: none; text-align: center; font-weight: 700; color: var(--muted); }
+.ci-trend-col.better { color: var(--primary-text); }
+.ci-trend-col.worse { color: var(--danger); }
+.dots { display: inline-flex; align-items: center; gap: 3px; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--outline); box-sizing: border-box; }
+.dots i.on { background: var(--primary); border-color: var(--primary); }
+.dots b { margin-left: 6px; width: 18px; text-align: right; font-variant-numeric: tabular-nums; }
+.ci-note { border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+.ci-note small { display: block; color: var(--muted); font-size: 12px; font-weight: 500; margin-bottom: 2px; }
+.ci-note p { white-space: pre-wrap; }
+.ci-reply { border: 1px solid var(--outline); border-radius: 12px; overflow: hidden; }
+.ci-reply label { display: block; padding: 10px 16px 0; color: var(--muted); font-size: 12px; font-weight: 500; }
+.ci-reply textarea { width: 100%; border: 0; outline: none; resize: vertical; padding: 6px 16px 10px; font: inherit; color: var(--ink); background: transparent; }
+.ci-reply-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.ci-reply-bar small { flex: 1 1 auto; color: var(--muted); font-size: 12px; }
+.ci-reply-bar .btn { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 560px) {
+  .ci-now-col { width: 132px; }
+  .dots { gap: 2px; }
+  .dots i { width: 8px; height: 8px; }
+  .ci-prev-col { width: 48px; }
+}
+
+/* Ρύθμιση ερωτήσεων */
+.cf-editor { max-width: 640px; width: 100%; }
+.cf-list { display: grid; gap: 0; max-height: 46vh; overflow-y: auto; margin: 6px 0 14px; border: 1px solid var(--line); border-radius: 12px; }
+.cf-row { display: flex; align-items: center; gap: 10px; padding: 6px 10px 6px 12px; }
+.cf-row + .cf-row { border-top: 1px solid var(--line); }
+.cf-row input { flex: 1 1 auto; min-width: 0; padding: 7px 10px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--ink); font: inherit; }
+.cf-row input:hover:not(:disabled), .cf-row input:focus { border-color: var(--outline); outline: none; }
+.cf-row.off input { color: var(--muted); }
+.cf-kind { flex: none; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.cf-add { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.cf-add input { flex: 1 1 240px; padding: 8px 12px; border: 1px solid var(--outline); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; }
+.cf-add .seg { flex: none; }
+.cf-add .seg button { padding: 6px 10px; font-size: 12.5px; flex: none; }
+.review-pill { flex: none; font-size: 11px; font-weight: 700; color: var(--primary-text); background: var(--soft); border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
+
+/* Η κλίμακα 1–10 χωράει πάντα σε μία γραμμή (και στο κινητό) */
+.scale { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; flex: 1 1 300px; max-width: 340px; }
+.scale button { width: 100%; height: auto; aspect-ratio: 1; max-width: 32px; justify-self: center; }

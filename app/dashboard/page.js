@@ -18,7 +18,7 @@ import Chat from '@/components/Chat';
 import AthletePlans from '@/components/AthletePlans';
 import PendingInvites from '@/components/PendingInvites';
 import { ArchiveIcon, ChatIcon, CloseIcon, UsersIcon } from '@/components/Icons';
-import { AthleteAvatar } from '@/components/AthleteSidebar';
+import { AthleteAvatar, toReview } from '@/components/AthleteSidebar';
 import { useLive } from '@/components/Live';
 import { ANGLES, daysBetween, fmtDate, todayISO } from '@/lib/utils';
 import Photo from '@/components/Photo';
@@ -74,6 +74,8 @@ function CoachHome() {
   const newCount = sum(unread);
   const msgCount = sum(unreadMsgs) + (groups || []).reduce((a, g) => a + g.unread, 0); // ατομικά + ομάδες
   const onlineCount = athletes.filter((a) => a.linked && online.has(a.id)).length;
+  const review = athletes.filter((a) => toReview(a) > 0);
+  const reviewCount = review.reduce((n, a) => n + toReview(a), 0);
 
   // Ακύρωση πρόσκλησης (με επιβεβαίωση) από την κάρτα «Αναμένουν».
   const cancelInvite = async (a) => {
@@ -85,6 +87,7 @@ function CoachHome() {
     <>
       {head}
       <div className="stats">
+        <Stat Icon={ArchiveIcon} value={reviewCount} label="check-in προς έλεγχο" good />
         <Stat Icon={ArchiveIcon} value={newCount} label="νέα check-in" good />
         <Stat Icon={ChatIcon} value={msgCount} label="νέα μηνύματα" good />
         <Stat Icon={UsersIcon} value={onlineCount} label="online τώρα" />
@@ -92,6 +95,10 @@ function CoachHome() {
 
       <RecentPhotos athletes={athletes} />
 
+      <Group
+        title="Προς έλεγχο" items={review} online={online}
+        sub={(a) => `${toReview(a)} check-in · τελευταίο ${fmtDate(a.checkins[a.checkins.length - 1].date, { day: 'numeric', month: 'short' })}`}
+      />
       <Group
         title="Νέα" items={fresh} online={online}
         // Μόνο μηνύματα → κατευθείαν στη συνομιλία.
@@ -106,7 +113,7 @@ function CoachHome() {
         sub={(a) => (a.lastDate ? `Τελευταία πριν ${ago(a)} ημέρες` : 'Καμία καταγραφή ακόμα')}
       />
       <Group title="Δεν έχουν αποδεχτεί την πρόσκληση" items={pending} sub={() => 'Αναμένει αποδοχή'} online={online} muted onCancel={cancelInvite} />
-      {!fresh.length && !quiet.length && !pending.length && (
+      {!fresh.length && !quiet.length && !pending.length && !review.length && (
         <p className="ov-ok">Όλοι οι αθλούμενοι είναι ενημερωμένοι.</p>
       )}
     </>
@@ -191,7 +198,7 @@ function MyProgress({ user }) {
   if (!me) return <><PaneHead title={title} /><WorkspaceSkeleton body /></>;
   return (
     <Workspace
-      athlete={me} title={title} subtitle={current === 'chat' ? 'Προπονητής' : <MyCoach />} view={current} onAthleteChange={setMe}
+      athlete={me} title={title} subtitle={current === 'chat' ? 'Προπονητής' : <MyCoach />} view={current} onAthleteChange={setMe} viewer="self"
       banner={<PendingInvites />}
       canConfigureJournal={!coach} // χωρίς προπονητή, ορίζει μόνος του πεδία και στόχους
       menu={(

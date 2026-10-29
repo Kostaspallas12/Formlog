@@ -40,6 +40,7 @@ export const PauseIcon = icon('pause', true);
 export const CloseIcon = icon('close');
 export const PlusIcon = icon('add');
 export const BackIcon = icon('chevron_left');
+export const ArrowForwardIcon = icon('arrow_forward');
 export const SearchIcon = icon('search');
 export const LinkIcon = icon('link');
 export const ImageIcon = icon('image');

@@ -19,6 +19,9 @@ import { useAppLock } from './AppLock';
 import AthleteRowMenu from './AthleteRowMenu';
 import { useLive } from './Live';
 
+// Check-in που περιμένουν τον έλεγχο του προπονητή (μόνο για συνδεδεμένους αθλούμενους).
+export const toReview = (a) => (a.linked ? (a.checkins || []).filter((c) => !c.reviewedAt).length : 0);
+
 // Φίλτρα: τα δύο πρώτα φαίνονται πάντα, τα υπόλοιπα στο «▾» (όπως σε μια εφαρμογή μηνυμάτων).
 const FILTERS = [
   { id: 'all', label: 'Όλοι' },
@@ -26,6 +29,7 @@ const FILTERS = [
   { id: 'favorite', label: 'Αγαπημένοι' },
 ];
 const MORE_FILTERS = [
+  { id: 'review', label: 'Προς έλεγχο' },
   { id: 'groups', label: 'Ομάδες' },
   { id: 'pending', label: 'Αναμένουν' },
 ];
@@ -82,7 +86,8 @@ export default function AthleteSidebar() {
       (filter === 'all'
         || (filter === 'unread' && (news(a.id) > 0 || pref(a.id).markedUnread))
         || (filter === 'favorite' && pref(a.id).favorite)
-        || (filter === 'pending' && !a.linked && a.pending)))
+        || (filter === 'pending' && !a.linked && a.pending)
+        || (filter === 'review' && toReview(a) > 0)))
     .sort((a, b) =>
       (pref(b.id).pinned ? 1 : 0) - (pref(a.id).pinned ? 1 : 0) ||
       (news(b.id) || pref(b.id).markedUnread ? 1 : 0) - (news(a.id) || pref(a.id).markedUnread ? 1 : 0) ||
@@ -321,6 +326,7 @@ function AthleteRow({ athlete, active, online, unread, pref, message, date, toCh
           <span className="chat-bottom">
             {/* Αν έχει νέο μήνυμα, φαίνεται αυτό (όπως σε μια εφαρμογή μηνυμάτων). */}
             <span className={`chat-sub${message ? ' msg-preview' : ''}`}>{message ? (message.call ? callText(message.call) : message.body || (message.audio ? 'Φωνητικό μήνυμα' : 'Φωτογραφία')) : sub}</span>
+            {toReview(athlete) > 0 && <span className="review-pill">Προς έλεγχο</span>}
             {pref.muted && <BellOffIcon size={16} className="chat-flag" aria-label="Σίγαση" />}
             {pref.pinned && <PinIcon size={16} className="chat-flag" aria-label="Καρφιτσωμένος" />}
             {unread > 0

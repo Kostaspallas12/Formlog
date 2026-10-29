@@ -8,15 +8,19 @@ import { ANGLES, fmtKg, parseDecimal, todayISO } from '@/lib/utils';
 import { ImageIcon } from './Icons';
 import Photo from './Photo';
 import DateField from './DateField';
+import { cleanAnswers } from '@/lib/checkinForm';
 
 // Νέα καταγραφή ή επεξεργασία υπάρχουσας: ημερομηνία, βάρος, έως 3 φωτογραφίες, σημείωση.
 // Γρήγορα: «Διάλεξε φωτογραφίες» (και τις 3 μαζί) ή σύρσιμο από τον υπολογιστή πάνω στη φόρμα·
 // μπαίνουν με τη σειρά που τραβήχτηκαν (Μπροστά → Πλάγια → Πίσω). Σύρσιμο ανάμεσα στις θέσεις = αλλαγή θέσης.
 // lastWeight: το τελευταίο βάρος (φαίνεται ως υπόδειξη).
-export default function CheckinForm({ athleteId, initial, onDone, onCancel, lastWeight = null }) {
+// form: οι ερωτήσεις του check-in (μόνο όταν το συμπληρώνει ο ίδιος ο αθλούμενος).
+export default function CheckinForm({ athleteId, initial, onDone, onCancel, lastWeight = null, form = null }) {
   const [date, setDate] = useState(initial?.date ?? todayISO());
   const [weight, setWeight] = useState(initial?.weight != null ? String(initial.weight) : '');
   const [note, setNote] = useState(initial?.note ?? '');
+  const [answers, setAnswers] = useState(() => initial?.answers ?? {});
+  const answer = (id, v) => setAnswers((a) => ({ ...a, [id]: a[id] === v ? undefined : v })); // ξανά κλικ = σβήσιμο
   // Για κάθε πλευρά: { id: αποθηκευμένη φωτογραφία, file: νέο αρχείο, preview: URL του νέου αρχείου }
   const [slots, setSlots] = useState(() =>
     Object.fromEntries(ANGLES.map((a) => [a.id, { id: initial?.photos?.[a.id] ?? null, file: null, preview: null }]))
@@ -107,6 +111,7 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel, last
         weight: kg,
         photos,
         note: note.trim(),
+        answers: form ? cleanAnswers(form, answers) : (initial?.answers ?? {}),
         createdAt: initial?.createdAt ?? new Date().toISOString(),
       };
       await putCheckin(checkin);
@@ -204,6 +209,8 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel, last
         })}
       </div>
 
+      {form?.length > 0 && <Questions form={form} answers={answers} onAnswer={answer} />}
+
       <label className="f">
         Σημείωση (προαιρετικά)
         <input value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="π.χ. αρχή νέου προγράμματος" />
@@ -216,5 +223,46 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel, last
         <button type="submit" className="btn primary" disabled={busy}>{busy ? 'Αποθήκευση...' : 'Αποθήκευση'}</button>
       </div>
     </form>
+  );
+}
+
+// Το ερωτηματολόγιο: κλίμακα 1–10 (κουκκίδες), Ναι/Όχι, κείμενο. Όλα προαιρετικά.
+function Questions({ form, answers, onAnswer }) {
+  return (
+    <fieldset className="questions">
+      <legend>Πώς πήγε η εβδομάδα; <small>(προαιρετικά)</small></legend>
+      {form.map((q) => {
+        const labelId = `q-${q.id}`;
+        return (
+          <div className="question" key={q.id}>
+            <span className="question-label" id={labelId}>{q.label}</span>
+            {q.kind === 'scale' && (
+              <div className="scale" role="group" aria-labelledby={labelId}>
+                {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                  <button
+                    key={n} type="button" aria-pressed={answers[q.id] === n} aria-label={`${n} από 10`}
+                    className={answers[q.id] >= n ? 'filled' : ''} onClick={() => onAnswer(q.id, n)}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            )}
+            {q.kind === 'yesno' && (
+              <div className="seg yesno" role="group" aria-labelledby={labelId}>
+                <button type="button" aria-pressed={answers[q.id] === true} onClick={() => onAnswer(q.id, true)}>Ναι</button>
+                <button type="button" aria-pressed={answers[q.id] === false} onClick={() => onAnswer(q.id, false)}>Όχι</button>
+              </div>
+            )}
+            {q.kind === 'text' && (
+              <input
+                aria-labelledby={labelId} maxLength={500} value={answers[q.id] ?? ''}
+                onChange={(e) => onAnswer(q.id, e.target.value || undefined)}
+              />
+            )}
+          </div>
+        );
+      })}
+    </fieldset>
   );
 }

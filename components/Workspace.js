@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { deleteCheckin, listCheckins, listDailyLogs, listWeighIns, withWeights } from '@/lib/storage';
 import { daysBetween, fmtDelta, fmtKg } from '@/lib/utils';
 import CheckinForm from './CheckinForm';
-import Timeline from './Timeline';
+import { CheckinReview, CheckinTable } from './Checkins';
+import CheckinFormEditor from './CheckinFormEditor';
 import Compare from './Compare';
 import WeightChart from './WeightChart';
 import WeightLog from './WeightLog';
@@ -12,7 +13,8 @@ import Journal from './Journal';
 import PaneHead from './PaneHead';
 import BodyInfo from './BodyInfo';
 import { CHAT_VIEW, PLAN_VIEW, VIEWS } from './AppShell';
-import { ArchiveIcon, PlusIcon } from './Icons';
+import { ArchiveIcon, PlusIcon, SlidersIcon } from './Icons';
+import { formOf } from '@/lib/checkinForm';
 import EmptyState from './EmptyState';
 import { WorkspaceBodySkeleton } from './Skeletons';
 import { useLive, useSignal } from './Live';
@@ -23,12 +25,17 @@ const LOADERS = { checkins: listCheckins, weighIns: listWeighIns, daily: listDai
 // Ο χώρος ενός αθλούμενου: κεφαλίδα, (καρτέλες), αρχείο, σύγκριση, βάρος, καθημερινά.
 // call: τα κουμπιά κλήσης/βιντεοκλήσης στην κεφαλίδα (όταν υπάρχει συνομιλία).
 // view: η ενότητα από το πλαϊνό μενού (προσωπικός χρήστης). Χωρίς view δείχνει δικές του καρτέλες (προπονητής).
-export default function Workspace({ athlete, title, subtitle, avatar, backHref, view, banner, menu, call, onAthleteChange, chat, chatBadge = 0, plans, initialTab, canConfigureJournal = false }) {
+// viewer: 'coach' (ο προπονητής βλέπει τον αθλούμενο) ή 'self' (ο ίδιος ο χρήστης).
+export default function Workspace({ athlete, title, subtitle, avatar, backHref, view, banner, menu, call, onAthleteChange, chat, chatBadge = 0, plans, initialTab, canConfigureJournal = false, viewer = 'coach' }) {
   const [raw, setRaw] = useState(null); // { checkins, weighIns, daily }
   const [loadError, setLoadError] = useState(false);
   const [ownTab, setOwnTab] = useState('archive');
   const [editing, setEditing] = useState(null); // null | 'new' | καταγραφή
-  const [progressMode, setProgressMode] = useState('timeline'); // Πρόοδος: 'timeline' | 'compare'
+  const [progressMode, setProgressMode] = useState('list'); // Πρόοδος: 'list' (πίνακας) | 'compare'
+  const [openId, setOpenId] = useState(null); // ανοιχτό check-in (οθόνη ελέγχου)
+  const [formOpen, setFormOpen] = useState(false); // ρύθμιση των ερωτήσεων
+  const form = formOf(athlete);
+  const coached = !!athlete.linked;
   const { reloadAthletes } = useLive(); // η λίστα του προπονητή (τελευταία καταγραφή, βάρος)
   // «Πρόγραμμα» και «Συνομιλία» υπάρχουν μόνο όταν δίνονται.
   const wanted = view ?? ownTab;
@@ -95,6 +102,7 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
   const days = dates.length ? daysBetween(dates[0], dates[dates.length - 1]) : 0;
   const firstKg = weighIns[0];
   const lastKg = weighIns[weighIns.length - 1];
+  const openCheckin = openId ? checkins.find((c) => c.id === openId) : null; // (σβήστηκε → πίσω στη λίστα)
 
   const done = () => {
     setEditing(null);
@@ -116,20 +124,24 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
           onDone={done}
           onCancel={() => setEditing(null)}
           lastWeight={weighIns.length ? weighIns[weighIns.length - 1].weight : null}
+          form={viewer === 'self' ? form : null}
         />
       )}
 
-      {tab === 'archive' && checkins.length > 1 && !editing && (
-        <div className="seg progress-mode" role="group" aria-label="Προβολή">
-          <button type="button" aria-pressed={progressMode === 'timeline'} onClick={() => setProgressMode('timeline')}>Χρονολόγιο</button>
-          <button type="button" aria-pressed={progressMode === 'compare'} onClick={() => setProgressMode('compare')}>Σύγκριση</button>
-        </div>
+      {/* Ένα check-in ανοιχτό: η οθόνη ελέγχου (φωτογραφίες, ερωτηματολόγιο, απάντηση προπονητή) */}
+      {tab === 'archive' && !editing && openCheckin && (
+        <CheckinReview
+          checkins={checkins} id={openCheckin.id} form={form} viewer={viewer} coached={coached} athlete={athlete}
+          onBack={() => setOpenId(null)} onOpen={(c) => setOpenId(c.id)}
+          onEdit={(c) => { setEditing(c); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          onDelete={async (c) => { await deleteCheckin(c); setOpenId(null); refresh(['checkins']); reloadAthletes(); }}
+          onChanged={() => { refresh(['checkins']); reloadAthletes(); }}
+        />
       )}
-      {tab === 'archive' && progressMode === 'compare' && checkins.length > 1 && !editing && <Compare key={checkins.length} checkins={checkins} />}
-      {tab === 'archive' && (progressMode === 'timeline' || checkins.length < 2 || editing) && (
+      {tab === 'archive' && !openCheckin && (
         <>
           {dates.length > 0 && (
-            // Μία λεπτή γραμμή σύνοψης (αντί για μεγάλα κουτιά).
+            // Μία λεπτή γραμμή σύνοψης (αντί για μεγάλα κουτιά), με τις επιλογές προβολής στο τέλος.
             <div className="summary">
               {lastKg && <span><b>{fmtKg(lastKg.weight)} kg</b> τώρα</span>}
               {weighIns.length > 1 && (
@@ -140,9 +152,22 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
                 </span>
               )}
               <span>
-                <b>{checkins.length}</b> {checkins.length === 1 ? 'καταγραφή' : 'καταγραφές'}
+                <b>{checkins.length}</b> check-in
                 {days > 0 && <> σε <b>{days}</b> {days === 1 ? 'ημέρα' : 'ημέρες'}</>}
               </span>
+              {!editing && (
+                <span className="summary-tools">
+                  {canConfigureJournal && (
+                    <button type="button" className="btn small" onClick={() => setFormOpen(true)}><SlidersIcon size={18} /> Ερωτήσεις</button>
+                  )}
+                  {checkins.length > 1 && (
+                    <span className="seg progress-mode" role="group" aria-label="Προβολή">
+                      <button type="button" aria-pressed={progressMode === 'list'} onClick={() => setProgressMode('list')}>Λίστα</button>
+                      <button type="button" aria-pressed={progressMode === 'compare'} onClick={() => setProgressMode('compare')}>Σύγκριση</button>
+                    </span>
+                  )}
+                </span>
+              )}
             </div>
           )}
           {checkins.length === 0 ? (
@@ -151,14 +176,18 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
                 <button className="btn primary" onClick={startNew}><PlusIcon size={18} /> Πρώτη καταγραφή</button>
               </EmptyState>
             )
+          ) : progressMode === 'compare' && checkins.length > 1 && !editing ? (
+            <Compare key={checkins.length} checkins={checkins} />
           ) : (
-            <Timeline
-              checkins={checkins}
-              onEdit={(c) => { setEditing(c); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              onDelete={async (c) => { await deleteCheckin(c); refresh(['checkins']); reloadAthletes(); }}
-            />
+            <CheckinTable checkins={checkins} form={form} viewer={viewer} coached={coached} onOpen={(c) => setOpenId(c.id)} />
           )}
         </>
+      )}
+      {formOpen && (
+        <CheckinFormEditor
+          athlete={athlete} onClose={() => setFormOpen(false)}
+          onSaved={(checkinForm) => { onAthleteChange?.({ ...athlete, checkinForm }); setFormOpen(false); }}
+        />
       )}
       {tab === 'weight' && (
         <div className="weight">
