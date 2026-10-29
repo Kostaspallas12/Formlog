@@ -10,19 +10,33 @@ const STUN = [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:
 
 export const dynamic = 'force-dynamic';
 
+const SUPA = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
 // Μόνο για συνδεδεμένους χρήστες: ελέγχουμε το token της συνεδρίας στο Supabase.
-async function signedIn(request) {
-  const auth = request.headers.get('authorization') || '';
+async function signedIn(auth) {
   if (!auth.startsWith('Bearer ')) return false;
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
-    headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, Authorization: auth },
-    cache: 'no-store',
-  }).catch(() => null);
+  const res = await fetch(`${SUPA}/auth/v1/user`, { headers: { apikey: KEY, Authorization: auth }, cache: 'no-store' }).catch(() => null);
   return !!res?.ok;
 }
 
+// …και μόνο σε όποιον έχει κλήση αυτή τη στιγμή (κουδουνίζει ή σε εξέλιξη, των τελευταίων ωρών):
+// αλλιώς οποιοσδήποτε λογαριασμός θα έπαιρνε τα στοιχεία του αναμεταδότη και θα «έκαιγε» το όριό του.
+// (Οι κανόνες της βάσης επιστρέφουν μόνο κλήσεις όπου ο χρήστης καλεί ή καλείται.)
+async function inCall(auth) {
+  const since = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+  const res = await fetch(`${SUPA}/rest/v1/calls?select=id&status=in.(ringing,accepted)&created_at=gte.${encodeURIComponent(since)}&limit=1`, {
+    headers: { apikey: KEY, Authorization: auth }, cache: 'no-store',
+  }).catch(() => null);
+  if (!res?.ok) return false;
+  const rows = await res.json().catch(() => []);
+  return Array.isArray(rows) && rows.length > 0;
+}
+
 export async function GET(request) {
-  if (!(await signedIn(request))) return Response.json({ error: 'unauthorized' }, { status: 401 });
+  const auth = request.headers.get('authorization') || '';
+  if (!(await signedIn(auth))) return Response.json({ error: 'unauthorized' }, { status: 401 });
+  if (!(await inCall(auth))) return Response.json({ error: 'no_call' }, { status: 403, headers: { 'Cache-Control': 'no-store' } });
 
   const keyId = process.env.CLOUDFLARE_TURN_KEY_ID;
   const token = process.env.CLOUDFLARE_TURN_API_TOKEN;
