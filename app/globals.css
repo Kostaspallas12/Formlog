@@ -9,7 +9,7 @@
   --primary-ink: #ffffff;
   --soft: #e3f4ee;
   --amber: #e8a33d;
-  --danger: #c2410c;
+  --danger: #dc2626;
   --radius: 12px;  /* κάρτες/πάνελ · κουμπιά/πεδία: 8px · ετικέτες/φίλτρα: κάψουλα */
   --shadow: 0 1px 2px rgba(22, 32, 42, 0.04), 0 8px 24px rgba(22, 32, 42, 0.06);
 }
@@ -25,7 +25,7 @@
     --primary-ink: #06241b;
     --soft: #123229;
     --amber: #f0b45a;
-    --danger: #f08a5d;
+    --danger: #f87171;
     --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 }
@@ -207,7 +207,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .plan .checks { margin-bottom: 0; }
 
 .tips { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
-.tip { background: var(--bg); border-radius: var(--radius); padding: 20px; border-left: 4px solid var(--amber); }
+.tip { background: var(--bg); border-radius: var(--radius); padding: 20px; border-left: 4px solid var(--danger); }
 .tip h3 { font-size: 19px; margin-bottom: 6px; }
 .tip p { color: var(--muted); font-size: 16px; }
 
@@ -334,7 +334,7 @@ a.who:hover { background: var(--surface); }
 }
 .x:hover { color: var(--ink); background: var(--bg); }
 .down { color: var(--primary); }
-.up { color: var(--amber); }
+.up { color: var(--danger); }
 
 .empty {
   padding: 56px 24px; text-align: center; color: var(--muted); background: var(--surface);
@@ -386,7 +386,7 @@ a.who:hover { background: var(--surface); }
 .summary { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-bottom: 18px; font-size: 15px; color: var(--muted); }
 .summary b { color: var(--ink); font-weight: 700; font-size: 16px; }
 .summary b.down { color: var(--primary); }
-.summary b.up { color: var(--amber); }
+.summary b.up { color: var(--danger); }
 
 /* Καρτέλες: απλό κείμενο με υπογράμμιση (όπως στις περισσότερες εφαρμογές) */
 .tabs {
@@ -566,7 +566,7 @@ tr:last-child td { border-bottom: 0; }
 /* ---------- Προπονητής ↔ αθλούμενος ---------- */
 .link-status { font-size: 13px; font-weight: 700; color: var(--muted); }
 .link-status.on { color: var(--primary); }
-.link-status.wait { color: var(--amber); }
+.link-status.wait { color: var(--danger); }
 .join-title { font-size: 26px; margin: 12px 0 8px; }
 .join-actions { display: grid; gap: 10px; margin-top: 8px; }
 .join-note { font-size: 15px; padding: 10px 12px; border-radius: 10px; background: var(--bg); margin-bottom: 14px; }
@@ -711,7 +711,7 @@ tr:last-child td { border-bottom: 0; }
 .chat-top small { font-size: 13px; color: var(--muted); flex: none; }
 .chat-sub { font-size: 15px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* «Αναμένει»: διακριτικό κείμενο με μια κουκκίδα, όχι κουτάκι */
-.chat-tag { flex: none; display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: var(--amber); }
+.chat-tag { flex: none; display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: var(--danger); }
 .chat-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
 .pane { min-width: 0; padding: 0 32px 64px; }
@@ -989,9 +989,9 @@ tr:last-child td { border-bottom: 0; }
 /* Πρόσκληση αθλούμενου σε μία γραμμή */
 .invite-bar {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; margin-bottom: 20px;
-  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--amber); border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--danger); border-radius: 12px;
 }
-.invite-icon { display: grid; flex: none; color: var(--amber); }
+.invite-icon { display: grid; flex: none; color: var(--danger); }
 .invite-text { flex: 1; min-width: 0; display: grid; gap: 4px; }
 .invite-text b { font-size: 16px; }
 .invite-text input {
@@ -1305,10 +1305,10 @@ img.avatar { object-fit: cover; }
 .stat b.zero { color: var(--muted); }
 .ov-group { margin-bottom: 30px; }
 /* «Αναμένουν»: ταυτότητα του site με τον τόνο του αμπέρ (= σε αναμονή), όχι άδειο πλαίσιο */
-.ov-group.muted .ov-row { background: color-mix(in srgb, var(--amber) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--amber) 30%, var(--line)); }
-.ov-group.muted .ov-row:hover { border-color: color-mix(in srgb, var(--amber) 55%, var(--line)); }
-.ov-group.muted .ov-name small { display: inline-flex; align-items: center; gap: 7px; color: color-mix(in srgb, var(--amber) 80%, var(--ink)); font-weight: 600; }
-.ov-group.muted .ov-name small::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); flex: none; }
+.ov-group.muted .ov-row { background: color-mix(in srgb, var(--danger) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--line)); }
+.ov-group.muted .ov-row:hover { border-color: color-mix(in srgb, var(--danger) 55%, var(--line)); }
+.ov-group.muted .ov-name small { display: inline-flex; align-items: center; gap: 7px; color: color-mix(in srgb, var(--danger) 80%, var(--ink)); font-weight: 600; }
+.ov-group.muted .ov-name small::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); flex: none; }
 
 /* Κουμπί ✕ για ακύρωση πρόσκλησης στην κάρτα «Αναμένουν» */
 .ov-row-wrap { position: relative; }
@@ -1585,7 +1585,7 @@ img.avatar { object-fit: cover; }
 /* συμπαγές πράσινο· πορτοκαλί μόνο όταν είναι πολύ κάτω από τον στόχο (ο στόχος φαίνεται από τη διακεκομμένη γραμμή) */
 .jr-bar { width: 100%; max-width: 46px; border-radius: 6px 6px 2px 2px; background: var(--primary); }
 .jr-bar.good { background: var(--primary); }
-.jr-bar.low { background: var(--amber); }
+.jr-bar.low { background: var(--danger); }
 .jr-bar-col em { font-style: normal; font-size: 11.5px; color: var(--muted); height: 18px; line-height: 18px; }
 .jr-target { position: absolute; left: 0; right: 0; border-top: 1px dashed color-mix(in srgb, var(--primary) 60%, transparent); pointer-events: none; }
 
@@ -1601,7 +1601,7 @@ img.avatar { object-fit: cover; }
 .jr-row .cell { font-size: 14.5px; padding: 6px 8px; }
 .jr-row .cell.num { text-align: left; max-width: none; margin: 0; font-weight: 650; }
 .cell.good, .jr-v.good, .jr-input.good, .jr-stepper b.good { color: var(--primary); }
-.cell.low, .jr-v.low, .jr-input.low, .jr-stepper b.low { color: var(--amber); }
+.cell.low, .jr-v.low, .jr-input.low, .jr-stepper b.low { color: var(--danger); }
 .cell.rest { color: var(--muted); }
 .cell.bad, .jr-input.bad { border-color: var(--danger) !important; }
 .jr-sleep { display: flex; flex-direction: column; min-width: 0; }
@@ -1615,7 +1615,7 @@ img.avatar { object-fit: cover; }
 .jr-quality button:hover { border-color: var(--primary); }
 .jr-quality button.on { background: color-mix(in srgb, var(--primary) 70%, transparent); border-color: transparent; }
 .jr-quality button.on.good { background: var(--primary); }
-.jr-quality button.on.low { background: var(--amber); }
+.jr-quality button.on.low { background: var(--danger); }
 
 /* κινητό μόνο */
 .jr-strip, .jr-daycard, .jr-week-sum { display: none; }
@@ -1641,7 +1641,7 @@ img.avatar { object-fit: cover; }
   .jr-card-head svg { color: var(--primary); }
   .jr-pill { margin-left: auto; padding: 2px 9px; border-radius: 99px; background: var(--soft); color: var(--ink); font-size: 12.5px; }
   .jr-pill.good { color: var(--primary); }
-  .jr-pill.low { background: color-mix(in srgb, var(--amber) 18%, transparent); color: var(--amber); }
+  .jr-pill.low { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); }
   .jr-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .jr-two label, .jr-card { font-size: 12px; color: var(--muted); font-weight: 600; }
   .jr-two label { display: flex; flex-direction: column; gap: 4px; }
@@ -1660,7 +1660,7 @@ img.avatar { object-fit: cover; }
     font: inherit; font-size: 14px; font-weight: 700;
   }
   .jr-quality.big button.on { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
-  .jr-quality.big button.on.low { background: var(--amber); border-color: var(--amber); }
+  .jr-quality.big button.on.low { background: var(--danger); border-color: var(--danger); }
   .jr-stepper { display: flex; align-items: center; justify-content: space-between; }
   .jr-stepper button {
     width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
@@ -1764,7 +1764,7 @@ img.avatar { object-fit: cover; }
 }
 .call-who b { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; margin-top: 10px; }
 .call-who span { color: #9fb2bd; font-size: 16px; font-variant-numeric: tabular-nums; }
-.call-who .call-note { max-width: 420px; color: #f0b45a; }
+.call-who .call-note { max-width: 420px; color: #f87171; }
 .call-top {
   position: absolute; left: 0; right: 0; top: 0; display: flex; flex-direction: column; align-items: center; gap: 2px;
   padding: 18px 16px 40px; background: linear-gradient(rgba(0, 0, 0, 0.55), transparent); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
