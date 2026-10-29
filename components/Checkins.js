@@ -8,6 +8,7 @@ import { ANGLES, daysBetween, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
 import { useGuard } from '@/lib/useGuard';
 import Photo from './Photo';
 import Menu from './Menu';
+import Select from './Select';
 import { Lightbox } from './Timeline';
 import { ArrowForwardIcon, BackIcon, ReadAllIcon, SendIcon } from './Icons';
 
@@ -99,7 +100,7 @@ export function CheckinReview({ checkins, id, form, viewer, coached, athlete, on
   const index = checkins.findIndex((c) => c.id === id);
   const all = withPrevious(checkins);
   const { c, prev, delta } = all[index] ?? {};
-  const [side, setSide] = useState(false); // φωτογραφίες δίπλα στις προηγούμενες
+  const [withId, setWithId] = useState(null); // σύγκριση φωτογραφιών με όποιο άλλο check-in διαλέξει
   const [zoom, setZoom] = useState(null);
   const [reply, setReply] = useState('');
   const [busy, setBusy] = useState(false);
@@ -111,6 +112,19 @@ export function CheckinReview({ checkins, id, form, viewer, coached, athlete, on
   const newer = checkins[index + 1];
   const older = checkins[index - 1];
   const answered = form.filter((q) => c.answers?.[q.id] != null || prev?.answers?.[q.id] != null);
+
+  // Σύγκριση: οποιοδήποτε άλλο check-in με φωτογραφίες (π.χ. το πρώτο, πριν από χρόνια).
+  const first = checkins[0];
+  const others = checkins.filter((x) => x.id !== c.id && Object.keys(x.photos).length > 0).reverse();
+  const options = others.map((x) => ({
+    value: x.id,
+    label: `${fmtDate(x.date, { day: 'numeric', month: 'short', year: 'numeric' })} · εβδομάδα ${Math.floor(daysBetween(first.date, x.date) / 7) + 1}${x.id === first.id ? ' · πρώτο' : ''}`,
+  }));
+  const other = others.find((x) => x.id === withId) ?? null;
+  const defaultOther = others.find((x) => x.date <= c.date) ?? others[0];
+  const pair = other ? (other.date <= c.date ? [other, c] : [c, other]) : [c]; // πάντα το παλαιότερο αριστερά
+  // Μεταβολή βάρους ανάμεσα στα δύο (από το παλαιότερο στο νεότερο).
+  const since = other && pair[0].weight != null && pair[1].weight != null ? pair[1].weight - pair[0].weight : null;
 
   const toggleReviewed = async () => {
     setBusy(true);
@@ -169,23 +183,31 @@ export function CheckinReview({ checkins, id, form, viewer, coached, athlete, on
         <div className="ci-col">
           <div className="ci-col-head">
             <h3>Φωτογραφίες</h3>
-            {prev && Object.keys(prev.photos).length > 0 && (
+            {others.length > 0 && (
               <div className="seg" role="group" aria-label="Προβολή φωτογραφιών">
-                <button type="button" aria-pressed={!side} onClick={() => setSide(false)}>Τώρα</button>
-                <button type="button" aria-pressed={side} onClick={() => setSide(true)}>Δίπλα στις {fmtDate(prev.date, { day: 'numeric', month: 'short' })}</button>
+                <button type="button" aria-pressed={!other} onClick={() => setWithId(null)}>Τώρα</button>
+                <button type="button" aria-pressed={!!other} onClick={() => setWithId(other?.id ?? defaultOther.id)}>Σύγκριση</button>
               </div>
             )}
           </div>
-          <div className={`ci-photos${side ? ' side' : ''}`}>
+          {other && (
+            <div className="ci-compare-pick">
+              <span>Δίπλα σε:</span>
+              <Select label="Σύγκριση με check-in" value={other.id} options={options} onChange={setWithId} />
+            </div>
+          )}
+          <div className={`ci-photos${other ? ' side' : ''}`}>
+            {other && (
+              <div className="ci-pair ci-pair-dates" aria-hidden="true">
+                {pair.map((x) => <b key={x.id}>{fmtDate(x.date, { day: 'numeric', month: 'short', year: 'numeric' })}{x.id === c.id ? ' (αυτό)' : ''}</b>)}
+              </div>
+            )}
             {ANGLES.map((a) => (
               <figure key={a.id}>
                 <div className="ci-pair">
-                  {side && (prev?.photos[a.id]
-                    ? <Photo id={prev.photos[a.id]} alt={`${a.label}, ${fmtDate(prev.date)}`} onClick={() => setZoom({ id: prev.photos[a.id], label: `${a.label} · ${fmtDate(prev.date)}` })} />
-                    : <span className="ci-photo-empty" />)}
-                  {c.photos[a.id]
-                    ? <Photo id={c.photos[a.id]} alt={`${a.label}, ${fmtDate(c.date)}`} onClick={() => setZoom({ id: c.photos[a.id], label: `${a.label} · ${fmtDate(c.date)}` })} />
-                    : <span className="ci-photo-empty" />}
+                  {pair.map((x) => (x.photos[a.id]
+                    ? <Photo key={x.id} id={x.photos[a.id]} alt={`${a.label}, ${fmtDate(x.date)}`} onClick={() => setZoom({ id: x.photos[a.id], label: `${a.label} · ${fmtDate(x.date)}` })} />
+                    : <span key={x.id} className="ci-photo-empty" />))}
                 </div>
                 <figcaption>{a.label}</figcaption>
               </figure>
@@ -194,6 +216,12 @@ export function CheckinReview({ checkins, id, form, viewer, coached, athlete, on
           <div className="ci-facts">
             <div><small>Βάρος</small><b>{c.weight != null ? `${fmtKg(c.weight)} kg` : '–'}</b></div>
             <div><small>Από το προηγούμενο</small><b className={delta == null ? '' : delta < 0 ? 'down' : delta > 0 ? 'up' : ''}>{delta != null ? fmtDelta(delta) : '–'}</b></div>
+            {other && (
+              <div>
+                <small>{fmtDate(pair[0].date, { day: 'numeric', month: 'short', year: 'numeric' })} → {fmtDate(pair[1].date, { day: 'numeric', month: 'short', year: 'numeric' })}</small>
+                <b className={since == null ? '' : since < 0 ? 'down' : since > 0 ? 'up' : ''}>{since != null ? fmtDelta(since) : '–'}</b>
+              </div>
+            )}
           </div>
         </div>
 
