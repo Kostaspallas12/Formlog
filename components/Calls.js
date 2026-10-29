@@ -63,6 +63,8 @@ function notifySystem(title, body) {
 
 const MEDIA_ERROR = 'Δεν επιτράπηκε η πρόσβαση στο μικρόφωνο ή στην κάμερα. Επίτρεψέ την από το εικονίδιο δίπλα στη διεύθυνση του site.';
 const isMobile = () => typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+// iPhone: ο αισθητήρας κλίσης θέλει άδεια, και ζητιέται μόνο μέσα σε πάτημα κουμπιού (κλήση/απάντηση).
+const askMotion = () => { try { if (typeof DeviceMotionEvent?.requestPermission === 'function') DeviceMotionEvent.requestPermission().catch(() => {}); } catch {} };
 
 export function CallProvider({ user, children }) {
   const live = useLive();
@@ -77,6 +79,7 @@ export function CallProvider({ user, children }) {
   const [media, setMedia] = useState({ mic: true, cam: false, screen: false, remoteCam: false, remoteScreen: false, remoteRot: 0, canFlip: false });
   const [since, setSince] = useState(null); // πότε συνδέθηκε (για το χρονόμετρο)
   const [mini, setMini] = useState(false);
+  const [myRot, setMyRot] = useState(0); // πώς κρατώ εγώ το κινητό (κλειδωμένη οθόνη)
   const mediaRef = useRef(media);
   mediaRef.current = media;
 
@@ -255,6 +258,7 @@ export function CallProvider({ user, children }) {
   // Εξερχόμενη κλήση.
   const start = useCallback(async (athleteId, video) => {
     if (callRef.current) return;
+    askMotion();
     const peer = peerOf(athleteId);
     setCall({ id: null, athleteId, video, role: 'caller', phase: 'outgoing', peer });
     let local;
@@ -291,6 +295,7 @@ export function CallProvider({ user, children }) {
   const accept = useCallback(async () => {
     const c = callRef.current;
     if (!c || c.phase !== 'incoming') return;
+    askMotion();
     tone.stop();
     setCall({ ...c, phase: 'connecting' });
     let local;
@@ -471,6 +476,7 @@ export function CallProvider({ user, children }) {
       const deg = ((dev - screenAngle) % 360 + 360) % 360;
       if (deg === rtc.current.rot) return;
       rtc.current.rot = deg;
+      setMyRot(deg);
       send({ t: 'rot', deg });
     };
     const onMotion = (e) => {
@@ -488,6 +494,19 @@ export function CallProvider({ user, children }) {
     screen.orientation?.addEventListener?.('change', report);
     return () => { window.removeEventListener('devicemotion', onMotion); screen.orientation?.removeEventListener?.('change', report); };
   }, [inCall]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!inCall) setMyRot(0); }, [inCall]);
+
+  // Κινητό: η οθόνη δεν σβήνει μόνη της όσο κρατά η κλήση.
+  useEffect(() => {
+    if (!inCall || !navigator.wakeLock) return;
+    let lock = null;
+    let alive = true;
+    const take = () => navigator.wakeLock.request('screen').then((l) => { if (alive) lock = l; else l.release(); }).catch(() => {});
+    take();
+    const back = () => { if (document.visibilityState === 'visible') take(); };
+    document.addEventListener('visibilitychange', back);
+    return () => { alive = false; document.removeEventListener('visibilitychange', back); lock?.release().catch(() => {}); };
+  }, [inCall]);
 
   const value = { call, start };
   return (
@@ -495,7 +514,7 @@ export function CallProvider({ user, children }) {
       {children}
       {call && (
         <CallScreen
-          call={call} streams={streams} media={media} since={since} mini={mini} setMini={setMini}
+          call={call} streams={streams} media={media} myRot={myRot} since={since} mini={mini} setMini={setMini}
           onAccept={accept} onDecline={decline} onHangup={hangup}
           onMic={toggleMic} onCam={toggleCam} onScreen={toggleScreen} onFlip={flip}
         />
@@ -589,7 +608,7 @@ function Timer({ since }) {
   return <>{fmtSecs(Math.max(0, Math.floor((now - since) / 1000)))}</>;
 }
 
-function CallScreen({ call, streams, media, since, mini, setMini, onAccept, onDecline, onHangup, onMic, onCam, onScreen, onFlip }) {
+function CallScreen({ call, streams, media, myRot = 0, since, mini, setMini, onAccept, onDecline, onHangup, onMic, onCam, onScreen, onFlip }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const [stageRef, stage] = useSize();
@@ -628,7 +647,8 @@ function CallScreen({ call, streams, media, since, mini, setMini, onAccept, onDe
   // Όπως στο WhatsApp: αν το σχήμα της εικόνας ταιριάζει με την οθόνη, τη γεμίζει· αλλιώς φαίνεται ολόκληρη
   // (π.χ. κάθετο βίντεο από κινητό σε οριζόντια οθόνη υπολογιστή), με θολό φόντο στα πλάγια — χωρίς «ζουμ».
   // Ο άλλος κρατά το κινητό οριζόντια με κλειδωμένη οθόνη: γυρίζουμε την εικόνα του (και το σχήμα της).
-  const rot = media.remoteRot || 0;
+  // (και αν εγώ κρατώ το κινητό μου οριζόντια, με κλειδωμένη οθόνη, τη γυρίζουμε ανάλογα)
+  const rot = (((media.remoteRot || 0) - myRot) % 360 + 360) % 360;
   const sideways = rot % 180 !== 0;
   const shape = remoteShape && (sideways ? { w: remoteShape.h, h: remoteShape.w } : remoteShape);
   const turn = (pad = 0) => (!rot || !stage ? undefined : sideways
