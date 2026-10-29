@@ -486,7 +486,7 @@ export function CallProvider({ user, children }) {
       const y = ios ? -g.y : g.y;
       // Με περιθώριο, ώστε να μην «τρεμοπαίζει» σε ενδιάμεσες κλίσεις.
       let next = dev;
-      if (Math.abs(x) > 6.5 && Math.abs(x) > Math.abs(y) * 1.4) next = x < 0 ? 90 : 270;
+      if (Math.abs(x) > 6.5 && Math.abs(x) > Math.abs(y) * 1.4) next = x < 0 ? 270 : 90; // (επιβεβαιωμένο σε αληθινό Android)
       else if (Math.abs(y) > 6.5 && Math.abs(y) > Math.abs(x) * 1.4) next = y < 0 ? 180 : 0;
       if (next !== dev) { dev = next; report(); }
     };
