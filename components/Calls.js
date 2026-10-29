@@ -495,8 +495,27 @@ function Video({ stream, muted, className, style, onShape }) {
   useEffect(() => {
     if (ref.current && ref.current.srcObject !== stream) ref.current.srcObject = stream || null;
   }, [stream]);
-  const shape = (e) => { const v = e.currentTarget; if (v.videoWidth) onShape?.(v.videoWidth, v.videoHeight); };
-  return <video ref={ref} className={className} style={style} autoPlay playsInline muted={muted} onLoadedMetadata={shape} onResize={shape} />;
+  // Το σχήμα αλλάζει όταν φτάσει η εικόνα (συχνά μετά τον ήχο), όταν γυρίσει το κινητό ή αλλάξει κάμερα:
+  // ακούμε τα γεγονότα του browser και, για σιγουριά, ελέγχουμε και κάθε μισό δευτερόλεπτο.
+  const shapeRef = useRef(onShape);
+  shapeRef.current = onShape;
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    let last = '';
+    const check = () => {
+      if (!v.videoWidth || !v.videoHeight) return;
+      const now = `${v.videoWidth}x${v.videoHeight}`;
+      if (now === last) return;
+      last = now;
+      shapeRef.current?.(v.videoWidth, v.videoHeight);
+    };
+    v.addEventListener('loadedmetadata', check);
+    v.addEventListener('resize', check);
+    const t = setInterval(check, 500);
+    return () => { v.removeEventListener('loadedmetadata', check); v.removeEventListener('resize', check); clearInterval(t); };
+  }, []);
+  return <video ref={ref} className={className} style={style} autoPlay playsInline muted={muted} />;
 }
 
 // Το μέγεθος ενός στοιχείου (ζωντανά, όταν αλλάζει το παράθυρο ή η σμίκρυνση).
