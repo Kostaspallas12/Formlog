@@ -82,7 +82,7 @@ export default function AthletePlans({ athleteId, coach = false, names = {} }) {
       setOne(await saveAthletePlan(athleteId, kind, { title: current?.title, content: current?.content, files: [...files, ...added] }));
     } catch (e) {
       await removePlanFiles(added.map((f) => f.path)).catch(() => {});
-      setError(e.message === 'type' ? 'Επιτρέπονται PDF, Word, Excel, κείμενο και φωτογραφίες.'
+      setError(e.message === 'type' ? 'Επιτρέπονται PDF, έγγραφα, πίνακες, κείμενο και φωτογραφίες.'
         : e.message === 'size' ? 'Κάθε αρχείο μπορεί να είναι έως 10 MB.'
           : 'Το αρχείο δεν ανέβηκε. Δοκίμασε ξανά.');
     } finally {

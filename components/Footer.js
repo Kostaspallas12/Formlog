@@ -12,8 +12,8 @@ export default function Footer() {
         </div>
         <nav className="foot-col" aria-label="Εφαρμογή">
           <b>Εφαρμογή</b>
-          <Link href="/#how">Πώς δουλεύει</Link>
-          <Link href="/#coaches">Για προπονητές</Link>
+          <Link href="/#features">Λειτουργίες</Link>
+          <Link href="/#athletes">Για αθλούμενους</Link>
           <Link href="/#pricing">Τιμές</Link>
           <Link href="/#faq">Συχνές ερωτήσεις</Link>
         </nav>

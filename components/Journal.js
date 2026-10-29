@@ -239,7 +239,7 @@ export default function Journal({ athlete, entries, onChange, canConfigure = fal
           </button>
         )}
         <button type="button" className="btn small jr-tool" onClick={() => exportCsv(athlete, entries, fields)} disabled={!entries.length}>
-          <DownloadIcon size={16} /> <span>Excel</span>
+          <DownloadIcon size={16} /> <span>Λήψη</span>
         </button>
       </div>
 

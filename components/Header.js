@@ -28,8 +28,8 @@ export default function Header() {
             ) : (
               <>
                 <span className="top-links">
-                  <Link href="/#how">Πώς δουλεύει</Link>
-                  <Link href="/#coaches">Προπονητές</Link>
+                  <Link href="/#features">Λειτουργίες</Link>
+                  <Link href="/#athletes">Για αθλούμενους</Link>
                   <Link href="/#pricing">Τιμές</Link>
                 </span>
                 <Link href="/login" className="btn ghost">Είσοδος</Link>

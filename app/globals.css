@@ -2159,3 +2159,76 @@ h1, h2, h3 { font-weight: 500; letter-spacing: 0; }
 .ci-compare-pick .selectfield { min-width: 240px; }
 .ci-pair-dates b { font-size: 12px; font-weight: 500; color: var(--muted); }
 .ci-compare-pick .selectfield { flex: 1 1 240px; width: auto; margin: 0; padding: 8px 12px; font-size: 14px; }
+
+/* =====================================================================================
+   Αρχική σελίδα: η ίδια η εφαρμογή (πραγματικά στιγμιότυπα), λίγο κείμενο, ήρεμο στιλ.
+   ===================================================================================== */
+.lp { color: var(--ink); }
+.lp h1, .lp h2, .lp h3 { font-weight: 500; letter-spacing: -0.01em; }
+.lp-wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.lp-eyebrow, .lp-label { margin: 0 0 12px; color: var(--primary-text); font-size: 15px; font-weight: 500; }
+.lp-label { font-size: 14px; margin-bottom: 10px; }
+.lp-shot img {
+  display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--line);
+  box-shadow: 0 1px 2px rgba(31, 35, 40, 0.06), 0 16px 48px rgba(31, 35, 40, 0.10);
+}
+.lp-points { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 12px; font-size: 15px; }
+.lp-points li { display: flex; gap: 10px; align-items: flex-start; }
+.lp-points .ms { color: var(--primary); font-size: 20px; margin-top: 1px; }
+
+.lp-hero { max-width: 1200px; margin: 0 auto; padding: 88px 24px 0; text-align: center; }
+.lp-hero h1 { margin: 0 auto; max-width: 880px; font-size: 56px; line-height: 1.12; letter-spacing: -0.02em; }
+.lp-lede { margin: 22px auto 0; max-width: 680px; font-size: 19px; line-height: 1.55; color: var(--muted); }
+.lp-cta { margin-top: 32px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.lp-cta .btn { min-width: 200px; }
+.lp-hero-shot { margin: 56px auto 0; max-width: 1160px; }
+
+.lp-features { max-width: 1200px; margin: 0 auto; padding: 120px 24px 0; display: grid; gap: 112px; }
+.lp-row { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 56px; align-items: center; }
+.lp-row.flip { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+.lp-row.flip .lp-text { order: 2; }
+.lp-text { max-width: 480px; }
+.lp-text h2 { margin: 0; font-size: 36px; line-height: 1.2; }
+.lp-text > p:not(.lp-label) { margin: 16px 0 0; font-size: 17px; line-height: 1.6; color: var(--muted); }
+.lp-text .lp-note { font-size: 15px; }
+
+.lp-more { margin-top: 120px; background: var(--rail); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.lp-more .lp-wrap { padding-top: 88px; padding-bottom: 88px; }
+.lp-more h2 { margin: 0 0 40px; font-size: 32px; }
+.lp-more-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px 48px; }
+.lp-more-grid h3 { margin: 0 0 6px; font-size: 17px; }
+.lp-more-grid p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.55; }
+
+.lp-athletes { padding-top: 120px; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+.lp-phone { display: flex; justify-content: center; }
+.lp-phone img { max-width: 320px; border-radius: 28px; }
+
+.lp-pricing { padding-top: 120px; text-align: center; }
+.lp-pricing h2, .lp-faq h2 { margin: 0; font-size: 32px; }
+.lp-plan { margin: 32px auto 0; max-width: 460px; border: 1px solid var(--line); border-radius: 16px; padding: 32px; text-align: left; }
+.lp-price { margin: 0; display: flex; align-items: baseline; gap: 8px; color: var(--muted); }
+.lp-price b { font-size: 44px; font-weight: 500; color: var(--ink); }
+.lp-plan .lp-points { margin: 20px 0 28px; }
+.lp-plan .btn { display: block; width: 100%; text-align: center; }
+
+.lp-faq { padding-top: 120px; padding-bottom: 120px; max-width: 760px; }
+.lp-faq h2 { margin-bottom: 24px; }
+
+@media (max-width: 900px) {
+  .lp-hero { padding-top: 48px; }
+  .lp-hero h1 { font-size: 36px; }
+  .lp-lede { font-size: 17px; }
+  .lp-hero-shot { margin-top: 36px; }
+  .lp-features { padding-top: 72px; gap: 72px; }
+  .lp-row, .lp-row.flip, .lp-athletes { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .lp-row.flip .lp-text { order: 0; }
+  .lp-text h2 { font-size: 28px; }
+  .lp-more { margin-top: 72px; }
+  .lp-more .lp-wrap { padding-top: 56px; padding-bottom: 56px; }
+  .lp-more h2, .lp-pricing h2, .lp-faq h2 { font-size: 26px; }
+  .lp-more-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .lp-athletes, .lp-pricing, .lp-faq { padding-top: 72px; }
+  .lp-faq { padding-bottom: 72px; }
+  .lp-shot img { border-radius: 10px; }
+  .lp-phone img { max-width: 260px; border-radius: 22px; }
+}
