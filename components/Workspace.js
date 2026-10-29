@@ -21,8 +21,9 @@ import { useLive, useSignal } from './Live';
 const LOADERS = { checkins: listCheckins, weighIns: listWeighIns, daily: listDailyLogs };
 
 // Ο χώρος ενός αθλούμενου: κεφαλίδα, (καρτέλες), αρχείο, σύγκριση, βάρος, καθημερινά.
+// call: τα κουμπιά κλήσης/βιντεοκλήσης στην κεφαλίδα (όταν υπάρχει συνομιλία).
 // view: η ενότητα από το πλαϊνό μενού (προσωπικός χρήστης). Χωρίς view δείχνει δικές του καρτέλες (προπονητής).
-export default function Workspace({ athlete, title, subtitle, avatar, backHref, view, banner, menu, onAthleteChange, chat, chatBadge = 0, plans, initialTab, canConfigureJournal = false }) {
+export default function Workspace({ athlete, title, subtitle, avatar, backHref, view, banner, menu, call, onAthleteChange, chat, chatBadge = 0, plans, initialTab, canConfigureJournal = false }) {
   const [raw, setRaw] = useState(null); // { checkins, weighIns, daily }
   const [loadError, setLoadError] = useState(false);
   const [ownTab, setOwnTab] = useState('archive');
@@ -59,6 +60,7 @@ export default function Workspace({ athlete, title, subtitle, avatar, backHref, 
     <PaneHead
       title={title} subtitle={subtitle} avatar={avatar} backHref={backHref}
       actions={<>
+        {call}
         {data && !editing && tab !== 'chat' && tab !== 'plan' && (
           <button className="btn primary" onClick={startNew}>
             <PlusIcon size={18} /><span className="long">Νέα καταγραφή</span><span className="short">Νέα</span>

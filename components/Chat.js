@@ -11,9 +11,11 @@ import { useLive, useSignal } from './Live';
 import Photo from './Photo';
 import VoiceNote from './VoiceNote';
 import { Lightbox } from './Timeline';
-import { ChevronIcon, ClockIcon, CopyIcon, ImageIcon, MicIcon, SendIcon, StarFilledIcon, StarIcon, TicksIcon, TrashIcon } from './Icons';
+import { ChevronIcon, ClockIcon, CopyIcon, ImageIcon, MicIcon, PhoneIcon, SendIcon, StarFilledIcon, StarIcon, TicksIcon, TrashIcon, VideoIcon } from './Icons';
 import PopMenu from './PopMenu';
 import { useWallpaper } from '@/lib/wallpaper';
+import { callText } from '@/lib/calls';
+import { useCalls } from './Calls';
 
 // Το μήνυμα που ήρθε από τη βάση: παίρνει τη θέση του προσωρινού του (αν υπάρχει), αλλιώς μπαίνει στο τέλος.
 function settle(list, m, tempId) {
@@ -51,6 +53,7 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
   const [photo, setPhoto] = useState(null); // { file, preview } πριν σταλεί
   const [sending, setSending] = useState(false);
   const [wall] = useWallpaper();
+  const { call: inCall, start: startCall } = useCalls();
   const [error, setError] = useState('');
   const [zoom, setZoom] = useState(null);
   // Μηνύματα με αστέρι (δικά μου) + μενού μηνύματος { m, at }.
@@ -258,12 +261,22 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
                   <Photo id={m.photo} alt="Φωτογραφία" className="msg-photo" onClick={() => setZoom({ id: m.photo, label: `Φωτογραφία · ${dayLabel(day)} ${time(m.createdAt)}` })} />
                 )}
                 {m.audio && <VoiceNote path={m.audio} secs={m.audioSecs} mine={mine} />}
+                {m.call && (
+                  // Η γραμμή μιας κλήσης· κλικ = ξανά κλήση (όπως στο WhatsApp).
+                  <button
+                    type="button" className={`msg-call${m.call.status !== 'ended' ? ' missed' : ''}`} disabled={!!inCall || isGroup}
+                    onClick={() => startCall(athleteId, m.call.video)} title={m.call.video ? 'Νέα βιντεοκλήση' : 'Νέα κλήση'}
+                  >
+                    <span className="msg-call-icon">{m.call.video ? <VideoIcon size={18} /> : <PhoneIcon size={18} />}</span>
+                    <span>{callText(m.call, mine)}</span>
+                  </button>
+                )}
                 {m.body && <p>{m.body}</p>}
                 <span className="msg-meta">
                   {stars.has(m.id) && <StarFilledIcon size={12} className="msg-star" aria-label="Με αστέρι" />}
                   {time(m.createdAt)}
                   {m.pending && <ClockIcon size={13} className="msg-pending" aria-label="Αποστέλλεται" />}
-                  {mine && !isGroup && !m.pending && <TicksIcon size={16} className={m.readAt ? 'read' : ''} aria-label={m.readAt ? 'Διαβάστηκε' : 'Στάλθηκε'} />}
+                  {mine && !isGroup && !m.pending && !m.call && <TicksIcon size={16} className={m.readAt ? 'read' : ''} aria-label={m.readAt ? 'Διαβάστηκε' : 'Στάλθηκε'} />}
                 </span>
               </div>
             );

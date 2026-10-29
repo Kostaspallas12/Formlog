@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { wroteAnythingRecently, wroteRecently } from '@/lib/supabase';
+import { callText } from '@/lib/calls';
 import {
   announcePresence, getAthlete, getAthletePlans, getMyCoach, getSelfAthlete, listAllCheckins, listAllWeighIns, listAthletes, listInvites,
   listAthletePrefs, listMyGroups, listUnreadMessages, markMessagesRead, setAthletePref, listUnreadNotifications, markAthleteRead, onGroupMessages, onMessages, onNotification, onSignals, listCoachUpdates, clearCoachUpdate, onCoachUpdates,
@@ -104,7 +105,7 @@ function systemNotify(title, body, href, tag) {
 }
 
 // Κείμενο μηνύματος για ειδοποιήσεις (σκέτη φωτογραφία → «Φωτογραφία»).
-const preview = (m) => (m.body ? (m.body.length > 70 ? `${m.body.slice(0, 70)}…` : m.body) : 'Φωτογραφία');
+const preview = (m) => (m.call ? callText(m.call) : m.body ? (m.body.length > 70 ? `${m.body.slice(0, 70)}…` : m.body) : m.audio ? 'Φωνητικό μήνυμα' : 'Φωτογραφία');
 
 // Αδιάβαστα μηνύματα ανά αθλούμενο + ζωντανή ενημέρωση. onIncoming: για κάθε νέο μήνυμα από τον άλλον.
 // onOpen: όταν ανοίγει μια συνομιλία (π.χ. για να κλείσει το μήνυμα στην οθόνη).
@@ -126,7 +127,7 @@ function useMessages(user, onIncoming, onOpen) {
     return onMessages(null, (type, m) => {
       if (type !== 'INSERT') return;
       setLastMsg((l) => ({ ...l, [m.athleteId]: m }));
-      if (m.sender === user.id) return;
+      if (m.sender === user.id || m.readAt) return; // (κλήση που έγινε: ήδη διαβασμένη)
       const open = openChat.current === m.athleteId;
       if (!open) setUnreadMsgs((u) => ({ ...u, [m.athleteId]: (u[m.athleteId] || 0) + 1 }));
       incoming.current?.(m, open);

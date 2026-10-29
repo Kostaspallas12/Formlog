@@ -63,3 +63,13 @@ export const MoonIcon = icon(<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10
 export const SlidersIcon = icon(<><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" /><circle cx="15" cy="6" r="2" /><circle cx="9" cy="12" r="2" /><circle cx="17" cy="18" r="2" /></>);
 export const ClockIcon = icon(<><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>);
 export const EditIcon = icon(<path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16v4zM13.5 6.5l4 4" />);
+
+// Κλήσεις
+export const PhoneIcon = icon(<path d="M5 3.5h3.2l1.6 4.2-2.1 1.4a11 11 0 0 0 7.2 7.2l1.4-2.1 4.2 1.6V19a1.5 1.5 0 0 1-1.6 1.5A16.5 16.5 0 0 1 3.5 5.1 1.5 1.5 0 0 1 5 3.5z" />);
+export const PhoneOffIcon = icon(<path d="M3.6 12.6a14.2 14.2 0 0 1 16.8 0l-.9 3-3.6-.9-.3-2.4a10.5 10.5 0 0 0-7.2 0l-.3 2.4-3.6.9z" />, true);
+export const VideoIcon = icon(<><rect x="2.5" y="6" width="13" height="12" rx="2.5" /><path d="M15.5 10.5 21.5 7v10l-6-3.5" /></>);
+export const VideoOffIcon = icon(<><path d="M15.5 13v3a2 2 0 0 1-2 2H5a2.5 2.5 0 0 1-2.5-2.5v-7A2.5 2.5 0 0 1 5 6h1M10 6h3.5a2 2 0 0 1 2 2v2.5l6-3.5v10" /><path d="M3 3l18 18" /></>);
+export const MicOffIcon = icon(<><path d="M9 9v3a3 3 0 0 0 5.1 2.1M15 9.3V5a3 3 0 0 0-5.7-1.3" /><path d="M19 11a7 7 0 0 1-1.1 3.8M5 11a7 7 0 0 0 11.1 5.7M12 18v3M3 3l18 18" /></>);
+export const ScreenIcon = icon(<><rect x="2.5" y="4" width="19" height="13" rx="2" /><path d="M8 21h8M12 17v4M12 13.5V7.5M9.5 10 12 7.5l2.5 2.5" /></>);
+export const FlipIcon = icon(<><path d="M4 8.5V7a2 2 0 0 1 2-2h2l1.5-2h5L16 5h2a2 2 0 0 1 2 2v1.5M20 15.5V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.5" /><path d="M7 12h10M14.5 9.5 17 12l-2.5 2.5M9.5 9.5 7 12l2.5 2.5" /></>);
+export const MinimizeIcon = icon(<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />);

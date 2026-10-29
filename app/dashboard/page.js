@@ -10,6 +10,7 @@ import { useRequireUser } from '@/lib/useAuthRedirect';
 import { revokeInvite } from '@/lib/storage';
 import { getLastUser } from '@/lib/lastUser';
 import Workspace from '@/components/Workspace';
+import { CallButtons } from '@/components/Calls';
 import MyCoach from '@/components/MyCoach';
 import PaneHead from '@/components/PaneHead';
 import { CHAT_VIEW, PLAN_VIEW, useAppView, VIEWS } from '@/components/AppShell';
@@ -200,6 +201,7 @@ function MyProgress({ user }) {
         ]} />
       )}
       chat={coach ? <Chat athleteId={me.id} me={user.id} otherName={coach.name} solo /> : null}
+      call={coach && me.linked ? <CallButtons athleteId={me.id} /> : null}
       plans={coach || hasPlans ? <AthletePlans athleteId={me.id} names={{ athlete: me.name, coach: coach?.name }} /> : null}
     />
   );

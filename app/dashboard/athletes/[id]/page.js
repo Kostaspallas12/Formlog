@@ -7,6 +7,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useRequireUser } from '@/lib/useAuthRedirect';
 import { deleteAthlete, disconnectCoach, getAthlete } from '@/lib/storage';
 import Workspace from '@/components/Workspace';
+import { CallButtons } from '@/components/Calls';
 import CoachLink from '@/components/CoachLink';
 import Menu from '@/components/Menu';
 import PaneHead from '@/components/PaneHead';
@@ -77,6 +78,7 @@ export default function AthletePage() {
       onAthleteChange={setAthlete}
       chat={athlete.linked ? <Chat athleteId={athlete.id} me={user.id} otherName={athlete.name} /> : null}
       chatBadge={unreadMsgs[athlete.id] || 0}
+      call={athlete.linked ? <CallButtons athleteId={athlete.id} /> : null}
       canConfigureJournal // ο προπονητής ορίζει πεδία και στόχους του Ημερολογίου
       plans={<AthletePlans athleteId={athlete.id} coach names={{ athlete: athlete.name, coach: user.name }} />}
       initialTab={tabParam}

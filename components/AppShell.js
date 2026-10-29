@@ -11,6 +11,7 @@ import { AppLockProvider } from './AppLock';
 import Photo from './Photo';
 import GroupSidebar from './GroupSidebar';
 import { CoachLive, PersonalLive, useLive } from './Live';
+import { CallProvider } from './Calls';
 import { ArchiveIcon, ChatIcon, DailyIcon, GroupsIcon, LogoutIcon, PlanIcon, UserIcon, UsersIcon, WeightIcon } from './Icons';
 
 // Οι ενότητες του χώρου ενός αθλούμενου.
@@ -60,7 +61,7 @@ export default function AppShell({ children }) {
   const coach = (user?.type ?? lastType) === 'coach';
   const body = (
     <ViewContext.Provider value={{ view, setView }}>
-      <Shell coach={coach}>{children}</Shell>
+      {user ? <CallProvider user={user}><Shell coach={coach}>{children}</Shell></CallProvider> : <Shell coach={coach}>{children}</Shell>}
     </ViewContext.Provider>
   );
   if (!user) return body;

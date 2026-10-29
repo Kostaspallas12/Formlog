@@ -11,6 +11,7 @@ import {
   ReadAllIcon, SearchIcon, SelectIcon, StarIcon,
 } from './Icons';
 import { markGroupRead } from '@/lib/storage';
+import { callText } from '@/lib/calls';
 import { useAuth } from '@/lib/AuthContext';
 import { confirmDialog } from './Confirm';
 import PopMenu from './PopMenu';
@@ -319,7 +320,7 @@ function AthleteRow({ athlete, active, online, unread, pref, message, date, toCh
           </span>
           <span className="chat-bottom">
             {/* Αν έχει νέο μήνυμα, φαίνεται αυτό (όπως σε μια εφαρμογή μηνυμάτων). */}
-            <span className={`chat-sub${message ? ' msg-preview' : ''}`}>{message ? message.body || 'Φωτογραφία' : sub}</span>
+            <span className={`chat-sub${message ? ' msg-preview' : ''}`}>{message ? (message.call ? callText(message.call) : message.body || (message.audio ? 'Φωνητικό μήνυμα' : 'Φωτογραφία')) : sub}</span>
             {pref.muted && <BellOffIcon size={16} className="chat-flag" aria-label="Σίγαση" />}
             {pref.pinned && <PinIcon size={16} className="chat-flag" aria-label="Καρφιτσωμένος" />}
             {unread > 0
