@@ -492,7 +492,9 @@ export function CallProvider({ user, children }) {
     };
     window.addEventListener('devicemotion', onMotion);
     screen.orientation?.addEventListener?.('change', report);
-    return () => { window.removeEventListener('devicemotion', onMotion); screen.orientation?.removeEventListener?.('change', report); };
+    // Ξανά κάθε 3 δευτερόλεπτα (αν χαθεί ένα μήνυμα ή ο άλλος μόλις συνδέθηκε).
+    const again = setInterval(() => { if (rtc.current.rot !== undefined) send({ t: 'rot', deg: rtc.current.rot }); }, 3000);
+    return () => { clearInterval(again); window.removeEventListener('devicemotion', onMotion); screen.orientation?.removeEventListener?.('change', report); };
   }, [inCall]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!inCall) setMyRot(0); }, [inCall]);
 
