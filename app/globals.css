@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --bg: #ffffff;
   --surface: #ffffff;
   --ink: #1f2328;
@@ -18,8 +19,9 @@
   --radius: 12px;  /* κάρτες/πάνελ · κουμπιά/πεδία: 8px · ετικέτες/φίλτρα: κάψουλα */
   --shadow: 0 1px 2px rgba(22, 32, 42, 0.04), 0 8px 24px rgba(22, 32, 42, 0.06);
 }
+/* Σκούρο θέμα: αυτόματα με το θέμα της συσκευής, ή όταν το διαλέξει ο χρήστης (Λογαριασμός → Εμφάνιση). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #101518;
     --surface: #101518;
     --ink: #e3e8ec;
@@ -37,7 +39,28 @@
     --amber: #f0b45a;
     --danger: #f87171;
     --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
   }
+}
+:root[data-theme='dark'] {
+  --bg: #101518;
+  --surface: #101518;
+  --ink: #e3e8ec;
+  --muted: #98a4ad;
+  --line: #263139;
+  --primary: #3ccb9f;
+  --primary-hover: #5bd9b3;
+  --primary-ink: #06241b;
+  --soft: #173a30;
+  --rail: #161d21;
+  --hover: #1b2328;
+  --field: #1d252b;
+  --outline: #3a4751;
+  --primary-text: #5fd4ae;
+  --amber: #f0b45a;
+  --danger: #f87171;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -1997,3 +2020,5 @@ h1, h2, h3 { font-weight: 500; letter-spacing: 0; }
 .empty-icon .ms { font-size: 44px; }
 .empty-state h3 { font-size: 16px; font-weight: 500; }
 .pane .stat { flex: none; }
+.theme-seg { flex: none; }
+.theme-seg button { padding: 6px 14px; font-size: 13px; }

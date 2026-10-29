@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import SiteChrome from '@/components/SiteChrome';
 import ConfirmHost from '@/components/Confirm';
 import { ICON_NAMES } from '@/components/Icons';
+import { THEME_BOOT } from '@/lib/themeBoot';
 import { Roboto } from 'next/font/google';
 
 // Η γραμματοσειρά της εφαρμογής (όπως στα εργαλεία της Google), με ελληνικά· φιλοξενείται από εμάς.
@@ -30,8 +31,10 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="el" data-scroll-behavior="smooth" className={roboto.variable}>
+    <html lang="el" data-scroll-behavior="smooth" className={roboto.variable} suppressHydrationWarning>
       <head>
+        {/* Εμφάνιση (Φωτεινό/Σκούρο) πριν σχεδιαστεί η σελίδα */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link rel="stylesheet" href={ICONS_CSS} />
       </head>

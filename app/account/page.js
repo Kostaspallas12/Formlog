@@ -15,6 +15,7 @@ import { LogoutIcon } from '@/components/Icons';
 import { disconnectCoach, getMyCoach } from '@/lib/storage';
 import { fmtDate } from '@/lib/utils';
 import { useWallpaper, WALLPAPERS } from '@/lib/wallpaper';
+import { THEMES, useTheme } from '@/lib/theme';
 
 export default function AccountPage() {
   const { user, ready, deleteAccount, logout, updateAvatar, removeAvatar } = useRequireUser();
@@ -88,7 +89,7 @@ export default function AccountPage() {
       {user.type === 'personal' && <CoachSection />}
       <NotifySection />
       <LockSection />
-      <WallpaperSection />
+      <AppearanceSection />
 
       <section className="panel account-block">
         <h2>Λήψη των δεδομένων μου</h2>
@@ -364,25 +365,41 @@ function LockSection() {
   );
 }
 
-/* ---------- Φόντο συνομιλίας (σε αυτή τη συσκευή) ---------- */
+/* ---------- Εμφάνιση: θέμα και φόντο συνομιλίας (σε αυτή τη συσκευή) ---------- */
 
-function WallpaperSection() {
+function AppearanceSection() {
+  const [theme, setTheme] = useTheme();
   const [wall, setWall] = useWallpaper();
   return (
     <section className="panel account-block">
-      <h2>Φόντο συνομιλίας</h2>
-      <div className="walls" role="radiogroup" aria-label="Φόντο συνομιλίας">
-        {WALLPAPERS.map((w) => (
-          <button
-            key={w.id} type="button" role="radio" aria-checked={wall === w.id}
-            className={`wall-pick${wall === w.id ? ' on' : ''}`} onClick={() => setWall(w.id)}
-          >
-            <span className={`wall-swatch wall-${w.id}`} aria-hidden="true">
-              <i className="wall-bubble" /><i className="wall-bubble mine" />
-            </span>
-            <span className="wall-name">{w.label}</span>
-          </button>
-        ))}
+      <h2>Εμφάνιση</h2>
+      <div className="settings">
+        <div className="setting">
+          <div className="setting-head">
+            <div><b>Θέμα</b></div>
+            <div className="seg theme-seg" role="group" aria-label="Θέμα">
+              {THEMES.map((t) => (
+                <button key={t.id} type="button" aria-pressed={theme === t.id} onClick={() => setTheme(t.id)}>{t.label}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="setting">
+          <span className="setting-label">Φόντο συνομιλίας</span>
+          <div className="walls" role="radiogroup" aria-label="Φόντο συνομιλίας">
+            {WALLPAPERS.map((w) => (
+              <button
+                key={w.id} type="button" role="radio" aria-checked={wall === w.id}
+                className={`wall-pick${wall === w.id ? ' on' : ''}`} onClick={() => setWall(w.id)}
+              >
+                <span className={`wall-swatch wall-${w.id}`} aria-hidden="true">
+                  <i className="wall-bubble" /><i className="wall-bubble mine" />
+                </span>
+                <span className="wall-name">{w.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -124,12 +124,17 @@ const THEMES = {
   },
 };
 
-let css = '/* Παράγεται από το scripts/walls.js: φόντο της συνομιλίας (Λογαριασμός → Φόντο συνομιλίας). */\n';
+let css = '/* Παράγεται από το scripts/walls.js: φόντο της συνομιλίας (Λογαριασμός → Εμφάνιση). */\n';
 let dark = '';
+let forced = '';
 for (const [id, t] of Object.entries(THEMES)) {
-  css += `.wall-${id} .chat-scroll, .wall-swatch.wall-${id} { background: ${t.light.bg} ${uri(t.draw(t.light))} 0 0 / 360px; }\n`;
-  dark += `  .wall-${id} .chat-scroll, .wall-swatch.wall-${id} { background: ${t.dark.bg} ${uri(t.draw(t.dark))} 0 0 / 360px; }\n`;
+  const sel = (pre) => `${pre}.wall-${id} .chat-scroll, ${pre}.wall-swatch.wall-${id}`;
+  const d = `background: ${t.dark.bg} ${uri(t.draw(t.dark))} 0 0 / 360px;`;
+  css += `${sel('')} { background: ${t.light.bg} ${uri(t.draw(t.light))} 0 0 / 360px; }\n`;
+  // Σκούρο: με το θέμα της συσκευής (εκτός αν διάλεξε «Φωτεινό»), ή όταν διάλεξε «Σκούρο».
+  dark += `  ${sel(":root:not([data-theme='light']) ")} { ${d} }\n`;
+  forced += `${sel(":root[data-theme='dark'] ")} { ${d} }\n`;
 }
-css += `@media (prefers-color-scheme: dark) {\n${dark}}\n`;
+css += `@media (prefers-color-scheme: dark) {\n${dark}}\n${forced}`;
 fs.writeFileSync(out, css);
 console.log('ok', css.length);
