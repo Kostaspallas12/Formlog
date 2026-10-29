@@ -5,6 +5,14 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SiteChrome from '@/components/SiteChrome';
 import ConfirmHost from '@/components/Confirm';
+import { ICON_NAMES } from '@/components/Icons';
+import { Roboto } from 'next/font/google';
+
+// Η γραμματοσειρά της εφαρμογής (όπως στα εργαλεία της Google), με ελληνικά· φιλοξενείται από εμάς.
+const roboto = Roboto({ subsets: ['latin', 'greek'], weight: ['400', '500', '700'], display: 'swap', variable: '--font-app' });
+// Τα εικονίδια (Material Symbols): μόνο όσα χρησιμοποιούμε, ώστε το αρχείο να είναι μικρό.
+const ICONS_CSS = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,400,0..1,0'
+  + '&icon_names=' + [...ICON_NAMES].sort().join(',') + '&display=block';
 
 const description = 'Κράτα όλες τις φωτογραφίες προόδου σου σε ένα ιδιωτικό αρχείο και δες πόσο έχεις αλλάξει.';
 
@@ -22,7 +30,11 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="el" data-scroll-behavior="smooth">
+    <html lang="el" data-scroll-behavior="smooth" className={roboto.variable}>
+      <head>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link rel="stylesheet" href={ICONS_CSS} />
+      </head>
       <body>
         <AuthProvider>
           <SiteChrome header={<Header />} footer={<Footer />}>{children}</SiteChrome>

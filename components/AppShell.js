@@ -146,10 +146,10 @@ function Shell({ coach, children }) {
 /* ---------- Πλάτος της λίστας αθλούμενων (σύρεται, όπως σε μια εφαρμογή μηνυμάτων) ---------- */
 
 const LIST_KEY = 'formlog:listWidth';
-const LIST_DEFAULT = 340;
+const LIST_DEFAULT = 360;
 const LIST_MIN = 260;
 const LIST_MAX = 560;
-const RAIL = 84; // πλάτος της στήλης με τα εικονίδια
+const RAIL = 80; // πλάτος της στήλης με τα εικονίδια
 const clampW = (w) => Math.round(Math.min(LIST_MAX, Math.max(LIST_MIN, w)));
 
 // Το πλάτος που διάλεξε ο χρήστης, αποθηκευμένο σε αυτόν τον browser.
