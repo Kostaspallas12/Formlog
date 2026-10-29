@@ -74,7 +74,7 @@ export function CallProvider({ user, children }) {
   // Ό,τι χρειάζεται η σύνδεση (δεν προκαλεί νέα σχεδίαση).
   const rtc = useRef({});
   const [streams, setStreams] = useState({ local: null, remote: null });
-  const [media, setMedia] = useState({ mic: true, cam: false, screen: false, remoteCam: false, remoteScreen: false, canFlip: false });
+  const [media, setMedia] = useState({ mic: true, cam: false, screen: false, remoteCam: false, remoteScreen: false, remoteRot: 0, canFlip: false });
   const [since, setSince] = useState(null); // πότε συνδέθηκε (για το χρονόμετρο)
   const [mini, setMini] = useState(false);
   const mediaRef = useRef(media);
@@ -101,7 +101,7 @@ export function CallProvider({ user, children }) {
     rtc.current = {};
     tone.stop();
     setStreams({ local: null, remote: null });
-    setMedia({ mic: true, cam: false, screen: false, remoteCam: false, remoteScreen: false, canFlip: false });
+    setMedia({ mic: true, cam: false, screen: false, remoteCam: false, remoteScreen: false, remoteRot: 0, canFlip: false });
     setSince(null);
     setMini(false);
   }, [tone]);
@@ -156,6 +156,7 @@ export function CallProvider({ user, children }) {
         setSince((s) => s || Date.now());
         const m = mediaRef.current;
         send({ t: 'cam', on: m.screen || m.cam, screen: m.screen }); // τι να δείξει ο άλλος
+        if (r.rot) send({ t: 'rot', deg: r.rot });
       }
       if (st === 'disconnected') {
         clearTimeout(r.dropTimer);
@@ -241,6 +242,8 @@ export function CallProvider({ user, children }) {
         send({ t: 'offer', sdp: pc.localDescription.toJSON() });
       } else if (msg.t === 'cam') {
         setMedia((m) => ({ ...m, remoteCam: !!msg.on, remoteScreen: !!msg.screen }));
+      } else if (msg.t === 'rot') {
+        setMedia((m) => ({ ...m, remoteRot: [0, 90, 180, 270].includes(msg.deg) ? msg.deg : 0 }));
       } else if (msg.t === 'bye') {
         finish('Η κλήση τελείωσε');
       }
@@ -456,6 +459,36 @@ export function CallProvider({ user, children }) {
     return () => window.removeEventListener('pagehide', bye);
   }, []);
 
+  // Κινητό με κλειδωμένη περιστροφή οθόνης: αν το γυρίσεις οριζόντια, η κάμερα στέλνει «ξαπλωμένη» εικόνα.
+  // Ο αισθητήρας κλίσης λέει πώς κρατάς το κινητό, και ο άλλος γυρίζει την εικόνα σωστά (όπως στο WhatsApp).
+  const inCall = !!call && ['connecting', 'active', 'reconnecting'].includes(call.phase);
+  useEffect(() => {
+    if (!inCall || !isMobile() || typeof DeviceMotionEvent === 'undefined') return;
+    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    let dev = 0;
+    const report = () => {
+      const screenAngle = screen.orientation?.angle ?? window.orientation ?? 0;
+      const deg = ((dev - screenAngle) % 360 + 360) % 360;
+      if (deg === rtc.current.rot) return;
+      rtc.current.rot = deg;
+      send({ t: 'rot', deg });
+    };
+    const onMotion = (e) => {
+      const g = e.accelerationIncludingGravity;
+      if (!g || g.x == null) return;
+      const x = ios ? -g.x : g.x;
+      const y = ios ? -g.y : g.y;
+      // Με περιθώριο, ώστε να μην «τρεμοπαίζει» σε ενδιάμεσες κλίσεις.
+      let next = dev;
+      if (Math.abs(x) > 6.5 && Math.abs(x) > Math.abs(y) * 1.4) next = x < 0 ? 90 : 270;
+      else if (Math.abs(y) > 6.5 && Math.abs(y) > Math.abs(x) * 1.4) next = y < 0 ? 180 : 0;
+      if (next !== dev) { dev = next; report(); }
+    };
+    window.addEventListener('devicemotion', onMotion);
+    screen.orientation?.addEventListener?.('change', report);
+    return () => { window.removeEventListener('devicemotion', onMotion); screen.orientation?.removeEventListener?.('change', report); };
+  }, [inCall]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const value = { call, start };
   return (
     <CallContext.Provider value={value}>
@@ -594,7 +627,14 @@ function CallScreen({ call, streams, media, since, mini, setMini, onAccept, onDe
   const live = call.phase !== 'ended' && call.phase !== 'outgoing';
   // Όπως στο WhatsApp: αν το σχήμα της εικόνας ταιριάζει με την οθόνη, τη γεμίζει· αλλιώς φαίνεται ολόκληρη
   // (π.χ. κάθετο βίντεο από κινητό σε οριζόντια οθόνη υπολογιστή), με θολό φόντο στα πλάγια — χωρίς «ζουμ».
-  const ratio = remoteShape && stage?.h ? (remoteShape.w / remoteShape.h) / (stage.w / stage.h) : 1;
+  // Ο άλλος κρατά το κινητό οριζόντια με κλειδωμένη οθόνη: γυρίζουμε την εικόνα του (και το σχήμα της).
+  const rot = media.remoteRot || 0;
+  const sideways = rot % 180 !== 0;
+  const shape = remoteShape && (sideways ? { w: remoteShape.h, h: remoteShape.w } : remoteShape);
+  const turn = (pad = 0) => (!rot || !stage ? undefined : sideways
+    ? { left: '50%', top: '50%', width: stage.h + pad, height: stage.w + pad, transform: `translate(-50%, -50%) rotate(${rot}deg)` }
+    : { transform: `rotate(${rot}deg)` });
+  const ratio = shape && stage?.h ? (shape.w / shape.h) / (stage.w / stage.h) : 1;
   const whole = media.remoteScreen || ratio < 0.8 || ratio > 1.25;
   const localPortrait = localShape && localShape.h > localShape.w;
 
@@ -602,9 +642,9 @@ function CallScreen({ call, streams, media, since, mini, setMini, onAccept, onDe
     <div className={`call${mini ? ' mini' : ''}${showRemote ? ' has-video' : ''}`} role="dialog" aria-label={`${call.video ? 'Βιντεοκλήση' : 'Κλήση'} με ${call.peer.name}`}>
       <Audio stream={streams.remote} />
       <div className="call-stage" ref={stageRef} onClick={mini ? () => setMini(false) : undefined}>
-        {showRemote && whole && !media.remoteScreen && <Video stream={streams.remote} muted className="call-remote-bg" />}
+        {showRemote && whole && !media.remoteScreen && <Video stream={streams.remote} muted className="call-remote-bg" style={turn(80)} />}
         <Video
-          stream={streams.remote} muted onShape={(w, h) => setRemoteShape({ w, h })}
+          stream={streams.remote} muted onShape={(w, h) => setRemoteShape({ w, h })} style={turn()}
           className={`call-remote${showRemote ? '' : ' hidden'}${whole ? ' whole' : ''}${media.remoteScreen ? ' screen' : ''}`}
         />
         {!showRemote && (
