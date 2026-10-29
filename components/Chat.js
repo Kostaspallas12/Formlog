@@ -11,7 +11,7 @@ import { useLive, useSignal } from './Live';
 import Photo from './Photo';
 import VoiceNote from './VoiceNote';
 import { Lightbox } from './Timeline';
-import { ChevronIcon, ClockIcon, CopyIcon, ImageIcon, MicIcon, PhoneIcon, SendIcon, StarFilledIcon, StarIcon, TicksIcon, TrashIcon, VideoIcon } from './Icons';
+import { ChevronIcon, ClockIcon, CloseIcon, CopyIcon, ImageIcon, MicIcon, PhoneIcon, SendIcon, StarFilledIcon, StarIcon, TicksIcon, TrashIcon, VideoIcon } from './Icons';
 import PopMenu from './PopMenu';
 import { useWallpaper } from '@/lib/wallpaper';
 import { callText } from '@/lib/calls';
@@ -299,7 +299,7 @@ export default function Chat({ athleteId, groupId, people = {}, me, otherName, s
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={photo.preview} alt="Φωτογραφία προς αποστολή" />
           <span>{sending ? 'Αποστολή…' : 'Φωτογραφία'}</span>
-          <button type="button" className="x" onClick={() => setPhoto(null)} disabled={sending} aria-label="Αφαίρεση φωτογραφίας">✕</button>
+          <button type="button" className="x" onClick={() => setPhoto(null)} disabled={sending} aria-label="Αφαίρεση φωτογραφίας"><CloseIcon size={18} /></button>
         </div>
       )}
       {error && <p className="error chat-error" role="alert">{error}</p>}

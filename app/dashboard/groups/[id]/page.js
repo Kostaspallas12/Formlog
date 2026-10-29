@@ -12,7 +12,7 @@ import PaneHead from '@/components/PaneHead';
 import { useLive, useSignal } from '@/components/Live';
 import EmptyState from '@/components/EmptyState';
 import Select from '@/components/Select';
-import { GroupsIcon } from '@/components/Icons';
+import { CloseIcon, GroupsIcon } from '@/components/Icons';
 import { WorkspaceSkeleton } from '@/components/Skeletons';
 import { isUuid } from '@/lib/utils';
 
@@ -124,7 +124,7 @@ function GroupMembers({ groupId, members, athletes, onChange, onClose }) {
     <section className="panel group-members">
       <div className="panel-head">
         <h2>Μέλη <span className="list-count">{members.length}</span></h2>
-        {onClose && <button type="button" className="x" onClick={onClose} aria-label="Κλείσιμο">✕</button>}
+        {onClose && <button type="button" className="x" onClick={onClose} aria-label="Κλείσιμο"><CloseIcon size={18} /></button>}
       </div>
       {members.length > 0 && (
         <ul className="member-list">
@@ -136,7 +136,7 @@ function GroupMembers({ groupId, members, athletes, onChange, onClose }) {
                 type="button" className="x" disabled={busy} aria-label={`Αφαίρεση: ${m.name}`}
                 onClick={async () => { if (await confirmDialog(`Αφαίρεση του/της «${m.name}» από την ομάδα;`)) run(() => removeGroupMember(groupId, m.userId)); }}
               >
-                ✕
+                <CloseIcon size={18} />
               </button>
             </li>
           ))}

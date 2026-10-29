@@ -2235,3 +2235,53 @@ h1, h2, h3 { font-weight: 500; letter-spacing: 0; }
 
 /* Η αρχική σελίδα λίγο πιο «μαζεμένη» (≈5% μικρότερη: γράμματα, εικόνες, μενού), αναλογικά παντού. */
 .lp, .top, .foot { zoom: 0.95; }
+
+/* ---------- Γυάλισμα: Ημερολόγιο, Βάρος, φόρμες ---------- */
+
+/* Ημερολόγιο: οι άδειες μέρες ήσυχες (μια παύλα)· τα πεδία φαίνονται όταν περνάς από τη γραμμή ή πατάς πάνω της. */
+.jr-row:not(:hover):not(:focus-within) .jr-sleep.blank .jr-times { opacity: 0; }
+.jr-quality.blank { position: relative; }
+.jr-row:not(:hover):not(:focus-within) .jr-quality.blank:not(.big) button { opacity: 0; }
+.jr-row:not(:hover):not(:focus-within) .jr-quality.blank:not(.big)::after {
+  content: '—'; position: absolute; left: 0; top: 50%; transform: translateY(-50%); color: var(--muted);
+}
+.jr-table .cell, .jr-table .jr-v { font-weight: 400; }
+.jr-table .jr-foot b { font-weight: 500; }
+.jr-chart-empty { margin: 0; padding: 40px 0; text-align: center; color: var(--muted); font-size: 14px; }
+
+/* Βάρος: ηλικία/ύψος σε μία λεπτή γραμμή (όχι κουτί) */
+.body-info { padding: 0 0 4px; border: 0; background: none; gap: 8px 32px; align-items: baseline; }
+.body-info > div { display: flex; align-items: baseline; gap: 8px; }
+.body-info span, .body-info label { font-size: 13px; font-weight: 400; }
+.body-info b { font-size: 15px; font-weight: 500; }
+.body-info.editing { padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; align-items: flex-end; }
+.body-info.editing label { font-weight: 500; }
+.weight .panel { padding: 16px 20px; }
+
+/* Βάρος: η προσθήκη και ο πίνακας σε ένα κουτί, όπως ο πίνακας των check-in */
+.weightlog { gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.wl-add { border: 0; border-radius: 0; border-bottom: 1px solid var(--line); background: var(--rail); padding: 12px 16px; }
+.wl-add label, .wl-add .field { font-size: 13px; font-weight: 500; }
+.wl-add input { font-size: 15px; padding: 8px 12px; background: var(--surface); border-color: var(--outline); }
+.weightlog > p { margin: 10px 16px; }
+.weightlog .table-wrap { border: 0; border-radius: 0; }
+.sheet th { background: var(--rail); color: var(--muted); font-size: 12px; font-weight: 500; }
+.sheet td.num { font-weight: 500; }
+.sheet tbody tr:hover { background: var(--hover); }
+
+/* Φόρμες: ετικέτες ήρεμες (όχι έντονες), πεδία λίγο μικρότερα */
+.f { font-size: 14px; font-weight: 500; }
+.f input, .f select { font-size: 15px; }
+@media (max-width: 760px) { .f input, .f select, .wl-add input { font-size: 16px; } } /* (το κινητό δεν κάνει ζουμ) */
+
+/* Κουμπιά κλεισίματος με εικονίδιο */
+.x { display: inline-grid; place-items: center; padding: 6px; border-radius: 50%; }
+.x:hover { background: var(--hover); }
+.slot-x { display: inline-grid; place-items: center; }
+.slot-x .ms { font-size: 16px; }
+
+/* Θέσεις φωτογραφιών: μικρότερες στον «Νέο αθλούμενο», ήρεμο κείμενο */
+.athlete-form .slots { grid-template-columns: repeat(3, minmax(0, 130px)); }
+.slot-empty { font-weight: 500; font-size: 14px; border-width: 1.5px; border-color: var(--outline); }
+.slot-empty .plus { font-size: 24px; }
+.wl-add-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }

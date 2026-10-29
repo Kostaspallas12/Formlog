@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { CloseIcon } from './Icons';
 import { useGuard } from '@/lib/useGuard';
 import { addAthlete, addPhoto, createInvite, deleteAthlete, inviteErrorCode, putCheckin, setWeighIn, uuid } from '@/lib/storage';
 import { processImage } from '@/lib/images';
@@ -124,7 +125,7 @@ export default function AthleteForm({ onDone, onCancel }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={files[a.id].preview} alt={a.label} />
                 <span className="slot-label">{a.label}</span>
-                <button type="button" className="slot-x" onClick={() => clear(a.id)} aria-label={`Αφαίρεση: ${a.label}`}>✕</button>
+                <button type="button" className="slot-x" onClick={() => clear(a.id)} aria-label={`Αφαίρεση: ${a.label}`}><CloseIcon size={18} /></button>
               </>
             ) : (
               <label className="slot-empty">

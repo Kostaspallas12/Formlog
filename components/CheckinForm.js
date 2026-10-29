@@ -5,7 +5,7 @@ import { useGuard } from '@/lib/useGuard';
 import { addPhoto, deleteWeighInOn, putCheckin, removePhotos, setWeighIn, uuid } from '@/lib/storage';
 import { processImage } from '@/lib/images';
 import { ANGLES, fmtKg, parseDecimal, todayISO } from '@/lib/utils';
-import { ImageIcon } from './Icons';
+import { CloseIcon, ImageIcon } from './Icons';
 import Photo from './Photo';
 import DateField from './DateField';
 import { cleanAnswers } from '@/lib/checkinForm';
@@ -136,7 +136,7 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel, last
       {dragging && <div className="drop-hint" aria-hidden="true"><ImageIcon size={28} /> Άφησε τις φωτογραφίες εδώ</div>}
       <div className="panel-head">
         <h2>{initial ? 'Επεξεργασία καταγραφής' : 'Νέα καταγραφή'}</h2>
-        <button type="button" className="x" onClick={onCancel} aria-label="Κλείσιμο">✕</button>
+        <button type="button" className="x" onClick={onCancel} aria-label="Κλείσιμο"><CloseIcon size={18} /></button>
       </div>
 
       <div className="form-row">
@@ -195,7 +195,7 @@ export default function CheckinForm({ athleteId, initial, onDone, onCancel, last
                       onChange={(e) => { pick(a.id, e.target.files[0]); e.target.value = ''; }}
                     />
                   </label>
-                  <button type="button" className="slot-x" onClick={() => clear(a.id)} aria-label={`Αφαίρεση: ${a.label}`}>✕</button>
+                  <button type="button" className="slot-x" onClick={() => clear(a.id)} aria-label={`Αφαίρεση: ${a.label}`}><CloseIcon size={18} /></button>
                 </>
               ) : (
                 <label className="slot-empty">

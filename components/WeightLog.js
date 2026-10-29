@@ -7,7 +7,7 @@ import { deleteWeighIn, setWeighIn, updateWeighIn } from '@/lib/storage';
 import { fmtDate, fmtDelta, fmtKg, parseDecimal, todayISO } from '@/lib/utils';
 import EmptyState from './EmptyState';
 import DateField from './DateField';
-import { WeightIcon } from './Icons';
+import { CloseIcon, PlusIcon, WeightIcon } from './Icons';
 
 // Πίνακας βάρους τύπου Excel: γρήγορη προσθήκη πάνω, και κάθε κελί αλλάζει με κλικ.
 // Enter ή κλικ έξω = αποθήκευση, Esc = ακύρωση.
@@ -72,7 +72,7 @@ export default function WeightLog({ athleteId, entries, onChange }) {
           <span>Σημείωση</span>
           <input value={note} maxLength={300} placeholder="προαιρετικά" onChange={(e) => setNote(e.target.value)} />
         </label>
-        <button className="btn primary" type="submit" disabled={busy}>+ Προσθήκη</button>
+        <button className="btn primary wl-add-btn" type="submit" disabled={busy}><PlusIcon size={18} /> Προσθήκη</button>
       </form>
 
       {msg && <p className={msg.type === 'error' ? 'error' : 'wl-ok'} role={msg.type === 'error' ? 'alert' : 'status'}>{msg.text}</p>}
@@ -189,7 +189,7 @@ function Row({ entry, delta, onChange, flash }) {
         />
       </td>
       <td className="actions">
-        <button className="x" onClick={remove} aria-label={`Διαγραφή ${fmtDate(entry.date)}`}>✕</button>
+        <button className="x" onClick={remove} aria-label={`Διαγραφή ${fmtDate(entry.date)}`}><CloseIcon size={18} /></button>
       </td>
     </tr>
   );

@@ -132,7 +132,7 @@ const timeText = (v) => v || '';
 // Ποιότητα ύπνου 1–5 (ξανά πάτημα στην ίδια = καθαρισμός).
 function Quality({ value, onSave, big = false, date }) {
   return (
-    <span className={`jr-quality${big ? ' big' : ''}`} role="group" aria-label={`Ποιότητα ύπνου ${date}`}>
+    <span className={`jr-quality${big ? ' big' : ''}${value == null ? ' blank' : ''}`} role="group" aria-label={`Ποιότητα ύπνου ${date}`}>
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n} type="button" aria-pressed={value === n} aria-label={`${n} από 5`}
@@ -278,7 +278,9 @@ export default function Journal({ athlete, entries, onChange, canConfigure = fal
                   {targetText(chartMetric, targets) && <> · στόχος {targetText(chartMetric, targets)}</>}
                 </span>
               </div>
-              <Bars metric={chartMetric} days={days} byDate={byDate} targets={targets} />
+              {avg(chartMetric) == null
+                ? <p className="jr-chart-empty">Καμία τιμή αυτή την εβδομάδα.</p>
+                : <Bars metric={chartMetric} days={days} byDate={byDate} targets={targets} />}
             </section>
           )}
 
@@ -352,7 +354,7 @@ function Cell({ f, e, date, targets, listId, onSave }) {
   if (f.id === 'sleep') {
     const m = sleepMinutes(e);
     return (
-      <span className="jr-sleep">
+      <span className={`jr-sleep${!e?.sleepStart && !e?.sleepEnd ? ' blank' : ''}`}>
         <b className={`jr-v ${tone('sleep', m, targets)}`}>{fmtDur(m)}</b>
         <span className="jr-times">
           <CommitInput className="cell jr-time" value={e?.sleepStart} toText={timeText} parse={parseTime} placeholder="--:--" inputMode="numeric" aria-label={`Ώρα ύπνου ${date}`} onSave={(v) => onSave({ sleepStart: v })} />

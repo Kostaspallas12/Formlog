@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CloseIcon } from './Icons';
 import { confirmDialog } from '@/components/Confirm';
 import { ANGLES, fmtDate, fmtDelta, fmtKg } from '@/lib/utils';
 import Photo from './Photo';
@@ -83,7 +84,7 @@ export function Lightbox({ id, label, onClose }) {
     <div className="lightbox" role="dialog" aria-modal="true" aria-label={label} onClick={onClose}>
       <Photo id={id} alt={label} size="full" />
       <p>{label}</p>
-      <button className="x light" onClick={onClose} aria-label="Κλείσιμο">✕</button>
+      <button className="x light" onClick={onClose} aria-label="Κλείσιμο"><CloseIcon size={18} /></button>
     </div>
   );
 }
