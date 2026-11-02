@@ -979,8 +979,8 @@ tr:last-child td { border-bottom: 0; }
 .switch:disabled { opacity: 0.6; }
 
 /* Φόντο συνομιλίας: μικρές προεπισκοπήσεις (τα μοτίβα στο walls.css) */
-.walls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 4px; }
-@media (max-width: 520px) { .walls { grid-template-columns: repeat(2, 1fr); } }
+.walls { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 4px; }
+@media (max-width: 760px) { .walls { grid-template-columns: repeat(3, 1fr); } }
 .wall-pick {
   display: flex; flex-direction: column; gap: 6px; padding: 0; border: 0; background: none; color: inherit;
   font: inherit; cursor: pointer; text-align: center;

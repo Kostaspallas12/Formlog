@@ -85,6 +85,22 @@ const SWIRL = [
   '<path d="M8 6h.01M16 5h.01M5 13h.01M12 12h.01M19 12h.01M9 19h.01M16 19h.01"/>',
 ];
 
+// Η πορεία του αθλούμενου: τικ, γραφήματα, φωτογραφίες, ημερολόγιο, στόχος, κύπελλο.
+const PROGRESS = [
+  'A:<path d="M4 12.5l5.5 5.5L20 6.5"/>',
+  '<path d="M4 18l5-6 4 3 7-9M15 6h5v5"/>',
+  '<path d="M6 20v-6M12 20V9M18 20V4"/>',
+  '<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M9 15l2 2 4-4"/>',
+  '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12h.01"/>',
+  'A:<path d="M7 4h10v6a5 5 0 0 1-10 0zM7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 15v4M8.5 20h7"/>',
+  '<rect x="3" y="5" width="8" height="14" rx="2"/><rect x="13" y="5" width="8" height="14" rx="2"/><path d="M5.5 15l1.5-2 1.5 2M15.5 15l1.5-2 1.5 2"/>',
+  '<path d="M4 5h16a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 17h-9l-5 4v-4H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 5zM8 11l2.5 2.5L16 9"/>',
+  'A:<path d="M6 21V4M6 4.5h12l-3 4 3 4H6"/>',
+  '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/>',
+  '<path d="M4 4v16h16M8 15l3-3 3 2 5-6"/>',
+  'A:<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6.1L12 16.5l-5.4 3.1 1.2-6.1-4.5-4.2 6.1-.7z"/>',
+];
+
 // Μικρά γεμίσματα ανάμεσα στα σχέδια (όλα τα θέματα).
 const FILL = [
   '<path d="M12 12h.01"/>',
@@ -155,6 +171,12 @@ const THEMES = {
     draw: tile(GYM, { seed: 11, cols: 8, scale: 2 }),
     light: { bg: '#e6eaee', ink: INK, op: 0.28, accent: GREEN, aop: 0.62 },
     dark: { bg: '#161c22', ink: INK_D, op: 0.2, accent: GREEN_D, aop: 0.42 },
+  },
+  // Πρόοδος: λευκά σχέδια πάνω σε έντονο πράσινο
+  progress: {
+    draw: tile(PROGRESS, { seed: 37, cols: 8, scale: 2 }),
+    light: { bg: '#bce6d4', ink: '#ffffff', op: 0.85, accent: GREEN, aop: 0.6 },
+    dark: { bg: '#0b3a2e', ink: '#ffffff', op: 0.17, accent: GREEN_D, aop: 0.5 },
   },
   // Περιβόλι: φρούτα και λαχανικά σε ζεστό φόντο
   food: {

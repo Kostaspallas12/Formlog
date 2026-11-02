@@ -1,12 +1,15 @@
 /* Παράγεται από το scripts/walls.js: φόντο της συνομιλίας (Λογαριασμός → Εμφάνιση). */
 .wall-brand .chat-scroll, .wall-swatch.wall-brand { background: #e3f4ee url("/walls/brand-light.svg") 0 0 / 480px; }
 .wall-gym .chat-scroll, .wall-swatch.wall-gym { background: #e6eaee url("/walls/gym-light.svg") 0 0 / 480px; }
+.wall-progress .chat-scroll, .wall-swatch.wall-progress { background: #bce6d4 url("/walls/progress-light.svg") 0 0 / 480px; }
 .wall-food .chat-scroll, .wall-swatch.wall-food { background: #f8f0e1 url("/walls/food-light.svg") 0 0 / 480px; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) .wall-brand .chat-scroll, :root:not([data-theme='light']) .wall-swatch.wall-brand { background: #0f1f1a url("/walls/brand-dark.svg") 0 0 / 480px; }
   :root:not([data-theme='light']) .wall-gym .chat-scroll, :root:not([data-theme='light']) .wall-swatch.wall-gym { background: #161c22 url("/walls/gym-dark.svg") 0 0 / 480px; }
+  :root:not([data-theme='light']) .wall-progress .chat-scroll, :root:not([data-theme='light']) .wall-swatch.wall-progress { background: #0b3a2e url("/walls/progress-dark.svg") 0 0 / 480px; }
   :root:not([data-theme='light']) .wall-food .chat-scroll, :root:not([data-theme='light']) .wall-swatch.wall-food { background: #1c1810 url("/walls/food-dark.svg") 0 0 / 480px; }
 }
 :root[data-theme='dark'] .wall-brand .chat-scroll, :root[data-theme='dark'] .wall-swatch.wall-brand { background: #0f1f1a url("/walls/brand-dark.svg") 0 0 / 480px; }
 :root[data-theme='dark'] .wall-gym .chat-scroll, :root[data-theme='dark'] .wall-swatch.wall-gym { background: #161c22 url("/walls/gym-dark.svg") 0 0 / 480px; }
+:root[data-theme='dark'] .wall-progress .chat-scroll, :root[data-theme='dark'] .wall-swatch.wall-progress { background: #0b3a2e url("/walls/progress-dark.svg") 0 0 / 480px; }
 :root[data-theme='dark'] .wall-food .chat-scroll, :root[data-theme='dark'] .wall-swatch.wall-food { background: #1c1810 url("/walls/food-dark.svg") 0 0 / 480px; }
