@@ -29,8 +29,10 @@ const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   // Σε εξωτερικά links δεν φεύγει η πλήρης διεύθυνση (π.χ. ο σύνδεσμος πρόσκλησης), μόνο το site.
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  // Χωρίς μικρόφωνο / τοποθεσία· κάμερα μόνο για το ίδιο το site.
+  // Κάμερα και μικρόφωνο μόνο για το ίδιο το site (κλήσεις, φωνητικά)· καμία τοποθεσία.
   { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=()' },
+  // Ένα άλλο site που ανοίγει το FormLog σε νέο παράθυρο δεν μπορεί να το ελέγξει (και αντίστροφα).
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
 ];
 
 /** @type {import('next').NextConfig} */
