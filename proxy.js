@@ -49,7 +49,7 @@ export function proxy(request) {
 export const config = {
   // Όχι στα αρχεία του Next.js και στο εικονίδιο, ώστε να φορτώνουν κανονικά.
   // Εικονίδια και η εικόνα προεπισκόπησης φορτώνουν πάντα (και την ώρα του «Υπό κατασκευή»).
-  matcher: ['/((?!api/keepalive|_next/static|_next/image|icon.svg|favicon.ico|apple-icon.png|opengraph-image.png|twitter-image.png).*)'],
+  matcher: ['/((?!api/keepalive|_vercel|_next/static|_next/image|icon.svg|favicon.ico|apple-icon.png|opengraph-image.png|twitter-image.png).*)'],
 };
 
 const PAGE = `<!doctype html>

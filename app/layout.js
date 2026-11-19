@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SiteChrome from '@/components/SiteChrome';
 import ConfirmHost from '@/components/Confirm';
+import SiteAnalytics from '@/components/SiteAnalytics';
 import { ICON_NAMES } from '@/components/Icons';
 import { THEME_BOOT } from '@/lib/themeBoot';
 import { Roboto } from 'next/font/google';
@@ -43,6 +44,7 @@ export default function RootLayout({ children }) {
           <SiteChrome header={<Header />} footer={<Footer />}>{children}</SiteChrome>
           <ConfirmHost />
         </AuthProvider>
+        <SiteAnalytics />
       </body>
     </html>
   );
