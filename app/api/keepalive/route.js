@@ -1,6 +1,7 @@
 // Η βάση «ξυπνάει» μία φορά τη μέρα (Vercel Cron, βλ. vercel.json): στο δωρεάν πλάνο το Supabase
 // βάζει σε παύση το project αν δεν το χρησιμοποιήσει κανείς για περίπου μία εβδομάδα.
-// Ένα μικρό ερώτημα αρκεί· οι κανόνες της βάσης δεν επιστρέφουν δεδομένα χωρίς σύνδεση.
+// Ένα μικρό ερώτημα αρκεί: χωρίς σύνδεση η βάση απαντά «δεν επιτρέπεται» (401), αλλά το ερώτημα
+// έφτασε σε αυτήν, άρα μετράει ως κίνηση. Αποτυχία είναι μόνο το να μην απαντήσει (δίκτυο / 5xx).
 // Αν στο Vercel υπάρχει CRON_SECRET, μόνο το Vercel Cron μπορεί να το καλέσει.
 
 export const dynamic = 'force-dynamic';
@@ -16,5 +17,6 @@ export async function GET(request) {
   const res = await fetch(`${SUPA}/rest/v1/athletes?select=id&limit=1`, {
     headers: { apikey: KEY }, cache: 'no-store',
   }).catch(() => null);
-  return Response.json({ ok: !!res?.ok }, { status: res?.ok ? 200 : 503 });
+  const ok = !!res && res.status < 500;
+  return Response.json({ ok }, { status: ok ? 200 : 503 });
 }
