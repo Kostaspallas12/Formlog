@@ -70,7 +70,8 @@ $$;
 
 
 -- ============================================================
--- 2. Αρχεία: έως 200 αρχεία / 150 MB την ημέρα και 2 GB συνολικά ανά λογαριασμό
+-- 2. Αρχεία: έως 200 αρχεία / 150 MB την ημέρα και 300 MB συνολικά ανά λογαριασμό
+--    (το δωρεάν πλάνο έχει 1 GB για ΟΛΟΥΣ: ένας λογαριασμός δεν πρέπει να μπορεί να το γεμίσει μόνος του)
 -- ============================================================
 create or replace function public.upload_quota_ok()
 returns boolean
@@ -84,7 +85,7 @@ as $$
        from storage.objects o
        where o.owner_id = (select auth.uid())::text and o.created_at > now() - interval '1 day')
     and
-    (select coalesce(sum((o.metadata ->> 'size')::bigint), 0) < 2::bigint * 1024 * 1024 * 1024
+    (select coalesce(sum((o.metadata ->> 'size')::bigint), 0) < 300::bigint * 1024 * 1024
        from storage.objects o
        where o.owner_id = (select auth.uid())::text);
 $$;

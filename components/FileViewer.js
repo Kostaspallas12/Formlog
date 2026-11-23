@@ -1,13 +1,32 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { downloadPlanFile } from '@/lib/storage';
+import { downloadPlanFile, PLAN_FILE_TYPES } from '@/lib/storage';
 import { CloseIcon, DownloadIcon } from './Icons';
+
+// Ο τύπος χωρίς παραμέτρους: 'text/plain;charset=utf-8' → 'text/plain'
+const baseType = (t) => String(t || '').split(';')[0].trim().toLowerCase();
+
+// Το όνομα της λήψης παίρνει πάντα την κατάληξη του πραγματικού τύπου του αρχείου: ένα αρχείο δεν κατεβαίνει
+// ποτέ ως «πρόγραμμα.pdf.exe» ή με χαρακτήρες που δεν επιτρέπονται σε όνομα αρχείου.
+const downloadName = (name, type) => {
+  const ext = Object.keys(PLAN_FILE_TYPES).find((k) => PLAN_FILE_TYPES[k] === type) || 'bin';
+  const base = String(name || '')
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, '')
+    .replace(/\.[^.]*$/, '')
+    .replace(/^[.\s]+/, '')
+    .trim()
+    .slice(0, 100);
+  return `${base || 'αρχείο'}.${ext}`;
+};
 
 // Προβολή αρχείου μέσα στη σελίδα: εικόνα, PDF και κείμενο προβάλλονται·
 // Έγγραφα και πίνακες (doc/xls) δεν προβάλλονται από τον browser, οπότε δίνουμε Λήψη.
+// Τι θα προβληθεί αποφασίζει ο πραγματικός τύπος (όπως τον κράτησε ο χώρος αποθήκευσης, που δέχεται μόνο
+// τους τύπους του PLAN_FILE_TYPES) — όχι ο τύπος που γράφει η λίστα αρχείων του προγράμματος.
 export default function FileViewer({ file, onClose }) {
   const [url, setUrl] = useState(null);
+  const [type, setType] = useState(() => baseType(file.type));
   const [text, setText] = useState(null);
   const [failed, setFailed] = useState(false);
 
@@ -17,9 +36,11 @@ export default function FileViewer({ file, onClose }) {
     downloadPlanFile(file.path)
       .then(async (blob) => {
         if (!alive) return;
+        const real = baseType(blob.type) || baseType(file.type);
         obj = URL.createObjectURL(blob);
+        setType(real);
         setUrl(obj);
-        if (file.type === 'text/plain') setText(await blob.text());
+        if (real === 'text/plain') setText(await blob.text());
       })
       .catch(() => { if (alive) setFailed(true); });
     return () => { alive = false; if (obj) URL.revokeObjectURL(obj); };
@@ -34,12 +55,12 @@ export default function FileViewer({ file, onClose }) {
 
   const download = () => {
     if (!url) return;
-    Object.assign(document.createElement('a'), { href: url, download: file.name }).click();
+    Object.assign(document.createElement('a'), { href: url, download: downloadName(file.name, type) }).click();
   };
 
-  const isImg = file.type === 'image/jpeg' || file.type === 'image/png';
-  const isPdf = file.type === 'application/pdf';
-  const isText = file.type === 'text/plain';
+  const isImg = type === 'image/jpeg' || type === 'image/png';
+  const isPdf = type === 'application/pdf';
+  const isText = type === 'text/plain';
 
   return (
     <div className="viewer" role="dialog" aria-modal="true" aria-label={file.name} onClick={(e) => { if (e.target === e.currentTarget) close(); }}>
